@@ -21,9 +21,40 @@ const express = require('express');
 const app = express();
 const port = 8000;
 
+const body_parser = require('body-parser');
+
+const csp = require('helmet-csp');
+
 const pg = require('pg-promise')();
 const db = pg(process.env.DATABASE_URL);
 
+app.use(body_parser.json());
+app.use(body_parser.urlencoded({ extended: true }));
+
+app.use(csp({
+    directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com/css?family=Open+Sans&display=swap"],
+        reportUri: '/signin',
+    },
+    reportOnly: true,
+}));
+
+let router = express.Router();
+
+app.post('/signup', (req, res) => {
+    console.log(req.body);
+    res.send('/signup');
+});
+
+router.get('/', (req, res) => {
+    res.send("Got your request for page landing");
+});
+
+app.use(express.static(__dirname + "/reshipi-frontend"));
+app.listen(port);
 
 async function main() {
     const create_user_table = 
@@ -100,7 +131,7 @@ async function signup_new_user(req, res) {
     console.log(user);
 }
 
-main()
+// main()
 
 let test_user = JSON.stringify(
     {
@@ -122,4 +153,4 @@ let test_recipe = JSON.stringify(
 )
 
 
-signup_new_user(test_user, 3);
+// signup_new_user(test_user, 3);
