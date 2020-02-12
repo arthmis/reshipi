@@ -102,7 +102,7 @@ async function addUser(userData) {
   }
 }
 
-async function getUser(userData) {
+async function validateUser(userData) {
   const getUserHash = new pg.ParameterizedQuery({
     text: 'SELECT * FROM Users WHERE username=$1 LIMIT 1',
     values: [userData.username],
@@ -123,10 +123,21 @@ async function getUser(userData) {
     return err;
   }
 }
+
+async function getUser(userData) {
+  try {
+    const user_username = await db.oneOrNone(`SELECT * FROM Users WHERE username=$1 LIMIT 1`, [userData.username]);
+    const user_email = await db.oneOrNone(`SELECT * FROM Users WHERE email=$1 LIMIT 1`, [userData.email]);
+    return [user_username, user_email];
+  } catch (err) {
+    return err;
+  }
+}
+
 async function deleteUser(userData) {
   try {
     // checks whether user exists and whether userData is valid
-    const user = await getUser(userData);
+    const user = await validateUser(userData);
     const deleteUserStatement = new pg.ParameterizedQuery({
       text: 'DELETE FROM Users WHERE username=$1 AND email=$2 AND hash=$3 AND recipes_table=$4',
       values: [user.username, user.email, user.hash, user.recipes_table],
@@ -163,6 +174,7 @@ async function deleteUser(userData) {
 }
 
 exports.addUser = addUser;
+exports.validateUser = validateUser;
 exports.getUser = getUser;
 exports.deleteUser = deleteUser;
 exports.db = db;

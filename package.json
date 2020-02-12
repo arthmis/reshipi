@@ -2,10 +2,10 @@
   "name": "reshipi",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "ava",
-    "server": "nodemon"
+    "server": "nodemon src/index.js"
   },
   "author": "",
   "license": "ISC",
@@ -13,6 +13,7 @@
     "bcrypt": "^3.0.7",
     "body-parser": "^1.19.0",
     "dotenv": "^8.2.0",
+    "ejs": "^3.0.1",
     "express": "^4.17.1",
     "helmet-csp": "^2.9.4",
     "pg-promise": "^10.4.0"

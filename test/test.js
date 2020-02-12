@@ -39,7 +39,7 @@ const testRecipe = JSON.stringify({
 test('test add user', async (t) => {
   let testUser = testUsers[0];
   await users.addUser(testUser);
-  let user = await users.getUser(testUser).catch((err) => console.log(err));
+  let user = await users.validateUser(testUser).catch((err) => console.log(err));
   t.assert(user.username === testUser.username);
   t.assert(user.email === testUser.email);
   let match = await bcrypt.compare(testUser.password, user.hash);
@@ -58,7 +58,7 @@ test('test add user', async (t) => {
       SELECT * FROM Users;
     `
   );
-  user = await users.getUser(testUser).catch((err) => console.log(err));
+  user = await users.validateUser(testUser).catch((err) => console.log(err));
   // console.log(user);
   t.assert(user.username === testUser.username);
   t.assert(user.email === testUser.email);
@@ -74,7 +74,7 @@ test('test add user', async (t) => {
   testUser = testUsers[2];
   await users.addUser(testUser);
 
-  user = await users.getUser(testUser).catch((err) => console.log(err));
+  user = await users.validateUser(testUser).catch((err) => console.log(err));
 
   t.assert(user.username === testUser.username);
   t.assert(user.email === testUser.email);

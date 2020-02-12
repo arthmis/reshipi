@@ -11,7 +11,7 @@
 // Related Account ID
 
 // const bcryptjs = require('bcryptjs');
-const bcrypt = require('bcrypt');
+const users = require('./users.js')
 
 require('dotenv').config();
 
@@ -22,10 +22,11 @@ const pg = require('pg-promise')();
 
 const app = express();
 const port = 8000;
-const db = pg(process.env.DATABASE_URL);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.set('view engine', 'ejs');
 
 app.use(
   csp({
@@ -38,97 +39,70 @@ app.use(
         "'unsafe-inline'",
         'https://fonts.googleapis.com/css?family=Open+Sans&display=swap'
       ],
-      reportUri: '/signin',
     },
     reportOnly: true,
   }),
 );
 
-const router = express.Router();
-
-app.post('/signup', (req, res) => {
-  console.log(req.body);
-  res.send('/signup');
-});
-
-router.get('/', (req, res) => {
-  res.send('Got your request for page landing');
-});
-
-app.use(express.static(__dirname.join('/reshipi-frontend')));
-app.listen(port);
-
 async function main() {
   const createUserTable = `CREATE TABLE IF NOT EXISTS
-            Users(
-                id SERIAL PRIMARY KEY,
-                username TEXT NOT NULL,
-                email TEXT NOT NULL,
-                hash TEXT NOT NULL,
-                recipes_table TEXT NOT NULL
-            )`;
+    Users(
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL,
+        email TEXT NOT NULL,
+        hash TEXT NOT NULL,
+        recipes_table TEXT NOT NULL
+    )`;
 
-  const client = await db.connect().catch(err => console.log(err));
-  client.none(createUserTable);
+  users.db.none(createUserTable);
 
   app.use(express.static('reshipi-frontend'));
   app.listen(port);
 }
 
-async function signup_new_user(req, res) {
-  const saltRounds = 10;
+async function signupNewUser(req, res) {
+  const userData = req.body;
 
-  const userData = JSON.parse(req);
-  const hashResult = await bcrypt
-    .hash(userData.password, saltRounds)
-    .catch((err) => console.log(err));
+  try {
+    const [previouslyUsedUsername, previouslyUsedEmail] = await users.getUser(userData);
+    if (previouslyUsedEmail || previouslyUsedUsername) {
+      let user = {
+        username: userData.username,
+        email: userData.email,
+        usernameSpan: "",
+        emailSpan: "",
+      };
+      if (previouslyUsedUsername) {
+        user.usernameSpan = "Username not available";
+      }
+      if (previouslyUsedEmail) {
+        user.emailSpan = "Email not available";
+      }
 
-  // const delete_user = pg.as.format(
-  //     `DELETE FROM Users WHERE $1:name=$2`,
-  //     ["username", user_data.username],
-  // );
-  // let num_rows_del = await db.none(delete_user);
-  // // console.log(num_rows_del);
-
-  userData.recipe_table = `${userData.username}_recipes`;
-
-  const createUserRecipesTable = pg.as.format(
-    `CREATE TABLE IF NOT EXISTS
-                $1:name(
-                    id INTEGER PRIMARY KEY,
-                    title TEXT NOT NULL,
-                    ingredients TEXT NOT NULL,
-                    directions TEXT NOT NULL,
-                    description TEXT NOT NULL,
-                    food_category TEXT NOT NULL,
-                    tags TEXT
-                );`,
-    [userData.recipe_table],
-  );
-
-  // create table for user recipes
-  db.none(createUserRecipesTable);
-
-  const insertNewUser = new pg.ParameterizedQuery({
-    text: `INSERT INTO Users (username, email, hash, recipes_table)
-            VALUES ($1, $2, $3, $4);`,
-    values: [
-      userData.username,
-      userData.email,
-      hashResult,
-      userData.recipe_table
-    ]
-  });
-  await db.none(insertNewUser).catch((err) => console.log(err));
-  const getOneUser = new pg.ParameterizedQuery({
-    text: 'SELECT * FROM Users WHERE username=$1 LIMIT 1;',
-    values: [userData.username],
-  });
-  const user = await db.one(getOneUser);
-  console.log(user);
+      res.render('pages/signup', {
+        user: user,
+      });
+    }
+    else {
+      try {
+        await users.addUser(userData); 
+        console.log('response: successfully added user');
+        res.status(201).send("successfully added user");
+        // res.render('pages/recipes');
+        return;
+      } catch (err) {
+        return err; 
+      } 
+    }
+  } catch (err) {
+      console.log(err);
+      return err;
+    }
 }
 
-// main()
+app.post('/signup', signupNewUser);
+
+main()
 
 
 // signup_new_user(test_user, 3);
