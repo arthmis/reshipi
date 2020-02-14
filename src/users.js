@@ -102,18 +102,20 @@ async function addUser(userData) {
   }
 }
 
-async function validateUser(userData) {
+// this function should use db.oneOrNone because when finding a user
+// it is possible the username doesn't exist and this can return None
+async function getUser(userData) {
   const getUserHash = new pg.ParameterizedQuery({
     text: 'SELECT * FROM Users WHERE username=$1 LIMIT 1',
     values: [userData.username],
   });
 
   try {
-    const user = await db.one(`SELECT * FROM Users WHERE username=$1 LIMIT 1`, [userData.username]);
+    const user = await db.one(getUserHash);
     try {
       const match = await bcrypt.compare(userData.password, user.hash);
       if (match) {
-        return (null, user);
+        return [null, user];
       }
       return new Error('user not found');
     } catch (err) {
@@ -124,7 +126,7 @@ async function validateUser(userData) {
   }
 }
 
-async function getUser(userData) {
+async function checkCredentialsExist(userData) {
   try {
     const user_username = await db.oneOrNone(`SELECT * FROM Users WHERE username=$1 LIMIT 1`, [userData.username]);
     const user_email = await db.oneOrNone(`SELECT * FROM Users WHERE email=$1 LIMIT 1`, [userData.email]);
@@ -137,7 +139,7 @@ async function getUser(userData) {
 async function deleteUser(userData) {
   try {
     // checks whether user exists and whether userData is valid
-    const user = await validateUser(userData);
+    const user = await getUser(userData);
     const deleteUserStatement = new pg.ParameterizedQuery({
       text: 'DELETE FROM Users WHERE username=$1 AND email=$2 AND hash=$3 AND recipes_table=$4',
       values: [user.username, user.email, user.hash, user.recipes_table],
@@ -174,8 +176,8 @@ async function deleteUser(userData) {
 }
 
 exports.addUser = addUser;
-exports.validateUser = validateUser;
-exports.getUser = getUser;
+exports.validateUser = getUser;
+exports.getUser = checkCredentialsExist;
 exports.deleteUser = deleteUser;
 exports.db = db;
 exports.User = User;

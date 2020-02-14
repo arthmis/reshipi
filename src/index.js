@@ -18,7 +18,7 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const csp = require('helmet-csp');
-const pg = require('pg-promise')();
+const {check, validationResult } = require('express-validator');
 
 const app = express();
 const port = 8000;
@@ -61,17 +61,38 @@ async function main() {
 }
 
 async function signupNewUser(req, res) {
+
   const userData = req.body;
 
+  console.log(userData);
+
+  let user = {
+    username: userData.username,
+    email: userData.email,
+    usernameSpan: "",
+    emailSpan: "",
+  };
+
+  // console.log(validationResult(req));
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    console.log(validationErrors);
+    user.emailSpan = `${validationErrors.errors[0].value} is not a valid email`;
+    res.status(200);
+    res.render('pages/signup', {
+      user: user,
+    });
+  }
+
   try {
-    const [previouslyUsedUsername, previouslyUsedEmail] = await users.getUser(userData);
+    const [previouslyUsedUsername, previouslyUsedEmail] = await users.checkCredentialsExist(userData);
     if (previouslyUsedEmail || previouslyUsedUsername) {
-      let user = {
-        username: userData.username,
-        email: userData.email,
-        usernameSpan: "",
-        emailSpan: "",
-      };
+      // let user = {
+      //   username: userData.username,
+      //   email: userData.email,
+      //   usernameSpan: "",
+      //   emailSpan: "",
+      // };
       if (previouslyUsedUsername) {
         user.usernameSpan = "Username not available";
       }
@@ -85,7 +106,7 @@ async function signupNewUser(req, res) {
     }
     else {
       try {
-        await users.addUser(userData); 
+        // await users.addUser(userData); 
         console.log('response: successfully added user');
         res.status(201).send("successfully added user");
         // res.render('pages/recipes');
@@ -100,14 +121,18 @@ async function signupNewUser(req, res) {
     }
 }
 
-app.post('/signup', signupNewUser);
+app.post('/signup', [
+    check('username').trim().escape().stripLow().isLength( {min: 4, max: 30}),
+    check('email').isEmail().normalizeEmail(),
+    check('password').isLength( {min: 8, max: 50}),
+  ], 
+  signupNewUser);
 
 main()
 
 
 // signup_new_user(test_user, 3);
 
-// addUser
 // deleteUser
 // updateUserInfo
 // readUserInfo
