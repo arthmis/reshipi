@@ -7,7 +7,13 @@ const users = require('../src/users');
 
 'use strict' 
 
-const testUsers = [
+const singleUser = {
+  username: 'billy bob',
+  email: 'billy@yahoo.com',
+  password: 'yeehaw32',
+};
+
+const multipleUsers = [
   {
     username: 'buman',
     email: 'magamaniaca@gmail.com',
@@ -36,55 +42,26 @@ const testRecipe = JSON.stringify({
   tags: 'beef',
 });
 
-test('test add user', async (t) => {
-  let testUser = testUsers[0];
-  await users.addUser(testUser);
-  let user = await users.validateUser(testUser).catch((err) => console.log(err));
-  t.assert(user.username === testUser.username);
-  t.assert(user.email === testUser.email);
-  let match = await bcrypt.compare(testUser.password, user.hash);
-  t.assert(match === true);
-  let tableExists = await users.db.one(
-    `
-      SELECT to_regclass('public.buman_recipes');
-    `
-  );
-  t.assert(`${testUser.username}_recipes` === tableExists.to_regclass);
-
-  testUser = testUsers[1];
-  await users.addUser(testUser);
-  all_users = await users.db.any(
-    `
-      SELECT * FROM Users;
-    `
-  );
-  user = await users.validateUser(testUser).catch((err) => console.log(err));
-  // console.log(user);
-  t.assert(user.username === testUser.username);
-  t.assert(user.email === testUser.email);
-  match = await bcrypt.compare(testUser.password, user.hash);
-  t.assert(match === true);
-  tableExists = await users.db.one(
-    `
-      SELECT to_regclass('public.luna_recipes');
-    `
-  );
-  t.assert(`${testUser.username}_recipes` === tableExists.to_regclass);
-
-  testUser = testUsers[2];
-  await users.addUser(testUser);
-
-  user = await users.validateUser(testUser).catch((err) => console.log(err));
+test('add one user', async (t) => {
+  let testUser = singleUser;
+  await users.addUser(testUser).catch((err) => console.log(err));
+  const user = await users.getUser(testUser).catch((err) => console.log(err));
 
   t.assert(user.username === testUser.username);
   t.assert(user.email === testUser.email);
-
-  match = await bcrypt.compare(testUser.password, user.hash);
+  const match = await bcrypt.compare(testUser.password, user.hash);
   t.assert(match === true);
-  tableExists = await users.db.one(
-    `
-      SELECT to_regclass('public.lyon_recipes');
-    `
-  );
-  t.assert(`${testUser.username}_recipes` === tableExists.to_regclass);
+});
+
+
+test('add multiple users', async (t) => {
+  for (testUser of multipleUsers) {
+    await users.addUser(testUser);
+    let user = await users.getUser(testUser).catch((err) => console.log(err));
+
+    t.assert(user.username === testUser.username);
+    t.assert(user.email === testUser.email);
+    const match = await bcrypt.compare(testUser.password, user.hash);
+    t.assert(match === true);
+  }
 });

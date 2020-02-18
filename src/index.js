@@ -47,17 +47,31 @@ app.use(
 async function main() {
   const createUserTable = `CREATE TABLE IF NOT EXISTS
     Users(
-        id SERIAL PRIMARY KEY,
-        username TEXT NOT NULL,
-        email TEXT NOT NULL,
-        hash TEXT NOT NULL,
-        recipes_table TEXT NOT NULL
+      id SERIAL PRIMARY KEY,
+      username TEXT NOT NULL,
+      email TEXT NOT NULL,
+      hash TEXT NOT NULL
     )`;
 
-  users.db.none(createUserTable);
+  const createRecipesTable = `CREATE TABLE IF NOT EXISTS
+    Recipes(
+      id SERIAL PRIMARY KEY,
+      username TEXT NOT NULL,
+      title TEXT NOT NULL,
+      ingredients TEXT NOT NULL,
+      directions TEXT NOT NULL,
+      description TEXT NOT NULL,
+      food_category TEXT NOT NULL,
+      tags TEXT
+    )`;
+
+  await users.db.none(createUserTable).catch((err) => {return err;});
+  await users.db.none(createRecipesTable).catch((err) => {return err;});
 
   app.use(express.static('reshipi-frontend'));
   app.listen(port);
+
+  return null;
 }
 
 async function signupNewUser(req, res) {
@@ -84,41 +98,38 @@ async function signupNewUser(req, res) {
     });
   }
 
-  try {
-    const [previouslyUsedUsername, previouslyUsedEmail] = await users.checkCredentialsExist(userData);
-    if (previouslyUsedEmail || previouslyUsedUsername) {
-      // let user = {
-      //   username: userData.username,
-      //   email: userData.email,
-      //   usernameSpan: "",
-      //   emailSpan: "",
-      // };
-      if (previouslyUsedUsername) {
-        user.usernameSpan = "Username not available";
-      }
-      if (previouslyUsedEmail) {
-        user.emailSpan = "Email not available";
-      }
+  const [previouslyUsedUsername, previouslyUsedEmail] = await users.checkCredentialsExist(userData).catch((err) => { return err; });
+  if (previouslyUsedEmail || previouslyUsedUsername) {
+    // let user = {
+    //   username: userData.username,
+    //   email: userData.email,
+    //   usernameSpan: "",
+    //   emailSpan: "",
+    // };
+    if (previouslyUsedUsername) {
+      user.usernameSpan = "Username not available";
+    }
+    if (previouslyUsedEmail) {
+      user.emailSpan = "Email not available";
+    }
 
-      res.render('pages/signup', {
-        user: user,
-      });
-    }
-    else {
-      try {
-        // await users.addUser(userData); 
-        console.log('response: successfully added user');
-        res.status(201).send("successfully added user");
-        // res.render('pages/recipes');
-        return;
-      } catch (err) {
-        return err; 
-      } 
-    }
-  } catch (err) {
-      console.log(err);
-      return err;
-    }
+    res.render('pages/signup', {
+      user: user,
+    });
+  }
+  else {
+    try {
+      // await users.addUser(userData); 
+      console.log('response: successfully added user');
+      res.status(201).send("successfully added user");
+      // res.render('pages/recipes');
+      return;
+    } catch (err) {
+      return err; 
+    } 
+  }
+    console.log(err);
+    return err;
 }
 
 app.post('/signup', [
@@ -126,12 +137,19 @@ app.post('/signup', [
     check('email').isEmail().normalizeEmail(),
     check('password').isLength( {min: 8, max: 50}),
   ], 
-  signupNewUser);
+  signupNewUser
+);
 
 main()
+  .then((err) => {
+    if (err === null) {
+      console.log("Starting server!");
+      return;
+    } else {
+      console.log(err);
+    }
+  });
 
-
-// signup_new_user(test_user, 3);
 
 // deleteUser
 // updateUserInfo

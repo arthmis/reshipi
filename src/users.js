@@ -34,72 +34,30 @@ const db = pg(process.env.DATABASE_URL);
 // let userCS = new pg.helpers.ColumnSet(['username', 'email', 'hash', 'recipes_table']);
 
 class User {
-  constructor(username, email, hash, recipesTable) {
+  constructor(username, email, hash) {
     this.username = username;
     this.email = email;
     this.hash = hash;
-    this.recipesTable = recipesTable;
   }
 }
 
 async function addUser(userData) {
   const saltRounds = 10;
 
-  try {
-    const hashResult = await bcrypt.hash(userData.password, saltRounds);
-    const recipeTable = `${userData.username}_recipes`;
-    const newUser = new User(userData.username, userData.email, hashResult, recipeTable);
+  const hashResult = await bcrypt.hash(userData.password, saltRounds).catch((err) => { return err; });
 
-    // sql code to create user recipes table
-    const createUserRecipesTable = pg.as.format(
-      `CREATE TABLE IF NOT EXISTS
-        $1:name(
-            id INTEGER PRIMARY KEY,
-            title TEXT NOT NULL,
-            ingredients TEXT NOT NULL,
-            directions TEXT NOT NULL,
-            description TEXT NOT NULL,
-            food_category TEXT NOT NULL,
-            tags TEXT
-        );`,
-      [newUser.recipesTable],
-    );
+  const insertNewUser = new pg.ParameterizedQuery({
+    text: `INSERT INTO Users (username, email, hash)
+            VALUES ($1, $2, $3)`,
+    values: [
+      userData.username,
+      userData.email,
+      hashResult
+    ],
+  });
 
-    // create table for user recipes
-    try {
-      await db.none(createUserRecipesTable);
-    } catch (err) {
-      return err;
-    }
-
-    const insertNewUser = new pg.ParameterizedQuery({
-      text: `INSERT INTO Users (username, email, hash, recipes_table)
-              VALUES ($1, $2, $3, $4)`,
-      values: [
-        newUser.username,
-        newUser.email,
-        newUser.hash,
-        newUser.recipesTable,
-      ],
-    });
-
-    // const values = [{
-    //   username: userData.username,
-    //   email: userData.email,
-    //   hash: hashResult,
-    //   recipes_table: recipeTable,   
-    // }];
-    // const query = pg.helpers.insert(values, userCS);
-
-    // insert new user into users table
-    try {
-      await db.none(insertNewUser);
-    } catch (err) {
-      return err;
-    }
-  } catch (err) {
-    return err;
-  }
+  // insert new user into users table
+  await db.none(insertNewUser).catch((err) => {return err;});
 }
 
 // this function should use db.oneOrNone because when finding a user
@@ -110,30 +68,25 @@ async function getUser(userData) {
     values: [userData.username],
   });
 
-  try {
-    const user = await db.one(getUserHash);
-    try {
-      const match = await bcrypt.compare(userData.password, user.hash);
-      if (match) {
-        return [null, user];
-      }
-      return new Error('user not found');
-    } catch (err) {
-      return err;
-    }
-  } catch (err) {
-    return err;
+  const user = await db.oneOrNone(getUserHash).catch((err) => {return err;});
+  if (user === null) {
+    return null;
+  }
+
+  const match = await bcrypt.compare(userData.password, user.hash).catch((err) => {return err;});
+  if (match) {
+    return user;
   }
 }
 
 async function checkCredentialsExist(userData) {
-  try {
-    const user_username = await db.oneOrNone(`SELECT * FROM Users WHERE username=$1 LIMIT 1`, [userData.username]);
-    const user_email = await db.oneOrNone(`SELECT * FROM Users WHERE email=$1 LIMIT 1`, [userData.email]);
-    return [user_username, user_email];
-  } catch (err) {
-    return err;
-  }
+  const user_username = await db.oneOrNone(
+    `SELECT * FROM Users WHERE username=$1 LIMIT 1`, 
+    [userData.username]
+  ).catch((err) => {return err});
+  const user_email = await db.oneOrNone(`SELECT * FROM Users WHERE email=$1 LIMIT 1`, [userData.email])
+    .catch((err) => {return err});
+  return [user_username, user_email];
 }
 
 async function deleteUser(userData) {
@@ -176,8 +129,8 @@ async function deleteUser(userData) {
 }
 
 exports.addUser = addUser;
-exports.validateUser = getUser;
-exports.getUser = checkCredentialsExist;
+exports.getUser = getUser;
+exports.checkCredentialsExist = checkCredentialsExist;
 exports.deleteUser = deleteUser;
 exports.db = db;
 exports.User = User;
