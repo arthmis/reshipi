@@ -15,6 +15,6 @@
         "sourceType": "module"
     },
     "rules": {
-        "no-restricted-syntax": ["ForInStatement"]
+        "no-restricted-syntax": ["error", "ForInStatement", "LabeledStatement", "WithStatement"]
     }
 }
