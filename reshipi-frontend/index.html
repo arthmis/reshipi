@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Reshipi</title>
+        <meta content="text/html;charset=UTF-8" http-equiv="Content-Type"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.5, user-scalable=no"/>
+        <link rel="stylesheet" type="text/css" href="/css/index.css"/>
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet"/>
+        <script src="/js/index.js" type="module" defer></script>
+    </head>
+
+    <body>
+        <header>
+            <nav id="nav">
+                <a id="reshipi" href="">Reshipi</a>
+                <div id="user-auth-actions">
+                    <a href="/login" id="login">Login</a>
+                </div>
+            </nav>
+        </header>
+        <main>
+            <div id="main-information">
+                <h1>
+                    Reshipi
+                </h1>
+                <p>
+                    Reshipi is a way to save your recipes and have them
+                    available anywhere you need.
+                </p>
+
+            </div>
+            <div id="sign-up-wrapper">
+                <form id="sign-up" action="/signup" method="post">
+                    <div id="form-inputs">
+                        <div class="input-group">
+                            <label class="sign-up-label" form="sign-up" for="username">Name</label><br>
+                            <input class="sign-up-input" form="sign-up" id="username" name="username" type="text" minlength="4" maxlength="30" placeholder="Can be anything" required><br>
+                        </div>
+                        <div class="input-group">
+                            <label class="sign-up-label" form="sign-up" for="email">Email</label><br>
+                            <input class="sign-up-input" form="sign-up" id="email" name="email" type="email" required><br>
+                        </div>
+                        <div class="input-group">
+                            <label class="sign-up-label" form="sign-up" for="password">Password</label><br> 
+                            <input class="sign-up-input" form="sign-up" id="password" name="password" type="password" minlength="8" maxlength="50" required><br>
+                        </div>
+                        <input id="submit-button" type="submit" value="Sign Up">
+                    </div>
+                </form>
+
+            </div>
+        </main>
+    </body>
+</html>
