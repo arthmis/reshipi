@@ -125,7 +125,9 @@ describe('reshipi', function () {
         assert(match === true);
       }
     });
-    it('signup user', async function () {
+  });
+  describe('user authentication', function () {
+    it('should sign up a user', async function () {
       const res = await request(app)
         .post('/signup')
         .send({
@@ -135,14 +137,13 @@ describe('reshipi', function () {
         })
         .expect(201);
       assert(res.status === 201);
-      assert(res.text === 'successfully added user');
     });
 
-    it('signup user duplicate', async function () {
+    it('should prevent a duplicate user from signing up', async function () {
       const res = await request(app)
         .post('/signup')
         .send({
-          username: 'samus',
+          username: 'samm',
           email: 'samus@gmail.com',
           password: 'secret_passy',
         })
@@ -152,5 +153,51 @@ describe('reshipi', function () {
         // });
       assert(res.status === 200);
     });
+
+    it('should login a user', async function () {
+      await request(app)
+        .post('/signup')
+        .send({
+          username: 'kupa',
+          email: 'kupa@gmail.com',
+          password: 'secret_passy',
+        })
+        .expect(201);
+
+      const res = await request(app)
+        .post('/login')
+        .send({
+          email: 'kupa@gmail.com',
+          password: 'secret_passy',
+        })
+        .expect(200);
+      assert(res.status === 200);
+      assert(res.type === 'text/html');
+      assert(res.text === 'login successful');
+      // assert(res.path === '/recipes');
+      // console.log(res);
+    });
+
+    // it('should not login a user', async function () {
+    //   await request(app)
+    //     .post('/signup')
+    //     .send({
+    //       username: 'kupa',
+    //       email: 'kupam@gmail.com',
+    //       password: 'secret_passy',
+    //     })
+    //     .expect(201);
+
+    //   const res = await request(app)
+    //     .post('/login')
+    //     .send({
+    //       email: 'kupam@gmail.com',
+    //       password: 'wrong_secret_passy',
+    //     })
+    //     .expect(200);
+    //   assert(res.status === 200);
+    //   assert(res.type === 'text/html');
+    //   assert(res.text === 'login successful');
+    // });
   });
 });

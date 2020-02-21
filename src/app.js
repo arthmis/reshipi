@@ -52,7 +52,6 @@ module.exports = (users) => {
     const user = {
       username: userData.username,
       email: userData.email,
-      usernameSpan: '',
       emailSpan: '',
     };
 
@@ -68,27 +67,23 @@ module.exports = (users) => {
       return;
     }
 
-    const [previouslyUsedUsername, previouslyUsedEmail] = await users
+    const previouslyUsedEmail = await users
       .checkCredentialsExist(userData)
       .catch((err) => err);
 
-    if (previouslyUsedEmail || previouslyUsedUsername) {
-      if (previouslyUsedUsername) {
-        user.usernameSpan = 'Username not available';
-      }
+    if (previouslyUsedEmail) {
       if (previouslyUsedEmail) {
         user.emailSpan = 'Email not available';
       }
       console.log('found duplicate user');
 
       res.status(200);
-      res.render('pages/signup', {
-        user,
-      });
+      res.render('pages/signup', { user });
     } else {
       await users.addUser(userData).catch((err) => err);
       // console.log('response: successfully added user');
-      res.status(201).send('successfully added user');
+      res.status(201);
+      res.render('pages/login', { user });
     }
   };
   app.post('/signup',
@@ -99,6 +94,52 @@ module.exports = (users) => {
       check('password').isLength({ min: 8, max: 50 }),
     ],
     signupNewUser,
+  );
+
+  const loginUser = async (req, res) => {
+    // console.log(res);
+    const credentials = req.body;
+
+    // console.log(validationResult(req));
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      const user = {
+        email: credentials.email,
+        errorMessage: 'email or password is incorrect',
+      };
+      // console.log(validationErrors);
+      res.status(200);
+      res.render('pages/login', {
+        user,
+      });
+      return;
+    }
+
+    if (!(await users.validateLogin(credentials))) {
+      const user = {
+        email: credentials.email,
+        errorMessage: 'email or password is incorrect',
+      };
+      res.status(200);
+      res.render('pages/login', {
+        user,
+      });
+      return;
+    }
+    res.status(200);
+    res.send('login successful');
+    // res.text = 'login successful';
+    // res.render('pages/recipes');
+    // res.render('pages/login');
+  };
+
+  app.post('/login',
+    [
+      // check('email').trim().isEmail().normalizeEmail(),
+      check('email').isEmail().normalizeEmail(),
+      check('password').isLength({ min: 8, max: 50 }),
+    ],
+    loginUser,
   );
 
   const tempApp = {

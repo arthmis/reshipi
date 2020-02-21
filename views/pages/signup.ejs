@@ -14,9 +14,9 @@
         <header>
             <nav id="nav">
                 <a id="reshipi" href="/">Reshipi</a>
-                <div id="user-auth-actions">
-                    <button id="login">Login</button>
-                </div>
+                <!-- <div id="user-auth-actions"> -->
+                    <a href="/login" id="login">Login</a>
+                <!-- </div> -->
             </nav>
         </header>
         <main>
@@ -26,8 +26,6 @@
                         <div class="input-group">
                             <div class="label-and-unavailable">
                                 <label class="sign-up-label" form="sign-up" for="username">Name</label>
-                                <!-- <span class="unavailable">Username not available</span> -->
-                                <span class="unavailable"><%= user.usernameSpan %></span>
                             </div>
                             <input class="sign-up-input" value="<%= user.username %>" form="sign-up" id="username" name="username" type="text" minlength="4" maxlength="30" required><br>
                         </div>

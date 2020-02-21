@@ -56,8 +56,8 @@ module.exports = (db) => {
     // it is possible the username doesn't exist and this can return None
     getUser: async (userData) => {
       const getUserHash = new pg.ParameterizedQuery({
-        text: 'SELECT * FROM Users WHERE username=$1 LIMIT 1',
-        values: [userData.username],
+        text: 'SELECT * FROM Users WHERE email=$1 LIMIT 1',
+        values: [userData.email],
       });
 
       const user = await db.oneOrNone(getUserHash).catch((err) => err);
@@ -76,16 +76,32 @@ module.exports = (db) => {
     },
 
     checkCredentialsExist: async (userData) => {
-      const userUsername = await db.oneOrNone(
-        'SELECT username FROM Users WHERE username=$1 LIMIT 1',
-        [userData.username],
-      ).catch((err) => err);
       const userEmail = await db.oneOrNone(
         'SELECT email FROM Users WHERE email=$1 LIMIT 1',
         [userData.email],
       )
         .catch((err) => err);
-      return [userUsername, userEmail];
+      if (userEmail !== null) {
+        return true;
+      }
+      return false;
+    },
+    validateLogin: async (credentials) => {
+      const user = await db.oneOrNone(
+        'SELECT email, password FROM Users WHERE email=$1 LIMIT 1',
+        [credentials.email],
+      ).catch((err) => err);
+
+      if (user !== null) {
+        const match = await bcrypt.compare(credentials.password, user.hash)
+          .catch((err) => err);
+        if (match) {
+          return true;
+        }
+
+        return false;
+      }
+      return false;
     },
 
     deleteUser: async (userData) => {
