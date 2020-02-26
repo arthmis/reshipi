@@ -21,12 +21,10 @@
                     <div id="form-inputs">
                         <div class="input-group">
                             <label class="login-label" form="login" for="email">Email</label><br>
-                            <span class="unavailable"><%= user.errorMessage %></span>
-                            <input class="login-input" form="login" value="<%= user.email %>" id="email" name="email" type="email" required><br>
+                            <input class="login-input" form="login" id="email" name="email" type="email" required><br>
                         </div>
                         <div class="input-group">
                             <label class="login-label" form="login" for="password">Password</label><br> 
-                            <span class="unavailable"><%= user.errorMessage %></span>
                             <input class="login-input" form="login" id="password" name="password" type="password" minlength="8" maxlength="50" required><br>
                         </div>
                         <input id="submit-button" type="submit" value="Login">

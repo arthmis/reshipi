@@ -23,10 +23,10 @@ class Nav extends React.Component {
     render() {
         return(
             <nav id="nav">
-                <a id="reshipi" href="">Reshipi</a>
-                <div id="user-auth-actions">
-                    <button id="login">Login</button>
-                </div>
+                <a id="reshipi" href="/recipes">Reshipi</a>
+                <form action="/logout" method="get">
+                    <input id="logout" type="submit" name="logout" value="Logout"/>
+                </form>
             </nav>
         );
     }
@@ -44,12 +44,7 @@ class App extends React.Component {
                     <Nav />
                 </header>
                 <main>
-                    <div id="main-information">
-
-                    </div>
-                    <div id="signup">
-
-                    </div>
+                    <h2>Reshipi recipe cards</h2>
                 </main>
             </div>
         );

@@ -14,19 +14,41 @@
 
 require('dotenv').config();
 
-const { check, validationResult } = require('express-validator');
-
 const express = require('express');
-const csp = require('helmet-csp');
+const { check, validationResult } = require('express-validator');
 const bodyParser = require('body-parser');
+const csp = require('helmet-csp');
+const session = require('express-session');
 
 module.exports = (users) => {
   const app = express();
-  app.use(bodyParser.json());
+
+  // app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
+  const cookieAge = 1200000;
+
+  app.use(session({
+    cookie: {
+      // secure: true,
+      secure: false,
+      httpOnly: true,
+      path: '/',
+      // maxAge: 1000 * 60 * 30,
+      maxAge: cookieAge,
+      sameSite: true,
+
+    },
+    secret: process.env.SECRET,
+    name: 'id',
+    // do more research into this because it depends
+    // on the session store i use
+    resave: false,
+    // again do more research into this
+    saveUninitialized: false,
+    // look into cryptographic encryption for creating session id
+  }));
+
 
   app.set('view engine', 'ejs');
 
@@ -39,12 +61,26 @@ module.exports = (users) => {
         styleSrc: [
           "'self'",
           "'unsafe-inline'",
-          'https://fonts.googleapis.com/css?family=Open+Sans&display=swap',
+          'https://fonts.googleapis.com',
         ],
+        fontSrc: [
+          'https://fonts.gstatic.com',
+        ],
+        // upgradeInsecureRequests: true,
+        reportUri: '/report-violation',
       },
       reportOnly: true,
     }),
   );
+
+  const reportCspViolation = (req, res) => {
+    if (req.body) {
+      console.log('CSP Violation: ', req.body);
+    }
+    res.status(204).end();
+  };
+
+  app.post('/report-violation', reportCspViolation);
 
   const signupNewUser = async (req, res) => {
     const userData = req.body;
@@ -72,9 +108,7 @@ module.exports = (users) => {
       .catch((err) => err);
 
     if (previouslyUsedEmail) {
-      if (previouslyUsedEmail) {
-        user.emailSpan = 'Email not available';
-      }
+      user.emailSpan = 'Email not available';
       console.log('found duplicate user');
 
       res.status(200);
@@ -83,6 +117,8 @@ module.exports = (users) => {
       await users.addUser(userData).catch((err) => err);
       // console.log('response: successfully added user');
       res.status(201);
+      user.username = '';
+      user.email = '';
       res.render('pages/login', { user });
     }
   };
@@ -97,7 +133,6 @@ module.exports = (users) => {
   );
 
   const loginUser = async (req, res) => {
-    // console.log(res);
     const credentials = req.body;
 
     // console.log(validationResult(req));
@@ -107,46 +142,80 @@ module.exports = (users) => {
         email: credentials.email,
         errorMessage: 'email or password is incorrect',
       };
-      // console.log(validationErrors);
-      res.status(200);
+      res.status(401);
       res.render('pages/login', {
         user,
       });
       return;
     }
 
-    if (!(await users.validateLogin(credentials))) {
+    if (!(await users.isValidLogin(credentials))) {
       const user = {
         email: credentials.email,
         errorMessage: 'email or password is incorrect',
       };
-      res.status(200);
+      res.status(401);
       res.render('pages/login', {
         user,
       });
       return;
     }
-    res.status(200);
-    res.send('login successful');
-    // res.text = 'login successful';
-    // res.render('pages/recipes');
-    // res.render('pages/login');
+    req.session.regenerate((err) => {
+      if (err) {
+        console.log(err);
+      }
+      res.redirect(303, '/recipes');
+    });
   };
 
-  app.post('/login',
+  app.post('/recipes_login',
     [
-      // check('email').trim().isEmail().normalizeEmail(),
       check('email').isEmail().normalizeEmail(),
       check('password').isLength({ min: 8, max: 50 }),
     ],
     loginUser,
   );
 
-  const tempApp = {
-    app,
+  const logout = (req, res) => {
+    req.sessionStore.get(req.session.id, (err, sesh) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      if (!sesh) {
+        res.redirect(303, '/');
+      }
+    });
+    req.sessionStore.destroy((err) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      res.redirect(303, '/');
+    });
   };
 
-  return tempApp;
+  app.get('/logout', logout);
+
+  app.get('/recipes', (req, res) => {
+    req.sessionStore.get(req.session.id, (err, sesh) => {
+      if (err) {
+        console.log('err: ', err);
+        return;
+      }
+      if (!sesh) {
+        // res.status(401);
+        res.redirect(303, '/login');
+        // res.render('pages/login_plain');
+        return;
+      }
+      res.status(200);
+      res.render('pages/recipes');
+    });
+  });
+
+
+  return { app };
 };
 
 // module.exports = function(app, usersDatabase) {

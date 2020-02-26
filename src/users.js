@@ -86,9 +86,9 @@ module.exports = (db) => {
       }
       return false;
     },
-    validateLogin: async (credentials) => {
+    isValidLogin: async (credentials) => {
       const user = await db.oneOrNone(
-        'SELECT email, password FROM Users WHERE email=$1 LIMIT 1',
+        'SELECT email, hash FROM Users WHERE email=$1 LIMIT 1',
         [credentials.email],
       ).catch((err) => err);
 
