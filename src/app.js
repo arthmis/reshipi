@@ -65,6 +65,7 @@ module.exports = (users) => {
         ],
         fontSrc: [
           'https://fonts.gstatic.com',
+          "'self'",
         ],
         // upgradeInsecureRequests: true,
         reportUri: '/report-violation',

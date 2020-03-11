@@ -3,19 +3,6 @@ import ReactDom from 'react-dom';
 
 'use strict';
 
-class Button extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-    render() {
-        return(
-            <button onClick={() => console.log("clicked")}>
-                Click
-            </button>
-        );
-    }
-}
-
 class Nav extends React.Component {
     constructor(props) {
         super(props);
@@ -30,7 +17,6 @@ class Nav extends React.Component {
             </nav>
         );
     }
-
 }
 
 class App extends React.Component {

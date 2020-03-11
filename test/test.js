@@ -127,7 +127,7 @@ describe('reshipi', function () {
     });
   });
   describe('user authentication', function () {
-    it('should sign up a user', async function () {
+    it.skip('should sign up a user', async function () {
       const res = await request(app)
         .post('/signup')
         .send({
@@ -154,7 +154,7 @@ describe('reshipi', function () {
       assert(res.status === 200);
     });
 
-    it('should login a user', async function () {
+    it.skip('should login a user', async function () {
       await request(app)
         .post('/signup')
         .send({
