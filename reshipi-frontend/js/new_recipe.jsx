@@ -67,6 +67,7 @@ class NewRecipeForm extends React.Component {
                             <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
                             {/* <input class="input" form="new-recipe" id="ingredients" name="ingredients" type="text" required/><br /> */}
                             <Directions />
+                            <FoodCategory />
                         </div>
                         <input id="submit-button" type="submit" value="Save Recipe" />
                     </div>
@@ -259,6 +260,29 @@ class DirectionInput extends React.Component {
             </div>
         )
     }
+}
+
+class FoodCategory extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = ({value: ''});
+        this.handleInput = this.handleInput.bind(this);
+    }
+
+    handleInput(event) {
+        this.setState((state, props) => ({value: event.target.value}))
+    }
+
+    render () {
+        return (
+            <div className="input-group">
+                <label className="label" form="new-recipe" htmlFor="food-category">Food Category</label><br />
+                <input className="input" form="new-recipe" id="title" name="food-category" type="text" onChange={this.handleInput} /><br />
+            </div>
+        )
+    }
+
+
 }
 
 const root = document.getElementById("root");
