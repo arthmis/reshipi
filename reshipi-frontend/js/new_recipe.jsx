@@ -43,12 +43,29 @@ class Nav extends React.Component {
 class NewRecipeForm extends React.Component {
     constructor(props) {
         super(props);
+        this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    handleSubmit(event) {
+        event.preventDefault();
+
+        fetch('/add_recipe', {
+            method: "POST",
+            body: JSON.stringify(userData),
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+        }).then(response => {
+            console.log("submitted");
+        })
     }
 
     render() {
         return(
-            <div>
-                <form id="new-recipe" action="/new_recipe" method="post">
+            // <div>
+                <form id="new-recipe" action="/add_recipe" method="post">
+                {/* // <form onSubmit={this.handleSubmit} id="new-recipe"> */}
                     <div id="form-inputs">
                         <div className="input-group">
                             <label className="label" form="new-recipe" htmlFor="title">Recipe Title</label><br />
@@ -67,12 +84,15 @@ class NewRecipeForm extends React.Component {
                             <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
                             {/* <input class="input" form="new-recipe" id="ingredients" name="ingredients" type="text" required/><br /> */}
                             <Directions />
+                        </div>
+                        <div>
+                            <label className="label" form="new-recipe" htmlFor="food-category">Food Category</label><br />
                             <FoodCategory />
                         </div>
                         <input id="submit-button" type="submit" value="Save Recipe" />
                     </div>
                 </form>
-            </div>
+            // </div>
         );
     }
 }
@@ -93,7 +113,8 @@ class IngredientList extends React.Component {
         this.updateIngredients = this.updateIngredients.bind(this);
     }
 
-    addNewIngredientInput() {
+    addNewIngredientInput(event) {
+        event.preventDefault();
         this.setState((state, props) => {
             state.ingredients.push(new Ingredient('', ''));
             return ({
@@ -119,6 +140,7 @@ class IngredientList extends React.Component {
             });
         });
     }
+
 
     render() {
         if (this.state.ingredients.length === 0) {
@@ -156,18 +178,20 @@ class IngredientInput extends React.Component {
     }
 
     handleInput(event) {
+        event.preventDefault();
         // this.setState({value: event.target.value});
         this.props.updateIngredients(Number(this.props.index), event.target.value);
     }
 
     removeInput(event) {
+        event.preventDefault();
         this.props.removeIngredientInput(Number(this.props.index));
     }
 
     render() {
         return (
             <div>
-                <input className="ingredient-input" form="new-recipe" name="ingredients" type="text" value={this.props.ingredient} onChange={this.handleInput} />
+                <input className="ingredient-input" form="new-recipe" name="ingredients" type="text" value={this.props.ingredient} onChange={this.handleInput} required />
                 <button onClick={this.props.addNewIngredientInput}><i className="fas fa-plus"></i></button>
                 <button onClick={this.removeInput} className="remove-ingredient"><i className="fas fa-minus"></i></button>
             </div>
@@ -185,6 +209,7 @@ class Directions extends React.Component {
     }
 
     addDirection(event) {
+        event.preventDefault();
         this.setState((state, props) => {
             state.directions.push('');
             return ({directions: state.directions});
@@ -244,17 +269,19 @@ class DirectionInput extends React.Component {
     }
 
     handleInput(event) {
+        event.preventDefault();
         this.props.updateDirections(Number(this.props.index), event.target.value);
     }
 
     removeInput(event) {
+        event.preventDefault();
         this.props.removeDirection(this.props.index);
     }
 
     render() {
         return (
             <div>
-                <input className="direction-input" form="new-recipe" name="directions" type="text" value={this.props.direction} onChange={this.handleInput} />
+                <input className="direction-input" form="new-recipe" name="directions" type="text" value={this.props.direction} onChange={this.handleInput} required />
                 <button onClick={this.props.addDirection}><i className="fas fa-plus"></i></button>
                 <button onClick={this.removeInput} className="remove-direction"><i className="fas fa-minus"></i></button>
             </div>
@@ -276,7 +303,6 @@ class FoodCategory extends React.Component {
     render () {
         return (
             <div className="input-group">
-                <label className="label" form="new-recipe" htmlFor="food-category">Food Category</label><br />
                 <input className="input" form="new-recipe" id="title" name="food-category" type="text" onChange={this.handleInput} /><br />
             </div>
         )
