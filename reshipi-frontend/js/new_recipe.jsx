@@ -81,12 +81,14 @@ class Ingredient {
 class IngredientList extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {ingredients: [new Ingredient("", "")]};
+        this.state = {ingredients: []};
         this.addNewIngredientInput = this.addNewIngredientInput.bind(this);
         this.removeIngredientInput = this.removeIngredientInput.bind(this);
+        this.updateIngredients = this.updateIngredients.bind(this);
     }
 
     addNewIngredientInput() {
+        console.log(this.state.ingredients);
         this.setState((state, props) => {
             state.ingredients.push(new Ingredient('', ''));
             return ({
@@ -97,6 +99,7 @@ class IngredientList extends React.Component {
 
     removeIngredientInput(index) {
         this.setState((state, props) => {
+            console.log(`index: ${index}`);
             state.ingredients.splice(index, 1);
             return ({
                 ingredients: state.ingredients
@@ -104,11 +107,9 @@ class IngredientList extends React.Component {
         });
     }
 
-    // TO DO make this function update the ingredients at the index
-    // with the user input when passed to IngredientInput 
-    updateIngredients(index) {
+    updateIngredients(index, ingredient) {
         this.setState((state, props) => {
-            
+            state.ingredients[index].ingredient = ingredient;
             return ({
                 ingredients: state.ingredients
             });
@@ -131,7 +132,9 @@ class IngredientList extends React.Component {
                                 key={index.toString()} 
                                 removeIngredientInput={this.removeIngredientInput} 
                                 addNewIngredientInput={this.addNewIngredientInput} 
-                                ingredient={ingredient.ingredient} />
+                                ingredient={ingredient.ingredient} 
+                                updateIngredients={this.updateIngredients} 
+                                index={index} />
                         )
                     })}
                 </div>
@@ -143,23 +146,24 @@ class IngredientList extends React.Component {
 class IngredientInput extends React.Component {
     constructor(props) {
         super(props);
-        this.state = ({value: ""});
+        // this.state = ({value: ""});
         this.handleInput = this.handleInput.bind(this);
         this.removeInput = this.removeInput.bind(this);
     }
 
     handleInput(event) {
-        this.setState({value: event.target.value});
+        // this.setState({value: event.target.value});
+        this.props.updateIngredients(Number(this.props.index), event.target.value);
     }
 
     removeInput(event) {
-        this.props.removeIngredientInput(this.props.index);
+        this.props.removeIngredientInput(Number(this.props.index));
     }
 
     render() {
         return (
             <div>
-                <input className="ingredient-input" form="new-recipe" name="ingredients" type="text" value={this.state.value} onChange={this.handleInput} />
+                <input className="ingredient-input" form="new-recipe" name="ingredients" type="text" value={this.props.ingredient} onChange={this.handleInput} />
                 <button onClick={this.props.addNewIngredientInput}><i className="fas fa-plus"></i></button>
                 <button onClick={this.removeInput} className="remove-ingredient"><i className="fas fa-minus"></i></button>
             </div>
