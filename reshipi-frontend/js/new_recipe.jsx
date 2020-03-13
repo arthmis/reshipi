@@ -63,6 +63,11 @@ class NewRecipeForm extends React.Component {
                             {/* <input class="input" form="new-recipe" id="ingredients" name="ingredients" type="text" required/><br /> */}
                             <IngredientList />
                         </div>
+                        <div className="input-group">
+                            <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
+                            {/* <input class="input" form="new-recipe" id="ingredients" name="ingredients" type="text" required/><br /> */}
+                            <Directions />
+                        </div>
                         <input id="submit-button" type="submit" value="Save Recipe" />
                     </div>
                 </form>
@@ -88,7 +93,6 @@ class IngredientList extends React.Component {
     }
 
     addNewIngredientInput() {
-        console.log(this.state.ingredients);
         this.setState((state, props) => {
             state.ingredients.push(new Ingredient('', ''));
             return ({
@@ -99,7 +103,6 @@ class IngredientList extends React.Component {
 
     removeIngredientInput(index) {
         this.setState((state, props) => {
-            console.log(`index: ${index}`);
             state.ingredients.splice(index, 1);
             return ({
                 ingredients: state.ingredients
@@ -166,6 +169,93 @@ class IngredientInput extends React.Component {
                 <input className="ingredient-input" form="new-recipe" name="ingredients" type="text" value={this.props.ingredient} onChange={this.handleInput} />
                 <button onClick={this.props.addNewIngredientInput}><i className="fas fa-plus"></i></button>
                 <button onClick={this.removeInput} className="remove-ingredient"><i className="fas fa-minus"></i></button>
+            </div>
+        )
+    }
+}
+
+class Directions extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = ({directions: []});
+        this.addDirection = this.addDirection.bind(this);
+        this.updateDirections = this.updateDirections.bind(this);
+        this.removeDirection = this.removeDirection.bind(this);
+    }
+
+    addDirection(event) {
+        this.setState((state, props) => {
+            state.directions.push('');
+            return ({directions: state.directions});
+        })
+    }
+
+    updateDirections(index, direction) {
+        this.setState((state, props) => {
+            state.directions[index]= direction;
+            return ({
+                directions: state.directions
+            });
+        });
+    }
+
+    removeDirection(index) {
+        this.setState((state, props) => {
+            state.directions.splice(index, 1);
+            return ({
+                directions: state.directions
+            });
+        });
+    }
+
+    render() {
+        if (this.state.directions.length === 0) {
+            return (
+                <div>
+                    <button onClick={this.addDirection}><i className="fas fa-plus"></i></button>
+                </div>
+            )
+        } else {
+            return (
+                <div>
+                    {this.state.directions.map((direction, index) => {
+                        return (
+                            <DirectionInput
+                                key={index.toString()} 
+                                removeDirection={this.removeDirection} 
+                                addDirection={this.addDirection} 
+                                direction={direction} 
+                                updateDirections={this.updateDirections} 
+                                index={index} />
+                        )
+                    })}
+                </div>
+            );
+        }
+    }
+}
+
+class DirectionInput extends React.Component {
+    constructor(props) {
+        super(props);
+        this.removeInput= this.removeInput.bind(this);
+        this.handleInput = this.handleInput.bind(this);
+    }
+
+    handleInput(event) {
+        this.props.updateDirections(Number(this.props.index), event.target.value);
+    }
+
+    removeInput(event) {
+        this.props.removeDirection(this.props.index);
+    }
+
+    render() {
+        return (
+            <div>
+                <input className="direction-input" form="new-recipe" name="directions" type="text" value={this.props.direction} onChange={this.handleInput} />
+                <button onClick={this.props.addDirection}><i className="fas fa-plus"></i></button>
+                <button onClick={this.removeInput} className="remove-direction"><i className="fas fa-minus"></i></button>
             </div>
         )
     }
