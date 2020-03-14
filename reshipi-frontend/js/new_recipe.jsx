@@ -75,18 +75,8 @@ class NewRecipeForm extends React.Component {
                             <label className="label" form="new-recipe" htmlFor="description">Description</label><br />
                             <textarea className="input" rows="3" form="new-recipe" id="description" name="description" type="text" required/><br />
                         </div>
-                        <div className="input-group">
-                            <label className="label" form="new-recipe" htmlFor="ingredients">Ingredients</label><br />
-                            {/* <input class="input" form="new-recipe" id="ingredients" name="ingredients" type="text" required/><br /> */}
                             <IngredientList />
-                        </div>
-                        <div className="input-group">
-                            <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
-                            {/* <input class="input" form="new-recipe" id="ingredients" name="ingredients" type="text" required/><br /> */}
                             <Directions />
-                        </div>
-                        <div>
-                            <label className="label" form="new-recipe" htmlFor="food-category">Food Category</label><br />
                             <FoodCategory />
                         </div>
                         <input id="submit-button" type="submit" value="Save Recipe" />
@@ -145,12 +135,16 @@ class IngredientList extends React.Component {
     render() {
         if (this.state.ingredients.length === 0) {
             return (
-                <div>
+                <div className="input-group">
+                    <label className="label" form="new-recipe" htmlFor="ingredients">Ingredients</label><br />
                     <button onClick={this.addNewIngredientInput}><i className="fas fa-plus"></i></button>
                 </div>
             )
         } else {
             return (
+                <div className="input-group">
+                    <label className="label" form="new-recipe" htmlFor="ingredients">Ingredients</label><br />
+                    {/* <input class="input" form="new-recipe" id="ingredients" name="ingredients" type="text" required/><br /> */}
                 <div>
                     {this.state.ingredients.map((ingredient, index) => {
                         return (
@@ -163,6 +157,7 @@ class IngredientList extends React.Component {
                                 index={index} />
                         )
                     })}
+                </div>
                 </div>
             );
         }
@@ -237,12 +232,16 @@ class Directions extends React.Component {
     render() {
         if (this.state.directions.length === 0) {
             return (
-                <div>
+                <div className="input-group">
+                    <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
                     <button onClick={this.addDirection}><i className="fas fa-plus"></i></button>
                 </div>
             )
         } else {
             return (
+                <div className="input-group">
+                    <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
+                {/* <input class="input" form="new-recipe" id="ingredients" name="ingredients" type="text" required/><br /> */}
                 <div>
                     {this.state.directions.map((direction, index) => {
                         return (
@@ -252,9 +251,11 @@ class Directions extends React.Component {
                                 addDirection={this.addDirection} 
                                 direction={direction} 
                                 updateDirections={this.updateDirections} 
-                                index={index} />
+                                    index={index} 
+                                />
                         )
                     })}
+                </div>
                 </div>
             );
         }
@@ -302,8 +303,11 @@ class FoodCategory extends React.Component {
 
     render () {
         return (
+            <div>
+                <label className="label" form="new-recipe" htmlFor="food-category">Food Category</label><br />
             <div className="input-group">
                 <input className="input" form="new-recipe" id="title" name="food-category" type="text" onChange={this.handleInput} /><br />
+            </div>
             </div>
         )
     }
