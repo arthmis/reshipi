@@ -106,6 +106,18 @@ main {
     border-radius: 4px;
 }
 
+#image-input {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+#user-image {
+    max-width: 40%;
+    height: auto;
+    align-self: center;
+}
+
 #submit-button:active {
     position: relative;
     top: 1px;

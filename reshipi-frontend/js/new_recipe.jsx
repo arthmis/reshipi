@@ -15,7 +15,6 @@ class App extends React.Component {
                 </header>
                 <main>
                     <NewRecipeForm />
-                    {/* <h1>hello</h1> */}
                 </main>
             </div>
         );
@@ -75,10 +74,11 @@ class NewRecipeForm extends React.Component {
                             <label className="label" form="new-recipe" htmlFor="description">Description</label><br />
                             <textarea className="input" rows="3" form="new-recipe" id="description" name="description" type="text" required/><br />
                         </div>
-                            <IngredientList />
-                            <Directions />
-                            <FoodCategory />
-                        </div>
+                        <IngredientList />
+                        <Directions />
+                        <FoodCategory />
+                        <ImageInput />
+                        <OriginalUrl />
                         <input id="submit-button" type="submit" value="Save Recipe" />
                     </div>
                 </form>
@@ -145,19 +145,19 @@ class IngredientList extends React.Component {
                 <div className="input-group">
                     <label className="label" form="new-recipe" htmlFor="ingredients">Ingredients</label><br />
                     {/* <input class="input" form="new-recipe" id="ingredients" name="ingredients" type="text" required/><br /> */}
-                <div>
-                    {this.state.ingredients.map((ingredient, index) => {
-                        return (
-                            <IngredientInput 
-                                key={index.toString()} 
-                                removeIngredientInput={this.removeIngredientInput} 
-                                addNewIngredientInput={this.addNewIngredientInput} 
-                                ingredient={ingredient.ingredient} 
-                                updateIngredients={this.updateIngredients} 
-                                index={index} />
-                        )
-                    })}
-                </div>
+                    <div>
+                        {this.state.ingredients.map((ingredient, index) => {
+                            return (
+                                <IngredientInput 
+                                    key={index.toString()} 
+                                    removeIngredientInput={this.removeIngredientInput} 
+                                    addNewIngredientInput={this.addNewIngredientInput} 
+                                    ingredient={ingredient.ingredient} 
+                                    updateIngredients={this.updateIngredients} 
+                                    index={index} />
+                            )
+                        })}
+                    </div>
                 </div>
             );
         }
@@ -242,20 +242,20 @@ class Directions extends React.Component {
                 <div className="input-group">
                     <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
                 {/* <input class="input" form="new-recipe" id="ingredients" name="ingredients" type="text" required/><br /> */}
-                <div>
-                    {this.state.directions.map((direction, index) => {
-                        return (
-                            <DirectionInput
-                                key={index.toString()} 
-                                removeDirection={this.removeDirection} 
-                                addDirection={this.addDirection} 
-                                direction={direction} 
-                                updateDirections={this.updateDirections} 
+                    <div>
+                        {this.state.directions.map((direction, index) => {
+                            return (
+                                <DirectionInput
+                                    key={index.toString()} 
+                                    removeDirection={this.removeDirection} 
+                                    addDirection={this.addDirection} 
+                                    direction={direction} 
+                                    updateDirections={this.updateDirections} 
                                     index={index} 
                                 />
-                        )
-                    })}
-                </div>
+                            )
+                        })}
+                    </div>
                 </div>
             );
         }
@@ -305,14 +305,86 @@ class FoodCategory extends React.Component {
         return (
             <div>
                 <label className="label" form="new-recipe" htmlFor="food-category">Food Category</label><br />
-            <div className="input-group">
-                <input className="input" form="new-recipe" id="title" name="food-category" type="text" onChange={this.handleInput} /><br />
-            </div>
+                <div className="input-group">
+                    <input className="input" form="new-recipe" id="title" name="food-category" type="text" onChange={this.handleInput} /><br />
+                </div>
             </div>
         )
     }
 
 
+}
+
+class ImageInput extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = ({
+            imageUrl: ''
+        });
+        this.handleChange = this.handleChange.bind(this);
+        this.removeImage = this.removeImage.bind(this);
+    }
+
+    handleChange (event) {
+        event.preventDefault();
+        const file = event.currentTarget.files[0];
+        const imageUrl = URL.createObjectURL(file); 
+        this.setState({imageUrl});
+    }
+
+    removeImage (event) {
+        event.preventDefault();
+        this.setState({imageUrl: ''});
+    }
+
+    render () {
+        if (this.state.imageUrl === '') {
+            return (
+                <div>
+                    <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
+                    <div className="input-group">
+                        <input onChange={this.handleChange} type="file" id="recipe-image" name="recipe_image" accept=".png, .jpg, .jpeg" />
+                    </div>
+                </div>
+            )
+        } else {
+            return (
+                <div>
+                    <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
+                    <div className="input-group">
+                        <input onChange={this.handleChange} type="file" id="recipe-image" name="recipe_image" accept=".png, .jpg, .jpeg" />
+                        <button onClick={this.removeImage}>Remove Image</button> 
+                    </div>
+                    <div id="image-input">
+                        <img id="user-image" src={this.state.imageUrl} alt="user uploaded image" />
+                    </div>
+                </div>
+            );
+        }
+    }
+}
+
+class OriginalUrl extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = ({value: ''});
+        this.handleChange = this.handleChange.bind(this);
+    }
+
+    handleChange (event) {
+        this.setState({value: event.target.value});
+    }
+
+    render () {
+        return (
+            <div>
+                <label className="label" form="new-recipe" htmlFor="original-url">Original link</label><br />
+                <div className="input-group">
+                    <input className="input" onChange={this.handleChange} type="url" id="original-url" name="original_url" />
+                </div>
+            </div>
+        )
+    }
 }
 
 const root = document.getElementById("root");
