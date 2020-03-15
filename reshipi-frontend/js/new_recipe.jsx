@@ -27,14 +27,12 @@ class Nav extends React.Component {
     }
     render() {
         return(
-            <div>
-                <nav id="nav">
-                    <a id="reshipi" href="/recipes">Reshipi</a>
-                    <form action="/logout" method="get">
-                        <input id="logout" type="submit" name="logout" value="Logout"/>
-                    </form>
-                </nav>
-            </div>
+            <nav id="nav">
+                <a id="home-link" href="/recipes">Reshipi</a>
+                <form id="logout-form" action="/logout" method="post">
+                    <input id="logout" type="submit" name="logout" value="Logout"/>
+                </form>
+            </nav>
         );
     }
 }
@@ -62,27 +60,25 @@ class NewRecipeForm extends React.Component {
 
     render() {
         return(
-            // <div>
-                <form id="new-recipe" action="/add_recipe" method="post">
-                {/* // <form onSubmit={this.handleSubmit} id="new-recipe"> */}
-                    <div id="form-inputs">
-                        <div className="input-group">
-                            <label className="label" form="new-recipe" htmlFor="title">Recipe Title</label><br />
-                            <input className="input" form="new-recipe" id="title" name="title" type="text" required /><br />
-                        </div>
-                        <div className="input-group">
-                            <label className="label" form="new-recipe" htmlFor="description">Description</label><br />
-                            <textarea className="input" rows="3" form="new-recipe" id="description" name="description" type="text" required/><br />
-                        </div>
-                        <IngredientList />
-                        <Directions />
-                        <FoodCategory />
-                        <ImageInput />
-                        <OriginalUrl />
-                        <input id="submit-button" type="submit" value="Save Recipe" />
+            <form id="new-recipe" action="/add_recipe" method="post">
+            {/* // <form onSubmit={this.handleSubmit} id="new-recipe"> */}
+                <div id="form-inputs">
+                    <div className="input-group">
+                        <label className="label" form="new-recipe" htmlFor="title">Recipe Title</label><br />
+                        <input className="input user-input" form="new-recipe" id="title" name="title" type="text" placeholder="Your recipe title" required /><br />
                     </div>
-                </form>
-            // </div>
+                    <div className="input-group">
+                        <label className="label" form="new-recipe" htmlFor="description">Description</label><br />
+                        <textarea className="input user-input" rows="3" form="new-recipe" id="description" name="description" type="text" placeholder="Short description of the recipe" required/><br />
+                    </div>
+                    <IngredientList />
+                    <Directions />
+                    <FoodCategory />
+                    <ImageInput />
+                    <OriginalUrl />
+                    <input id="submit-button" type="submit" value="Save Recipe" />
+                </div>
+            </form>
         );
     }
 }
@@ -137,7 +133,7 @@ class IngredientList extends React.Component {
             return (
                 <div className="input-group">
                     <label className="label" form="new-recipe" htmlFor="ingredients">Ingredients</label><br />
-                    <button onClick={this.addNewIngredientInput}><i className="fas fa-plus"></i></button>
+                    <button className="add-new-input" onClick={this.addNewIngredientInput}><i className="fas fa-plus"></i></button>
                 </div>
             )
         } else {
@@ -154,7 +150,8 @@ class IngredientList extends React.Component {
                                     addNewIngredientInput={this.addNewIngredientInput} 
                                     ingredient={ingredient.ingredient} 
                                     updateIngredients={this.updateIngredients} 
-                                    index={index} />
+                                    index={index} 
+                                />
                             )
                         })}
                     </div>
@@ -186,9 +183,23 @@ class IngredientInput extends React.Component {
     render() {
         return (
             <div>
-                <input className="ingredient-input" form="new-recipe" name="ingredients" type="text" value={this.props.ingredient} onChange={this.handleInput} required />
-                <button onClick={this.props.addNewIngredientInput}><i className="fas fa-plus"></i></button>
-                <button onClick={this.removeInput} className="remove-ingredient"><i className="fas fa-minus"></i></button>
+                <input 
+                    className="ingredient-input user-input" 
+                    form="new-recipe" 
+                    name="ingredients" 
+                    type="text" 
+                    value={this.props.ingredient} 
+                    onChange={this.handleInput} 
+                    placeholder="Enter new ingredient" 
+                    required 
+                />
+
+                <button className="add-new-input" onClick={this.props.addNewIngredientInput}>
+                    <i className="fas fa-plus"></i>
+                </button>
+                <button className="remove-input" onClick={this.removeInput} >
+                    <i className="fas fa-minus"></i>
+                </button>
             </div>
         )
     }
@@ -234,7 +245,7 @@ class Directions extends React.Component {
             return (
                 <div className="input-group">
                     <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
-                    <button onClick={this.addDirection}><i className="fas fa-plus"></i></button>
+                    <button className="add-new-input" onClick={this.addDirection}><i className="fas fa-plus"></i></button>
                 </div>
             )
         } else {
@@ -282,9 +293,9 @@ class DirectionInput extends React.Component {
     render() {
         return (
             <div>
-                <input className="direction-input" form="new-recipe" name="directions" type="text" value={this.props.direction} onChange={this.handleInput} required />
-                <button onClick={this.props.addDirection}><i className="fas fa-plus"></i></button>
-                <button onClick={this.removeInput} className="remove-direction"><i className="fas fa-minus"></i></button>
+                <input className="direction-input user-input" form="new-recipe" name="directions" type="text" value={this.props.direction} onChange={this.handleInput} placeholder="Enter new direction" required />
+                <button className="add-new-input" onClick={this.props.addDirection}><i className="fas fa-plus"></i></button>
+                <button className="remove-input" onClick={this.removeInput}><i className="fas fa-minus"></i></button> 
             </div>
         )
     }
@@ -303,10 +314,19 @@ class FoodCategory extends React.Component {
 
     render () {
         return (
-            <div>
-                <label className="label" form="new-recipe" htmlFor="food-category">Food Category</label><br />
-                <div className="input-group">
-                    <input className="input" form="new-recipe" id="title" name="food-category" type="text" onChange={this.handleInput} /><br />
+            <div className="input-group">
+                <label className="label" form="new-recipe" htmlFor="food-category">Food Type</label><br />
+                <div>
+                    <input 
+                        className="user-input" 
+                        form="new-recipe" 
+                        id="title" 
+                        name="food-category" 
+                        type="text" 
+                        onChange={this.handleInput} 
+                        placeholder='"Italian", "French", "Japanese".'
+                    />
+                    <br />
                 </div>
             </div>
         )
@@ -319,17 +339,20 @@ class ImageInput extends React.Component {
     constructor(props) {
         super(props);
         this.state = ({
-            imageUrl: ''
+            imageUrl: '',
+            imageName: '',
         });
         this.handleChange = this.handleChange.bind(this);
         this.removeImage = this.removeImage.bind(this);
+        this.handleFileInput = this.handleFileInput.bind(this);
     }
 
     handleChange (event) {
         event.preventDefault();
         const file = event.currentTarget.files[0];
+        let imageName = file.name;
         const imageUrl = URL.createObjectURL(file); 
-        this.setState({imageUrl});
+        this.setState({imageUrl, imageName});
     }
 
     removeImage (event) {
@@ -337,26 +360,32 @@ class ImageInput extends React.Component {
         this.setState({imageUrl: ''});
     }
 
+    handleFileInput (event) {
+        event.preventDefault();
+        document.getElementById('recipe-image').click();
+    }
+
     render () {
         if (this.state.imageUrl === '') {
             return (
-                <div>
+                <div className="input-group">
                     <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
-                    <div className="input-group">
-                        <input onChange={this.handleChange} type="file" id="recipe-image" name="recipe_image" accept=".png, .jpg, .jpeg" />
+                    <button className="image-input-button" onClick={this.handleFileInput}>Upload Image</button>
+                    <div>
+                        <input style={{visibility: 'hidden'}} onChange={this.handleChange} type="file" id="recipe-image" name="recipe_image" accept=".png, .jpg, .jpeg" />
                     </div>
                 </div>
             )
         } else {
             return (
-                <div>
+                <div className="input-group">
                     <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
-                    <div className="input-group">
-                        <input onChange={this.handleChange} type="file" id="recipe-image" name="recipe_image" accept=".png, .jpg, .jpeg" />
-                        <button onClick={this.removeImage}>Remove Image</button> 
-                    </div>
+                    <button className="image-input-button" onClick={this.handleFileInput}>Upload Image</button>
+                    <input style={{display: 'none'}} onChange={this.handleChange} type="file" id="recipe-image" name="recipe_image" accept=".png, .jpg, .jpeg" />
                     <div id="image-input">
+                        <p id="image-name">{this.state.imageName}</p>
                         <img id="user-image" src={this.state.imageUrl} alt="user uploaded image" />
+                        <button id="remove-image" className="image-input-button" onClick={this.removeImage}>Remove Image</button> 
                     </div>
                 </div>
             );
@@ -377,10 +406,10 @@ class OriginalUrl extends React.Component {
 
     render () {
         return (
-            <div>
+            <div className="input-group">
                 <label className="label" form="new-recipe" htmlFor="original-url">Original link</label><br />
-                <div className="input-group">
-                    <input className="input" onChange={this.handleChange} type="url" id="original-url" name="original_url" />
+                <div>
+                    <input className="user-input" onChange={this.handleChange} type="url" id="original-url" name="original_url" placeholder="Link to original recipe if any" />
                 </div>
             </div>
         )
