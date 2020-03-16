@@ -212,6 +212,9 @@ class Directions extends React.Component {
         this.addDirection = this.addDirection.bind(this);
         this.updateDirections = this.updateDirections.bind(this);
         this.removeDirection = this.removeDirection.bind(this);
+        this.handleDragOver = this.handleDragOver.bind(this);
+        this.onDragStart = this.onDragStart.bind(this);
+        this.onDrop = this.onDrop.bind(this);
     }
 
     addDirection(event) {
@@ -240,6 +243,41 @@ class Directions extends React.Component {
         });
     }
 
+    handleDragOver (event) {
+        event.preventDefault();
+    }
+
+    onDragStart (event, index) {
+        // console.log(index);
+        event.dataTransfer.setData("index", index);
+    }
+
+    onDrop(event, dropIndex) {
+        event.preventDefault();
+
+        // dataTransfer turns the data into a DOMstring
+        const index = Number(event.dataTransfer.getData("index"));
+
+        const directions = this.state.directions;
+        const directionToDrag = directions[index];
+
+        // if greater than dropIndex I will have to right shift
+        // the array elements up to index
+        if (index > dropIndex) {
+            for (let i = index-1; i >= dropIndex; i--) {
+                directions[i + 1] = directions[i];
+            } 
+            directions[dropIndex] = directionToDrag; 
+            this.setState({directions});
+        } else if (index < dropIndex) { // left shifts elements
+            for (let i = index; i < dropIndex; i++) {
+                directions[i] = directions[i + 1];
+            } 
+            directions[dropIndex] = directionToDrag; 
+            this.setState({directions});
+        }
+    }
+
     render() {
         if (this.state.directions.length === 0) {
             return (
@@ -249,25 +287,33 @@ class Directions extends React.Component {
                 </div>
             )
         } else {
+            
+            const directionList = this.state.directions.map((direction, index) => {
+                return (
+                    <li 
+                        key={index.toString()} 
+                        draggable
+                        onDragStart={(e) => this.onDragStart(e, index)}
+                        onDragOver={this.handleDragOver}
+                        onDrop={(e) => this.onDrop(e, index)}
+                    >
+                        <DirectionInput
+                            removeDirection={this.removeDirection} 
+                            addDirection={this.addDirection} 
+                            direction={direction} 
+                            updateDirections={this.updateDirections} 
+                            index={index} 
+                        />
+                    </li>
+                )
+            });
             return (
-                <div className="input-group">
+                <ol 
+                    className="input-group" 
+                >
                     <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
-                {/* <input class="input" form="new-recipe" id="ingredients" name="ingredients" type="text" required/><br /> */}
-                    <div>
-                        {this.state.directions.map((direction, index) => {
-                            return (
-                                <DirectionInput
-                                    key={index.toString()} 
-                                    removeDirection={this.removeDirection} 
-                                    addDirection={this.addDirection} 
-                                    direction={direction} 
-                                    updateDirections={this.updateDirections} 
-                                    index={index} 
-                                />
-                            )
-                        })}
-                    </div>
-                </div>
+                    {directionList}
+                </ol>
             );
         }
     }
@@ -292,7 +338,7 @@ class DirectionInput extends React.Component {
 
     render() {
         return (
-            <div>
+            <div >
                 <input className="direction-input user-input" form="new-recipe" name="directions" type="text" value={this.props.direction} onChange={this.handleInput} placeholder="Enter new direction" required />
                 <button className="add-new-input" onClick={this.props.addDirection}><i className="fas fa-plus"></i></button>
                 <button className="remove-input" onClick={this.removeInput}><i className="fas fa-minus"></i></button> 

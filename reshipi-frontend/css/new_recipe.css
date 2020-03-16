@@ -129,6 +129,10 @@ main {
 .direction-input {
 }
 
+ol {
+    padding: 0;
+}
+
 
 #image-input {
     display: flex;
