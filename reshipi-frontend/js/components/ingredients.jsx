@@ -31,7 +31,7 @@ export default class IngredientList extends React.Component {
         });
     }
 
-    removeIngredientInput(index) {
+    removeIngredientInput(event, index) {
         event.preventDefault();
         this.setState((state, props) => {
             state.ingredients.splice(index, 1);
@@ -41,10 +41,14 @@ export default class IngredientList extends React.Component {
         });
     }
 
-    updateIngredients(index, ingredient) {
+    updateIngredients(index, ingredientOrAmount, valueType) {
         event.preventDefault();
         this.setState((state, props) => {
-            state.ingredients[index].ingredient = ingredient;
+            if (valueType === "ingredient amount") {
+                state.ingredients[index].quantity = ingredientOrAmount;
+            } else if (valueType === "ingredient") {
+                state.ingredients[index].ingredient = ingredientOrAmount;
+            }
             return ({
                 ingredients: state.ingredients
             });
@@ -112,7 +116,7 @@ export default class IngredientList extends React.Component {
                             </span>
                         </div>
                         <span className="remove-input-wrapper">
-                            <button onClick={this.removeIngredientInput} className="remove-input-button"><i className="fas fa-times"></i></button>
+                            <button onClick={(e) => this.removeIngredientInput(e, index)} className="remove-input-button"><i className="fas fa-times"></i></button>
                         </span>
                     </li>
                 )
@@ -136,14 +140,18 @@ class IngredientInput extends React.Component {
 
     handleInput(event) {
         event.preventDefault();
-        this.props.updateIngredients(Number(this.props.index), event.target.value);
+        if (event.target.name === "ingredient-amount") {
+            this.props.updateIngredients(Number(this.props.index), event.target.value, "ingredient amount");
+        } else if (event.target.name === "ingredients") {
+            this.props.updateIngredients(Number(this.props.index), event.target.value, "ingredient");
+        }
     }
-
 
     render() {
         return (
             <div className="ingredient-input">
                 <input 
+                    className="ingredient"
                     form="new-recipe" 
                     name="ingredients" 
                     type="text" 
@@ -151,6 +159,16 @@ class IngredientInput extends React.Component {
                     onChange={this.handleInput} 
                     placeholder="Enter new ingredient" 
                     required 
+                />
+                <input 
+                    className="ingredient-amount"
+                    form="new-recipe"
+                    name="ingredient-amount"
+                    type="text"
+                    value={this.props.ingredient.quantity}
+                    onChange={this.handleInput}
+                    placeholder="Amount"
+                    required
                 />
             </div>
         )

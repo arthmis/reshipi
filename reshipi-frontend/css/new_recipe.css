@@ -117,16 +117,33 @@ main {
     display: inline-flex;
 }
 
-.direction-input > input, .ingredient-input > input {
+.direction-input > input {
     font-family: inherit;
     font-size: 1em;
-    margin-top: 0.3em;
-    /* border-radius: 4px; */
     padding: 5px;
     max-width: 100%;
     width: calc(100% - 10px);
-    /* border: 1px solid #ffffff; */
     border: none;
+}
+
+.ingredient-input > .ingredient {
+    font-family: inherit;
+    font-size: 1em;
+    padding: 5px;
+    max-width: 80%;
+    width: calc(100% - 10px);
+    border: none;
+}
+
+
+.ingredient-amount {
+    border: none;
+    border-left: solid 1px #bbbbbb;
+    font-family: inherit;
+    font-size: 1em;
+    padding: 5px;
+    max-width: 20%;
+    width: 100%;
 }
 
 .list-item {
@@ -139,7 +156,6 @@ main {
 .drag-item {
     border: 1px solid #afafaf;
     border-radius: 5px;
-    /* display: inline-block; */
     display: inline-flex;
     flex-direction: row;
     width: calc(100% - 5em - 2px);
@@ -152,6 +168,9 @@ main {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+.draggable-icon > i {
+    margin-left: 1.7em;
 }
 
 .draggable-icon:hover {

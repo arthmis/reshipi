@@ -32,7 +32,7 @@ export default class Directions extends React.Component {
         });
     }
 
-    removeDirection(index) {
+    removeDirection(event, index) {
         event.preventDefault();
         this.setState((state, props) => {
             state.directions.splice(index, 1);
@@ -103,7 +103,7 @@ export default class Directions extends React.Component {
                             </span>
                         </div>
                         <span className="remove-input-wrapper">
-                            <button onClick={this.removeDirection} className="remove-input-button"><i className="fas fa-times"></i></button>
+                            <button onClick={(e) => this.removeDirection(e, index)} className="remove-input-button"><i className="fas fa-times"></i></button>
                         </span>
                     </li>
                 )
