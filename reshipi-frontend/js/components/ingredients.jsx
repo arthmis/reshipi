@@ -2,14 +2,14 @@ import React from 'react';
 import {moveElementDownList, moveElementUpList} from './utility.js';
 'use strict';
 
-export class Ingredient {
+class Ingredient {
     constructor(ingredient, quantity) {
         this.ingredient = ingredient;
         this.quantity = quantity;
     }
 }
 
-export class IngredientList extends React.Component {
+export default class IngredientList extends React.Component {
     constructor(props) {
         super(props);
         this.state = {ingredients: []};
@@ -112,6 +112,7 @@ export class IngredientList extends React.Component {
                             />
                             <span className="draggable-icon">
                                 <i className="fas fa-grip-lines"></i>
+                                {/* <i className="fas fa-grip-vertical"></i> */}
                             </span>
                         </div>
                         <span className="remove-input-wrapper">
