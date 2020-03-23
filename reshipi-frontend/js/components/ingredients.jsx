@@ -1,5 +1,6 @@
 import React from 'react';
 import {moveElementDownList, moveElementUpList} from './utility.js';
+import ReactDOM from 'react-dom';
 'use strict';
 
 class Ingredient {
@@ -23,11 +24,9 @@ export default class IngredientList extends React.Component {
 
     addNewIngredientInput(event) {
         event.preventDefault();
-        this.setState((state, props) => {
-            state.ingredients.push(new Ingredient('', ''));
-            return ({
-                ingredients: state.ingredients
-            });
+        this.setState((prevState, props) => {
+            prevState.ingredients.push(new Ingredient('', ''));
+            return (prevState);
         });
     }
 
@@ -123,7 +122,7 @@ export default class IngredientList extends React.Component {
             });
             return (
                 <ul className="input-group ingredient-list">
-                    <label className="label" form="new-recipe" htmlFor="ingredients">Ingredient</label><br />
+                    <label className="label" form="new-recipe" htmlFor="ingredients">Ingredients</label><br />
                     {ingredientList}
                     <button className="add-new-input" onClick={this.addNewIngredientInput}>Add ingredient</button>
                 </ul>

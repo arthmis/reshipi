@@ -184,8 +184,8 @@ main {
 
 .add-new-input {
     font-family: inherit;
-    /* font-size: 1em; */
-    max-width: 10em;
+    font-size: 1em;
+    max-width: 9em;
     width: 100%;
     max-height: 3em;
     height: 100%;
@@ -243,18 +243,23 @@ ol, ul {
     font-family: inherit;
     text-align: center;
     font-size: 1em;
-    background-color: #1ba327;
+    background-color: #bbbbbb;
     border: none;
-    color: white;
+    color: #363636;
+    border-radius: 5px;
 }
 
 #remove-image {
     margin-top: 1.3em;
     background-color: #a32b1b;
+    color: white;
+}
+#remove-image:hover {
+    background-color: #df1e05;
 }
 
 .image-input-button:hover, .add-new-input:hover {
-    background-color: #087724;
+    background-color: #838383;
 }
 
 #image-name {
@@ -282,15 +287,19 @@ ol, ul {
     border-radius: 4px;
     align-self: center;
 }
+#submit-button:hover {
+    background-color: #16751e;
+}
+
+#no-ingredients-or-directions-error {
+    font-size: 0.8em;
+    color: red;
+}
 
 #submit-button:active {
     position: relative;
     top: 1px;
     right: 1px;
-}
-
-#submit-button:hover {
-    background-color: #17772f;
 }
 
 @media screen and (max-width: 600px) {

@@ -44,45 +44,153 @@ class NewRecipeForm extends React.Component {
     constructor(props) {
         super(props);
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.state = {
+            hasAtleastOneDirection: true,
+            hasAtleastOneIngredient: true,
+            imageUrl: '',
+            imageName: '',
+            image: null,
+        };
+        this.handleChange = this.handleChange.bind(this);
+        this.removeImage = this.removeImage.bind(this);
+        this.handleFileInput = this.handleFileInput.bind(this);
     }
 
-    handleSubmit(event) {
+    handleSubmit (event) {
         event.preventDefault();
+        let formIsValid = true;
 
-        fetch('/add_recipe', {
-            method: "POST",
-            body: JSON.stringify(userData),
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-        }).then(response => {
-            console.log("submitted");
-        })
+        const form = ReactDom.findDOMNode(this);
+
+        const title = form.querySelector('#title');
+        if (title.value.trim().length === 0) {
+            title.setCustomValidity("Title cannot be empty.");
+            title.reportValidity();
+            formIsValid = false;
+        }
+
+        const description = form.querySelector('#description');
+        if (description.value.trim().length === 0) {
+            description.setCustomValidity("Description cannot be empty.");
+            description.reportValidity();
+            formIsValid = false;
+        }
+
+        const ingredients = form.querySelectorAll('.ingredient');
+        const ingredientsAmount = form.querySelectorAll('.ingredient-amount');
+        const directions = form.querySelectorAll('.direction');
+        if (ingredients.length === 0 || directions.length === 0) {
+            formIsValid = false;
+            this.setState((prevState, props) => {
+                prevState.hasAtleastOneDirection = false;
+                prevState.hasAtleastOneIngredient = false;
+                return (prevState);
+            });
+        }
+
+
+        // console.log(form.elements);
+        if (formIsValid) {
+            let formData = new FormData(form);
+            console.log(this.state.image);
+            formData.append("image", this.state.image);
+            fetch('/add_recipe', {
+                method: "POST",
+                body: formData,
+                mode: 'same-origin',
+                credentials: 'same-origin',
+            }).then(response => {
+                console.log(response.body);
+            });
+        }
+    }
+    handleChange (event) {
+        event.preventDefault();
+        const file = event.target.files[0];
+        let imageName = file.name;
+        const imageUrl = URL.createObjectURL(file); 
+        this.setState((prevState, props) => {
+            prevState.imageUrl = imageUrl;
+            prevState.imageName = imageName;
+            prevState.image = file;
+            return (prevState);
+        });
+    }
+
+    removeImage (event) {
+        event.preventDefault();
+        this.setState((prevState, props) => {
+            prevState.imageUrl = '';
+            return (prevState);
+        });
+    }
+
+    handleFileInput (event) {
+        event.preventDefault();
+        document.getElementById('recipe-image').click();
     }
 
     render() {
+        if (this.state.hasAtleastOneDirection === false && this.state.hasAtleastOneIngredient === false) {
+            return (
+                <form id="new-recipe" onSubmit={this.handleSubmit} method="post" encType="multipart/form-data">
+                    <div id="form-inputs">
+                        <div className="input-group">
+                            <label className="label" form="new-recipe" htmlFor="title">Recipe Title</label><br />
+                            <input className="input user-input" form="new-recipe" id="title" name="title" type="text" placeholder="Your recipe title" required /><br />
+                        </div>
+                        <div className="input-group">
+                            <label className="label" form="new-recipe" htmlFor="description">Description</label><br />
+                            <textarea className="input user-input" rows="3" form="new-recipe" id="description" name="description" type="text" placeholder="Short description of the recipe" required/><br />
+                        </div>
+                        <div id="no-ingredients-or-directions-error">
+                            Need to add at least one ingredient and one direction.
+                        </div>
+                        <IngredientList />
+                        <Directions />
+                        <FoodCategory />
+                        <ImageInput 
+                            handleChange={this.handleChange} 
+                            removeImage={this.removeImage} 
+                            handleFileInput={this.handleFileInput}
+                            imageUrl={this.state.imageUrl}
+                            imageName={this.state.imageName}
+                        />
+                        <OriginalUrl />
+                        <input id="submit-button" type="submit" value="Save Recipe" />
+                    </div>
+                </form>
+            );
+        } else {
+
         return(
-            <form id="new-recipe" action="/add_recipe" method="post">
-            {/* // <form onSubmit={this.handleSubmit} id="new-recipe"> */}
-                <div id="form-inputs">
-                    <div className="input-group">
-                        <label className="label" form="new-recipe" htmlFor="title">Recipe Title</label><br />
-                        <input className="input user-input" form="new-recipe" id="title" name="title" type="text" placeholder="Your recipe title" required /><br />
+                // <form id="new-recipe" action="/add_recipe" method="post">
+                <form id="new-recipe" onSubmit={this.handleSubmit} method="post" encType="multipart/form-data">
+                    <div id="form-inputs">
+                        <div className="input-group">
+                            <label className="label" form="new-recipe" htmlFor="title">Recipe Title</label><br />
+                            <input className="input user-input" form="new-recipe" id="title" name="title" type="text" placeholder="Your recipe title" required /><br />
+                        </div>
+                        <div className="input-group">
+                            <label className="label" form="new-recipe" htmlFor="description">Description</label><br />
+                            <textarea className="input user-input" rows="3" form="new-recipe" id="description" name="description" type="text" placeholder="Short description of the recipe" required/><br />
+                        </div>
+                        <IngredientList />
+                        <Directions />
+                        <FoodCategory />
+                        <ImageInput 
+                            handleChange={this.handleChange} 
+                            removeImage={this.removeImage} 
+                            handleFileInput={this.handleFileInput}
+                            imageUrl={this.state.imageUrl}
+                            imageName={this.state.imageName}
+                        />
+                        <OriginalUrl />
+                        <input id="submit-button" type="submit" value="Save Recipe" />
                     </div>
-                    <div className="input-group">
-                        <label className="label" form="new-recipe" htmlFor="description">Description</label><br />
-                        <textarea className="input user-input" rows="3" form="new-recipe" id="description" name="description" type="text" placeholder="Short description of the recipe" required/><br />
-                    </div>
-                    <IngredientList />
-                    <Directions />
-                    <FoodCategory />
-                    <ImageInput />
-                    <OriginalUrl />
-                    <input id="submit-button" type="submit" value="Save Recipe" />
-                </div>
-            </form>
-        );
+                </form>
+            );
+        }
     }
 }
 
@@ -95,7 +203,8 @@ class FoodCategory extends React.Component {
     }
 
     handleInput(event) {
-        this.setState((state, props) => ({value: event.target.value}))
+        const value = event.target.value;
+        this.setState((state, props) => ({value}))
     }
 
     render () {
@@ -124,41 +233,25 @@ class FoodCategory extends React.Component {
 class ImageInput extends React.Component {
     constructor(props) {
         super(props);
-        this.state = ({
-            imageUrl: '',
-            imageName: '',
-        });
-        this.handleChange = this.handleChange.bind(this);
-        this.removeImage = this.removeImage.bind(this);
-        this.handleFileInput = this.handleFileInput.bind(this);
-    }
-
-    handleChange (event) {
-        event.preventDefault();
-        const file = event.currentTarget.files[0];
-        let imageName = file.name;
-        const imageUrl = URL.createObjectURL(file); 
-        this.setState({imageUrl, imageName});
-    }
-
-    removeImage (event) {
-        event.preventDefault();
-        this.setState({imageUrl: ''});
-    }
-
-    handleFileInput (event) {
-        event.preventDefault();
-        document.getElementById('recipe-image').click();
     }
 
     render () {
-        if (this.state.imageUrl === '') {
+        if (this.props.imageUrl === '') {
             return (
                 <div className="input-group">
                     <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
-                    <button className="image-input-button" onClick={this.handleFileInput}>Upload Image</button>
+                    <button className="image-input-button" onClick={this.props.handleFileInput}>Upload Image</button>
                     <div>
-                        <input style={{visibility: 'hidden'}} onChange={this.handleChange} type="file" id="recipe-image" name="recipe_image" accept=".png, .jpg, .jpeg" />
+                        <input 
+                            style={{visibility: 'hidden'}} 
+                            onChange={this.props.handleChange} 
+                            type="file" 
+                            id="recipe-image" 
+                            name="recipe_image" 
+                            accept=".png, .jpg, .jpeg" 
+                            form="new-recipe"
+                            htmlFor="new-recipe"
+                        />
                     </div>
                 </div>
             )
@@ -166,12 +259,21 @@ class ImageInput extends React.Component {
             return (
                 <div className="input-group">
                     <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
-                    <button className="image-input-button" onClick={this.handleFileInput}>Upload Image</button>
-                    <input style={{display: 'none'}} onChange={this.handleChange} type="file" id="recipe-image" name="recipe_image" accept=".png, .jpg, .jpeg" />
+                    <button className="image-input-button" onClick={this.props.handleFileInput}>Upload Image</button>
+                    <input 
+                        style={{display: 'none'}} 
+                        onChange={this.props.handleChange} 
+                        type="file" 
+                        id="recipe-image" 
+                        name="recipe_image" 
+                        accept=".png, .jpg, .jpeg" 
+                        form="new-recipe"
+                        htmlFor="new-recipe"
+                    />
                     <div id="image-input">
-                        <p id="image-name">{this.state.imageName}</p>
-                        <img id="user-image" src={this.state.imageUrl} alt="user uploaded image" />
-                        <button id="remove-image" className="image-input-button" onClick={this.removeImage}>Remove Image</button> 
+                        <img id="user-image" src={this.props.imageUrl} alt="user uploaded image" />
+                        <p id="image-name">{this.props.imageName}</p>
+                        <button id="remove-image" className="image-input-button" onClick={this.props.removeImage}>Remove Image</button> 
                     </div>
                 </div>
             );

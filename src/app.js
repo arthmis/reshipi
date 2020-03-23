@@ -19,6 +19,9 @@ const { check, validationResult } = require('express-validator');
 const bodyParser = require('body-parser');
 const csp = require('helmet-csp');
 const session = require('express-session');
+const multer = require('multer');
+
+const upload = multer({ dest: 'uploads/' });
 
 module.exports = (users) => {
   const app = express();
@@ -57,7 +60,7 @@ module.exports = (users) => {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'"],
+        imgSrc: ["'self'", 'blob:'],
         styleSrc: [
           "'self'",
           "'unsafe-inline'",
@@ -213,6 +216,12 @@ module.exports = (users) => {
       res.status(200);
       res.render('pages/recipes');
     });
+  });
+
+  app.post('/add_recipe', upload.any('recipe_image'), (req, res) => {
+    console.log(req.files);
+    res.status(200);
+    res.send("got the recipe");
   });
 
 

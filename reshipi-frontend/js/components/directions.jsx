@@ -24,11 +24,9 @@ export default class Directions extends React.Component {
 
     updateDirections(index, direction) {
         event.preventDefault();
-        this.setState((state, props) => {
-            state.directions[index]= direction;
-            return ({
-                directions: state.directions
-            });
+        this.setState((prevState, props) => {
+            prevState.directions[index]= direction;
+            return (prevState);
         });
     }
 
@@ -134,6 +132,7 @@ class DirectionInput extends React.Component {
         return (
             <div className="direction-input">
                 <input 
+                    className="direction"
                     form="new-recipe" 
                     name="directions" 
                     type="text" 
