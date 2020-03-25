@@ -226,6 +226,9 @@ ol, ul {
     padding: 0;
 }
 
+textarea {
+    resize: vertical;
+}
 
 #image-input {
     display: flex;

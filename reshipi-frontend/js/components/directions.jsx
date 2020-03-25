@@ -80,10 +80,7 @@ export default class Directions extends React.Component {
             
             const directionList = this.state.directions.map((direction, index) => {
                 return (
-                    <li 
-                        className="list-item"
-                        key={index.toString()} 
-                    >
+                    <li className="list-item" key={index.toString()} >
                         <div className="drag-item"
                             draggable
                             onDragStart={(e) => this.onDragStart(e, index)}
@@ -107,11 +104,13 @@ export default class Directions extends React.Component {
                 )
             });
             return (
-                <ol className="input-group">
+                <div className="input-group">
                     <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
-                    {directionList}
+                    <ol>
+                        {directionList}
+                    </ol>
                     <button className="add-new-input" onClick={this.addDirection}>Add direction</button>
-                </ol>
+                </div>
             );
         }
     }
@@ -125,7 +124,17 @@ class DirectionInput extends React.Component {
 
     handleInput(event) {
         event.preventDefault();
-        this.props.updateDirections(Number(this.props.index), event.target.value);
+
+        const direction = event.target; 
+        if (direction.value.length === 0) {
+            direction.setCustomValidity('Please provide a direction.');
+        }
+        else if (direction.value.trim().length === 0) {
+            direction.setCustomValidity('Title cannot only contain empty spaces.'); 
+        } else {
+            direction.setCustomValidity(''); 
+        }
+        this.props.updateDirections(Number(this.props.index), direction.value);
     }
 
     render() {

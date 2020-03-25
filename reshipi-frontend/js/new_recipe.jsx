@@ -45,8 +45,8 @@ class NewRecipeForm extends React.Component {
         super(props);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.state = {
-            hasAtleastOneDirection: true,
-            hasAtleastOneIngredient: true,
+            title: '',
+            description: '',
             imageUrl: '',
             imageName: '',
             image: null,
@@ -54,45 +54,18 @@ class NewRecipeForm extends React.Component {
         this.handleChange = this.handleChange.bind(this);
         this.removeImage = this.removeImage.bind(this);
         this.handleFileInput = this.handleFileInput.bind(this);
+        this.handleTitle = this.handleTitle.bind(this);
+        this.handleDescription = this.handleDescription.bind(this);
     }
 
     handleSubmit (event) {
         event.preventDefault();
-        let formIsValid = true;
 
         const form = ReactDom.findDOMNode(this);
 
-        const title = form.querySelector('#title');
-        if (title.value.trim().length === 0) {
-            title.setCustomValidity("Title cannot be empty.");
-            title.reportValidity();
-            formIsValid = false;
-        }
-
-        const description = form.querySelector('#description');
-        if (description.value.trim().length === 0) {
-            description.setCustomValidity("Description cannot be empty.");
-            description.reportValidity();
-            formIsValid = false;
-        }
-
-        const ingredients = form.querySelectorAll('.ingredient');
-        const ingredientsAmount = form.querySelectorAll('.ingredient-amount');
-        const directions = form.querySelectorAll('.direction');
-        if (ingredients.length === 0 || directions.length === 0) {
-            formIsValid = false;
-            this.setState((prevState, props) => {
-                prevState.hasAtleastOneDirection = false;
-                prevState.hasAtleastOneIngredient = false;
-                return (prevState);
-            });
-        }
-
-
-        // console.log(form.elements);
-        if (formIsValid) {
+        if (form.reportValidity()) {
             let formData = new FormData(form);
-            console.log(this.state.image);
+            // console.log(this.state.image);
             formData.append("image", this.state.image);
             fetch('/add_recipe', {
                 method: "POST",
@@ -130,67 +103,71 @@ class NewRecipeForm extends React.Component {
         document.getElementById('recipe-image').click();
     }
 
-    render() {
-        if (this.state.hasAtleastOneDirection === false && this.state.hasAtleastOneIngredient === false) {
-            return (
-                <form id="new-recipe" onSubmit={this.handleSubmit} method="post" encType="multipart/form-data">
-                    <div id="form-inputs">
-                        <div className="input-group">
-                            <label className="label" form="new-recipe" htmlFor="title">Recipe Title</label><br />
-                            <input className="input user-input" form="new-recipe" id="title" name="title" type="text" placeholder="Your recipe title" required /><br />
-                        </div>
-                        <div className="input-group">
-                            <label className="label" form="new-recipe" htmlFor="description">Description</label><br />
-                            <textarea className="input user-input" rows="3" form="new-recipe" id="description" name="description" type="text" placeholder="Short description of the recipe" required/><br />
-                        </div>
-                        <div id="no-ingredients-or-directions-error">
-                            Need to add at least one ingredient and one direction.
-                        </div>
-                        <IngredientList />
-                        <Directions />
-                        <FoodCategory />
-                        <ImageInput 
-                            handleChange={this.handleChange} 
-                            removeImage={this.removeImage} 
-                            handleFileInput={this.handleFileInput}
-                            imageUrl={this.state.imageUrl}
-                            imageName={this.state.imageName}
-                        />
-                        <OriginalUrl />
-                        <input id="submit-button" type="submit" value="Save Recipe" />
-                    </div>
-                </form>
-            );
-        } else {
-
-        return(
-                // <form id="new-recipe" action="/add_recipe" method="post">
-                <form id="new-recipe" onSubmit={this.handleSubmit} method="post" encType="multipart/form-data">
-                    <div id="form-inputs">
-                        <div className="input-group">
-                            <label className="label" form="new-recipe" htmlFor="title">Recipe Title</label><br />
-                            <input className="input user-input" form="new-recipe" id="title" name="title" type="text" placeholder="Your recipe title" required /><br />
-                        </div>
-                        <div className="input-group">
-                            <label className="label" form="new-recipe" htmlFor="description">Description</label><br />
-                            <textarea className="input user-input" rows="3" form="new-recipe" id="description" name="description" type="text" placeholder="Short description of the recipe" required/><br />
-                        </div>
-                        <IngredientList />
-                        <Directions />
-                        <FoodCategory />
-                        <ImageInput 
-                            handleChange={this.handleChange} 
-                            removeImage={this.removeImage} 
-                            handleFileInput={this.handleFileInput}
-                            imageUrl={this.state.imageUrl}
-                            imageName={this.state.imageName}
-                        />
-                        <OriginalUrl />
-                        <input id="submit-button" type="submit" value="Save Recipe" />
-                    </div>
-                </form>
-            );
+    handleTitle(event) {
+        const title = event.target; 
+        if (title.value.length === 0) {
+            title.setCustomValidity('Please provide a title.');
         }
+        else if (title.value.trim().length === 0) {
+            title.setCustomValidity('Title cannot only contain empty spaces.'); 
+        } else {
+            title.setCustomValidity(''); 
+        }
+
+        const value = event.target.value;
+        this.setState((prevState, props) => {
+            prevState.title = value;
+            return (prevState);
+        });
+    }
+
+    handleDescription(event) {
+        const description = event.target; 
+        if (description.value.length === 0) {
+            description.setCustomValidity('')
+        }
+        else if (description.value.length > 0 && description.value.trim().length === 0) {
+            description.setCustomValidity('Description cannot only contain empty spaces.');
+        }
+        else {
+            description.setCustomValidity('');
+        }
+
+        const value = event.target.value;
+        this.setState((prevState, props) => {
+            prevState.description = value;
+            return (prevState);
+        });
+    }
+
+    render() {
+        return(
+            // <form id="new-recipe" action="/add_recipe" method="post">
+            <form id="new-recipe" onSubmit={this.handleSubmit} method="post" encType="multipart/form-data">
+                <div id="form-inputs">
+                    <div className="input-group">
+                        <label className="label" form="new-recipe" htmlFor="title">Recipe Title</label><br />
+                        <input className="input user-input" onChange={this.handleTitle} value={this.state.title} form="new-recipe" id="title" name="title" type="text" placeholder="Your recipe title" required /><br />
+                    </div>
+                    <div className="input-group">
+                        <label className="label" form="new-recipe" htmlFor="description">Description</label><br />
+                        <textarea className="input user-input" form="new-recipe" onChange={this.handleDescription} value={this.state.description} rows="3" form="new-recipe" id="description" name="description" type="text" placeholder="Short description of the recipe" /><br />
+                    </div>
+                    <IngredientList />
+                    <Directions />
+                    <FoodCategory />
+                    <ImageInput 
+                        handleChange={this.handleChange} 
+                        removeImage={this.removeImage} 
+                        handleFileInput={this.handleFileInput}
+                        imageUrl={this.state.imageUrl}
+                        imageName={this.state.imageName}
+                    />
+                    <OriginalUrl />
+                    <input id="submit-button" type="submit" value="Save Recipe" />
+                </div>
+            </form>
+        );
     }
 }
 
@@ -203,8 +180,15 @@ class FoodCategory extends React.Component {
     }
 
     handleInput(event) {
+        event.preventDefault();
+        const foodType = event.target;
+        if (foodType.value.trim().length === 0) {
+            foodType.setCustomValidity("Food category cannot contain only empty spaces.");
+        } else {
+            foodType.setCustomValidity('');
+        }
         const value = event.target.value;
-        this.setState((state, props) => ({value}))
+        this.setState(({value}));
     }
 
     render () {
@@ -215,8 +199,8 @@ class FoodCategory extends React.Component {
                     <input 
                         className="user-input" 
                         form="new-recipe" 
-                        id="title" 
-                        name="food-category" 
+                        id="food-category" 
+                        name="food_category" 
                         type="text" 
                         onChange={this.handleInput} 
                         placeholder='"Italian", "French", "Japanese".'

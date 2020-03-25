@@ -32,10 +32,10 @@ export default class IngredientList extends React.Component {
 
     removeIngredientInput(event, index) {
         event.preventDefault();
-        this.setState((state, props) => {
-            state.ingredients.splice(index, 1);
+        this.setState((prevState, props) => {
+            prevState.ingredients.splice(index, 1);
             return ({
-                ingredients: state.ingredients
+                ingredients: prevState.ingredients
             });
         });
     }
@@ -94,10 +94,7 @@ export default class IngredientList extends React.Component {
         } else {
             const ingredientList = this.state.ingredients.map((ingredient, index) => {
                 return (
-                    <li 
-                        className="list-item"
-                        key={index.toString()} 
-                    >
+                    <li className="list-item" key={index.toString()}>
                         <div className="drag-item"
                             draggable
                             onDragStart={(e) => this.onDragStart(e, index)}
@@ -121,11 +118,13 @@ export default class IngredientList extends React.Component {
                 )
             });
             return (
-                <ul className="input-group ingredient-list">
+                <div className="input-group">
                     <label className="label" form="new-recipe" htmlFor="ingredients">Ingredients</label><br />
-                    {ingredientList}
+                    <ul className="ingredient-list">
+                        {ingredientList}
+                    </ul>
                     <button className="add-new-input" onClick={this.addNewIngredientInput}>Add ingredient</button>
-                </ul>
+                </div>
             );
         }
     }
@@ -139,9 +138,29 @@ class IngredientInput extends React.Component {
 
     handleInput(event) {
         event.preventDefault();
-        if (event.target.name === "ingredient-amount") {
+
+        if (event.target.name === 'ingredient-amount') {
+            let ingredient = event.target;
+            if (ingredient.value.length === 0) {
+                ingredient.setCustomValidity('Please provide an ingredient.');
+            }
+            else if (ingredient.value.trim().length === 0) {
+                ingredient.setCustomValidity('Ingredient cannot be empty.');
+            } else {
+                ingredient.setCustomValidity('');
+            }
             this.props.updateIngredients(Number(this.props.index), event.target.value, "ingredient amount");
-        } else if (event.target.name === "ingredients") {
+        } else if (event.target.name === 'ingredients') {
+            let amount = event.target;
+            if (amount.value.length === 0) {
+                amount.setCustomValidity('Please provide an ingredient amount.');
+            }
+            else if (amount.value.trim().length === 0) {
+                amount.setCustomValidity('Ingredient cannot be empty.');
+                // ingredient.reportValidity();
+            } else {
+                amount.setCustomValidity('');
+            }
             this.props.updateIngredients(Number(this.props.index), event.target.value, "ingredient");
         }
     }
@@ -162,7 +181,7 @@ class IngredientInput extends React.Component {
                 <input 
                     className="ingredient-amount"
                     form="new-recipe"
-                    name="ingredient-amount"
+                    name="ingredient_amount"
                     type="text"
                     value={this.props.ingredient.quantity}
                     onChange={this.handleInput}
