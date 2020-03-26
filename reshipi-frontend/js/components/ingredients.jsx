@@ -13,7 +13,7 @@ class Ingredient {
 export default class IngredientList extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {ingredients: []};
+        this.state = {ingredients: [new Ingredient('', '')]};
         this.addNewIngredientInput = this.addNewIngredientInput.bind(this);
         this.removeIngredientInput = this.removeIngredientInput.bind(this);
         this.updateIngredients = this.updateIngredients.bind(this);
@@ -32,25 +32,23 @@ export default class IngredientList extends React.Component {
 
     removeIngredientInput(event, index) {
         event.preventDefault();
-        this.setState((prevState, props) => {
-            prevState.ingredients.splice(index, 1);
-            return ({
-                ingredients: prevState.ingredients
+        if (this.state.ingredients.length > 1) {
+            this.setState((prevState, props) => {
+                prevState.ingredients.splice(index, 1);
+                return (prevState);
             });
-        });
+        }
     }
 
     updateIngredients(index, ingredientOrAmount, valueType) {
         event.preventDefault();
-        this.setState((state, props) => {
+        this.setState((prevState, props) => {
             if (valueType === "ingredient amount") {
-                state.ingredients[index].quantity = ingredientOrAmount;
+                prevState.ingredients[index].quantity = ingredientOrAmount;
             } else if (valueType === "ingredient") {
-                state.ingredients[index].ingredient = ingredientOrAmount;
+                prevState.ingredients[index].ingredient = ingredientOrAmount;
             }
-            return ({
-                ingredients: state.ingredients
-            });
+            return (prevState);
         });
     }
 
@@ -84,15 +82,9 @@ export default class IngredientList extends React.Component {
 
 
     render() {
-        if (this.state.ingredients.length === 0) {
-            return (
-                <div className="input-group">
-                    <label className="label" form="new-recipe" htmlFor="ingredients">Ingredients</label><br />
-                    <button className="add-new-input" onClick={this.addNewIngredientInput}>Add Ingredient</button>
-                </div>
-            )
-        } else {
-            const ingredientList = this.state.ingredients.map((ingredient, index) => {
+        let ingredientList = null;
+        if (this.state.ingredients.length === 1) {
+            ingredientList = this.state.ingredients.map((ingredient, index) => {
                 return (
                     <li className="list-item" key={index.toString()}>
                         <div className="drag-item"
@@ -108,7 +100,32 @@ export default class IngredientList extends React.Component {
                             />
                             <span className="draggable-icon">
                                 <i className="fas fa-grip-lines"></i>
-                                {/* <i className="fas fa-grip-vertical"></i> */}
+                            </span>
+                        </div>
+                        <span className="remove-input-wrapper">
+                            <button onClick={(e) => this.removeIngredientInput(e, index)} className="remove-input-button" disabled><i className="fas fa-times"></i></button>
+                        </span>
+                    </li>
+                )
+            });
+        } else {
+            ingredientList = this.state.ingredients.map((ingredient, index) => {
+                
+                return (
+                    <li className="list-item" key={index.toString()}>
+                        <div className="drag-item"
+                            draggable
+                            onDragStart={(e) => this.onDragStart(e, index)}
+                            onDragOver={this.handleDragOver}
+                            onDrop={(e) => this.onDrop(e, index)}
+                        >
+                            <IngredientInput
+                                ingredient={ingredient} 
+                                updateIngredients={this.updateIngredients} 
+                                index={index} 
+                            />
+                            <span className="draggable-icon">
+                                <i className="fas fa-grip-lines"></i>
                             </span>
                         </div>
                         <span className="remove-input-wrapper">
@@ -117,16 +134,16 @@ export default class IngredientList extends React.Component {
                     </li>
                 )
             });
-            return (
-                <div className="input-group">
-                    <label className="label" form="new-recipe" htmlFor="ingredients">Ingredients</label><br />
-                    <ul className="ingredient-list">
-                        {ingredientList}
-                    </ul>
-                    <button className="add-new-input" onClick={this.addNewIngredientInput}>Add ingredient</button>
-                </div>
-            );
         }
+        return (
+            <div className="input-group">
+                <label className="label" form="new-recipe" htmlFor="ingredients">Ingredients</label><br />
+                <ul className="ingredient-list">
+                    {ingredientList}
+                </ul>
+                <button className="add-new-input" onClick={this.addNewIngredientInput}>Add ingredient</button>
+            </div>
+        );
     }
 }
 
@@ -139,7 +156,7 @@ class IngredientInput extends React.Component {
     handleInput(event) {
         event.preventDefault();
 
-        if (event.target.name === 'ingredient-amount') {
+        if (event.target.name === 'ingredient_amount') {
             let ingredient = event.target;
             if (ingredient.value.length === 0) {
                 ingredient.setCustomValidity('Please provide an ingredient.');

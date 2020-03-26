@@ -211,6 +211,9 @@ main {
 .remove-input-button:hover {
     color: red;
 }
+.remove-input-button:disabled {
+    color: rgb(207, 207, 207);
+}
 
 .remove-input-wrapper {
     display: inline-flex;

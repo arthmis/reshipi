@@ -5,7 +5,7 @@ import {moveElementDownList, moveElementUpList} from './utility.js';
 export default class Directions extends React.Component {
     constructor(props) {
         super(props);
-        this.state = ({directions: []});
+        this.state = ({directions: ['']});
         this.addDirection = this.addDirection.bind(this);
         this.updateDirections = this.updateDirections.bind(this);
         this.removeDirection = this.removeDirection.bind(this);
@@ -32,12 +32,12 @@ export default class Directions extends React.Component {
 
     removeDirection(event, index) {
         event.preventDefault();
-        this.setState((state, props) => {
-            state.directions.splice(index, 1);
-            return ({
-                directions: state.directions
+        if (this.state.directions.length > 1) {
+            this.setState((prevState, props) => {
+                prevState.directions.splice(index, 1);
+                return(prevState);
             });
-        });
+        }
     }
 
     handleDragOver (event) {
@@ -69,16 +69,36 @@ export default class Directions extends React.Component {
     }
 
     render() {
-        if (this.state.directions.length === 0) {
-            return (
-                <div className="input-group">
-                    <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
-                    <button className="add-new-input" onClick={this.addDirection}>Add direction</button>
-                </div>
-            )
+        let directionList = null;
+        if (this.state.directions.length === 1) {
+            directionList = this.state.directions.map((direction, index) => {
+                return (
+                    <li className="list-item" key={index.toString()} >
+                        <div className="drag-item"
+                            draggable
+                            onDragStart={(e) => this.onDragStart(e, index)}
+                            onDragOver={this.handleDragOver}
+                            onDrop={(e) => this.onDrop(e, index)}
+                        >
+                            <DirectionInput
+                                direction={direction} 
+                                updateDirections={this.updateDirections} 
+                                index={index} 
+                            />
+                            <span className="draggable-icon">
+                                <i className="fas fa-grip-lines"></i>
+                            </span>
+                        </div>
+                        <span className="remove-input-wrapper">
+                            <button onClick={(e) => this.removeDirection(e, index)} className="remove-input-button" disabled><i className="fas fa-times"></i></button>
+                        </span>
+                    </li>
+                );
+            });
+            
         } else {
             
-            const directionList = this.state.directions.map((direction, index) => {
+            directionList = this.state.directions.map((direction, index) => {
                 return (
                     <li className="list-item" key={index.toString()} >
                         <div className="drag-item"
@@ -103,16 +123,17 @@ export default class Directions extends React.Component {
                     </li>
                 )
             });
-            return (
-                <div className="input-group">
-                    <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
-                    <ol>
-                        {directionList}
-                    </ol>
-                    <button className="add-new-input" onClick={this.addDirection}>Add direction</button>
-                </div>
-            );
         }
+
+        return (
+            <div className="input-group">
+                <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
+                <ol>
+                    {directionList}
+                </ol>
+                <button className="add-new-input" onClick={this.addDirection}>Add direction</button>
+            </div>
+        );
     }
 }
 
