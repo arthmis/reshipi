@@ -16,7 +16,8 @@ export default class IngredientList extends React.Component {
         this.state = {ingredients: [new Ingredient('', '')]};
         this.addNewIngredientInput = this.addNewIngredientInput.bind(this);
         this.removeIngredientInput = this.removeIngredientInput.bind(this);
-        this.updateIngredients = this.updateIngredients.bind(this);
+        this.updateIngredient = this.updateIngredient.bind(this);
+        this.updateIngredientQuantity = this.updateIngredientQuantity.bind(this);
         this.handleDragOver = this.handleDragOver.bind(this);
         this.onDragStart = this.onDragStart.bind(this);
         this.onDrop = this.onDrop.bind(this);
@@ -40,14 +41,15 @@ export default class IngredientList extends React.Component {
         }
     }
 
-    updateIngredients(index, ingredientOrAmount, valueType) {
-        event.preventDefault();
+    updateIngredient(index, ingredient) {
         this.setState((prevState, props) => {
-            if (valueType === "ingredient amount") {
-                prevState.ingredients[index].quantity = ingredientOrAmount;
-            } else if (valueType === "ingredient") {
-                prevState.ingredients[index].ingredient = ingredientOrAmount;
-            }
+            prevState.ingredients[index].ingredient = ingredient;
+            return (prevState);
+        });
+    }
+    updateIngredientQuantity(index, quantity) {
+        this.setState((prevState, props) => {
+            prevState.ingredients[index].quantity = quantity;
             return (prevState);
         });
     }
@@ -67,7 +69,6 @@ export default class IngredientList extends React.Component {
         const element_index = Number(event.dataTransfer.getData("text/plain"));
 
         const ingredients = this.state.ingredients;
-        const ingredientToDrag = ingredients[element_index];
 
         // if greater than dropIndex I will have to right shift
         // the array elements up to index
@@ -95,7 +96,8 @@ export default class IngredientList extends React.Component {
                         >
                             <IngredientInput
                                 ingredient={ingredient} 
-                                updateIngredients={this.updateIngredients} 
+                                updateIngredient={this.updateIngredient} 
+                                updateIngredientQuantity={this.updateIngredientQuantity}
                                 index={index} 
                             />
                             <span className="draggable-icon">
@@ -110,7 +112,6 @@ export default class IngredientList extends React.Component {
             });
         } else {
             ingredientList = this.state.ingredients.map((ingredient, index) => {
-                
                 return (
                     <li className="list-item" key={index.toString()}>
                         <div className="drag-item"
@@ -121,7 +122,8 @@ export default class IngredientList extends React.Component {
                         >
                             <IngredientInput
                                 ingredient={ingredient} 
-                                updateIngredients={this.updateIngredients} 
+                                updateIngredient={this.updateIngredient} 
+                                updateIngredientQuantity={this.updateIngredientQuantity}
                                 index={index} 
                             />
                             <span className="draggable-icon">
@@ -166,7 +168,7 @@ class IngredientInput extends React.Component {
             } else {
                 ingredient.setCustomValidity('');
             }
-            this.props.updateIngredients(Number(this.props.index), event.target.value, "ingredient amount");
+            this.props.updateIngredientQuantity(Number(this.props.index), event.target.value);
         } else if (event.target.name === 'ingredients') {
             let amount = event.target;
             if (amount.value.length === 0) {
@@ -174,11 +176,10 @@ class IngredientInput extends React.Component {
             }
             else if (amount.value.trim().length === 0) {
                 amount.setCustomValidity('Ingredient cannot be empty.');
-                // ingredient.reportValidity();
             } else {
                 amount.setCustomValidity('');
             }
-            this.props.updateIngredients(Number(this.props.index), event.target.value, "ingredient");
+            this.props.updateIngredient(Number(this.props.index), event.target.value);
         }
     }
 
