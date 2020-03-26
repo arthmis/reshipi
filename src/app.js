@@ -19,17 +19,22 @@ const { check, validationResult } = require('express-validator');
 const bodyParser = require('body-parser');
 const csp = require('helmet-csp');
 const session = require('express-session');
+const PgSession = require('connect-pg-simple')(session);
 const multer = require('multer');
 
 const upload = multer({ dest: 'uploads/' });
 
-module.exports = (users) => {
+module.exports = (users, db) => {
   const app = express();
 
   // app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  const cookieAge = 1200000;
+  function getMinutesInMilliseconds(minutes) {
+    return minutes * 60 * 1000;
+  }
+  // millisecond * second * milliseconds
+  const cookieAge = getMinutesInMilliseconds(120);
 
   app.use(session({
     cookie: {
@@ -37,7 +42,6 @@ module.exports = (users) => {
       secure: false,
       httpOnly: true,
       path: '/',
-      // maxAge: 1000 * 60 * 30,
       maxAge: cookieAge,
       sameSite: true,
 
@@ -47,9 +51,11 @@ module.exports = (users) => {
     // do more research into this because it depends
     // on the session store i use
     resave: false,
-    // again do more research into this
     saveUninitialized: false,
-    // look into cryptographic encryption for creating session id
+    store: new PgSession({
+      pgPromise: db,
+      tableName: 'sessions',
+    }),
   }));
 
 
@@ -164,10 +170,13 @@ module.exports = (users) => {
       });
       return;
     }
+    console.log(`old id: ${req.session.id}`);
     req.session.regenerate((err) => {
       if (err) {
         console.log(err);
       }
+      console.log(`new id: ${req.session.id}`);
+      req.session.user = credentials.email;
       res.redirect(303, '/recipes');
     });
   };
@@ -218,10 +227,37 @@ module.exports = (users) => {
     });
   });
 
+  app.get('/new_recipe', (req, res) => {
+    req.sessionStore.get(req.session.id, (err, sesh) => {
+      if (err) {
+        console.log(`err: ${err}`);
+        return;
+      }
+      if (!sesh) {
+        res.redirect(303, '/login');
+        return;
+      }
+      res.status(200);
+      res.render('pages/new_recipe');
+      // res.send("got the recipe");
+    });
+  });
+
   app.post('/add_recipe', upload.any('recipe_image'), (req, res) => {
-    console.log(req.files);
-    res.status(200);
-    res.send("got the recipe");
+    req.sessionStore.get(req.session.id, (err, sesh) => {
+      if (err) {
+        console.log(`err: ${err}`);
+        return;
+      }
+      if (!sesh) {
+        res.redirect(303, '/login');
+        return;
+      }
+      // console.log(req.files);
+      console.log(req.body);
+      res.status(200);
+      res.render('pages/recipes');
+    });
   });
 
 

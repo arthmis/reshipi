@@ -129,6 +129,9 @@ module.exports = (db) => {
         return true;
       }
     },
+    addRecipe: async (recipe) => {
+      console.log(recipe);
+    },
   };
   return users;
 };

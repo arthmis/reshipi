@@ -32,7 +32,7 @@ class Nav extends React.Component {
         return(
             <nav id="nav">
                 <a id="home-link" href="/recipes">Reshipi</a>
-                <form id="logout-form" action="/logout" method="post">
+                <form id="logout-form" action="/logout" method="get">
                     <input id="logout" type="submit" name="logout" value="Logout"/>
                 </form>
             </nav>
@@ -63,19 +63,22 @@ class NewRecipeForm extends React.Component {
 
         const form = ReactDom.findDOMNode(this);
 
-        if (form.reportValidity()) {
-            let formData = new FormData(form);
-            // console.log(this.state.image);
-            formData.append("image", this.state.image);
-            fetch('/add_recipe', {
-                method: "POST",
-                body: formData,
-                mode: 'same-origin',
-                credentials: 'same-origin',
-            }).then(response => {
-                console.log(response.body);
-            });
+        if(form.reportValidity()) {
+            form.submit();
         }
+        // if (form.reportValidity()) {
+        //     let formData = new FormData(form);
+        //     // console.log(this.state.image);
+        //     formData.append("image", this.state.image);
+        //     fetch('/add_recipe', {
+        //         method: "POST",
+        //         body: formData,
+        //         mode: 'same-origin',
+        //         credentials: 'same-origin',
+        //     }).then(response => {
+        //         console.log(response.body);
+        //     });
+        // }
     }
     handleChange (event) {
         event.preventDefault();
@@ -143,7 +146,7 @@ class NewRecipeForm extends React.Component {
     render() {
         return(
             // <form id="new-recipe" action="/add_recipe" method="post">
-            <form id="new-recipe" onSubmit={this.handleSubmit} method="post" encType="multipart/form-data">
+            <form id="new-recipe" action="/add_recipe" onSubmit={this.handleSubmit} method="post" encType="multipart/form-data">
                 <div id="form-inputs">
                     <div className="input-group">
                         <label className="label" form="new-recipe" htmlFor="title">Recipe Title</label><br />

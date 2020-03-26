@@ -22,7 +22,7 @@ const pgp = require('pg-promise')();
 const db = pgp(process.env.DATABASE_URL);
 
 const users = require('./users.js')(db);
-const { app } = require('./app.js')(users);
+const { app } = require('./app.js')(users, db);
 
 const port = 8000;
 
@@ -47,9 +47,18 @@ async function main() {
       tags TEXT
     )`;
 
+  // need to put unique for sid or will get error
+  const createSessionsTable = `CREATE TABLE IF NOT EXISTS
+    Sessions(
+      sid VARCHAR UNIQUE,
+      sess JSON NOT NULL,
+      expire TIMESTAMP(6) NOT NULL
+    )`;
+
 
   await db.none(createUserTable).catch((err) => err);
   await db.none(createRecipesTable).catch((err) => err);
+  await db.none(createSessionsTable).catch((err) => err);
 
   app.use(express.static('reshipi-frontend'));
   app.listen(port);

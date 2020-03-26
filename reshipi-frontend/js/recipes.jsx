@@ -31,9 +31,24 @@ class App extends React.Component {
                 </header>
                 <main>
                     <h2>Reshipi recipe cards</h2>
+                    <AddNewRecipe />
                 </main>
             </div>
         );
+    }
+}
+
+class AddNewRecipe extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <form action="/new_recipe" method="get">
+                <input id="new-recipe" type="submit" name="new_recipe" value="Add new recipe"/>
+            </form>
+        )
     }
 }
 
