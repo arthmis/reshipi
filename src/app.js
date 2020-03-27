@@ -15,12 +15,13 @@
 require('dotenv').config();
 
 const express = require('express');
-const { check, validationResult } = require('express-validator');
+const { check, validationResult, body } = require('express-validator');
 const bodyParser = require('body-parser');
 const csp = require('helmet-csp');
 const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
 const multer = require('multer');
+const validator = require('validator');
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -243,22 +244,114 @@ module.exports = (users, db) => {
     });
   });
 
-  app.post('/add_recipe', upload.any('recipe_image'), (req, res) => {
-    req.sessionStore.get(req.session.id, (err, sesh) => {
+  const addRecipe = (req, res) => {
+    req.sessionStore.get(req.session.id, (err, sess) => {
       if (err) {
         console.log(`err: ${err}`);
         return;
       }
-      if (!sesh) {
+      if (!sess) {
         res.redirect(303, '/login');
         return;
       }
+      const validationErrors = validationResult(req);
+      console.log(validationErrors);
+      const recipe = req.body;
+      console.log(recipe);
+      if (!validationErrors.isEmpty()) {
+        res.status(401);
+        return;
+      }
       // console.log(req.files);
-      console.log(req.body);
       res.status(200);
       res.render('pages/recipes');
     });
-  });
+
+  };
+
+  const checkIngredients = (ingredients) => {
+    if (Array.isArray(ingredients)) {
+      for (let ingredient of ingredients) {
+        ingredient = validator.trim(ingredient);
+        ingredient = validator.escape(ingredient);
+
+        if (validator.isEmpty(ingredient)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    let ingredient = validator.trim(ingredients);
+    ingredient = validator.escape(ingredient);
+    if (validator.isEmpty(ingredient)) {
+      return false;
+    }
+    return true;
+  };
+  const checkIngredientQuantity = (quantities) => {
+    if (Array.isArray(quantities)) {
+      for (let quantity of quantities) {
+        quantity = validator.trim(quantity);
+        quantity = validator.escape(quantity);
+
+        if (validator.isEmpty(quantity)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    let quantity = validator.trim(quantities);
+    quantity = validator.escape(quantity);
+    if (validator.isEmpty(quantity)) {
+      return false;
+    }
+    return true;
+  };
+  const checkDirections = (directions) => {
+    if (Array.isArray(directions)) {
+      for (let direction of directions) {
+        direction = validator.trim(direction);
+        direction = validator.escape(direction);
+
+        if (validator.isEmpty(direction)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    let direction = validator.trim(directions);
+    direction = validator.escape(direction);
+    if (validator.isEmpty(direction)) {
+      return false;
+    }
+    return true;
+  };
+  app.post(
+    '/add_recipe',
+    upload.any('recipe_image'),
+    [
+      body('title').trim().not().isEmpty()
+        .escape()
+        .isLength({ min: 3, max: 50 }),
+      body('description').trim().escape().isLength({ min: 0, max: 100 }),
+      body('ingredients', 'Provided ingredient must not be empty.')
+        .custom(checkIngredients),
+      body('ingredient_amount', 'Provided ingredient quantity cannot be empty.')
+        .custom(checkIngredientQuantity),
+      body('directions', 'Provided direction cannot be empty.')
+        .custom(checkDirections),
+      body('original_url').if(body('original_url').not().isEmpty())
+        .trim()
+        .not()
+        .isEmpty()
+        .isURL(),
+      body('food_category').isEmpty().trim().escape(),
+    ],
+    addRecipe,
+  );
 
 
   return { app };
