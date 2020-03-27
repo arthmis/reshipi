@@ -129,8 +129,43 @@ module.exports = (db) => {
         return true;
       }
     },
-    addRecipe: async (recipe) => {
+    addRecipe: async (recipe, user, image) => {
+      if (image.length === 0) {
+        recipe.image = '';
+      } else {
+        console.log(image[0]);
+        recipe.image = image[0];
+      }
       console.log(recipe);
+      const insertNewRecipe = new pg.ParameterizedQuery(
+        {
+          text: `INSERT INTO recipes (
+              username, 
+              title, 
+              description, 
+              ingredients, 
+              ingredients_amount, 
+              directions, 
+              food_category,
+              image,
+              url
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          values: [
+            user,
+            recipe.title,
+            recipe.description,
+            recipe.ingredients,
+            recipe.ingredient_amount,
+            recipe.directions,
+            recipe.food_category,
+            recipe.image.path,
+            recipe.original_url,
+          ],
+        },
+      );
+
+      await db.none(insertNewRecipe).catch((err) => err);
     },
   };
   return users;

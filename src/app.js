@@ -255,47 +255,67 @@ module.exports = (users, db) => {
         return;
       }
       const validationErrors = validationResult(req);
-      console.log(validationErrors);
       const recipe = req.body;
-      console.log(recipe);
       if (!validationErrors.isEmpty()) {
         res.status(401);
         return;
       }
       // console.log(req.files);
+      if (Array.isArray(recipe.ingredients)) {
+        let ingredients = '';
+        for (const ingredient of recipe.ingredients) {
+          ingredients += (`\n${ingredient}`);
+        }
+        recipe.ingredients = ingredients;
+      }
+      if (Array.isArray(recipe.directions)) {
+        let directions = '';
+        for (const direction of recipe.directions) {
+          directions += (`\n${direction}`);
+        }
+        recipe.directions = directions;
+      }
+      if (Array.isArray(recipe.ingredient_amount)) {
+        let quantities = '';
+        for (const quantity of recipe.ingredient_amount) {
+          quantities += (`\n${quantity}`);
+        }
+        recipe.ingredient_amount = quantities;
+      }
+      users.addRecipe(recipe, req.session.user, req.files);
       res.status(200);
       res.render('pages/recipes');
     });
-
   };
 
-  const checkIngredients = (ingredients) => {
+  const checkIngredients = (ingredients, { req }) => {
     if (Array.isArray(ingredients)) {
-      for (let ingredient of ingredients) {
-        ingredient = validator.trim(ingredient);
-        ingredient = validator.escape(ingredient);
+      for (let i = 0; i < ingredients.length; i += 1) {
+        ingredients[i] = validator.trim(ingredients[i]);
+        ingredients[i] = validator.escape(ingredients[i]);
 
-        if (validator.isEmpty(ingredient)) {
+        if (validator.isEmpty(ingredients[i])) {
           return false;
         }
       }
       return true;
     }
 
-    let ingredient = validator.trim(ingredients);
-    ingredient = validator.escape(ingredient);
-    if (validator.isEmpty(ingredient)) {
+    ingredients = validator.trim(ingredients);
+    ingredients = validator.escape(ingredients);
+    if (validator.isEmpty(ingredients)) {
       return false;
     }
+    req.body.ingredients = ingredients;
     return true;
   };
-  const checkIngredientQuantity = (quantities) => {
+  const checkIngredientQuantity = (quantities, { req }) => {
     if (Array.isArray(quantities)) {
-      for (let quantity of quantities) {
-        quantity = validator.trim(quantity);
-        quantity = validator.escape(quantity);
+      for (let i = 0; i < quantities.length; i += 1) {
+        quantities[i] = validator.trim(quantities[i]);
+        quantities[i] = validator.escape(quantities[i]);
 
-        if (validator.isEmpty(quantity)) {
+        if (validator.isEmpty(quantities[i])) {
           return false;
         }
       }
@@ -307,15 +327,16 @@ module.exports = (users, db) => {
     if (validator.isEmpty(quantity)) {
       return false;
     }
+    req.body.ingredient_amount = quantity;
     return true;
   };
-  const checkDirections = (directions) => {
+  const checkDirections = (directions, { req }) => {
     if (Array.isArray(directions)) {
-      for (let direction of directions) {
-        direction = validator.trim(direction);
-        direction = validator.escape(direction);
+      for (let i = 0; i < directions.length; i += 1) {
+        directions[i] = validator.trim(directions[i]);
+        directions[i] = validator.escape(directions[i]);
 
-        if (validator.isEmpty(direction)) {
+        if (validator.isEmpty(directions[i])) {
           return false;
         }
       }
@@ -327,6 +348,7 @@ module.exports = (users, db) => {
     if (validator.isEmpty(direction)) {
       return false;
     }
+    req.body.directions = direction;
     return true;
   };
   app.post(

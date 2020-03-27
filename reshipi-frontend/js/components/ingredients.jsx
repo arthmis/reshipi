@@ -165,7 +165,8 @@ class IngredientInput extends React.Component {
             }
             else if (ingredient.value.trim().length === 0) {
                 ingredient.setCustomValidity('Ingredient cannot be empty.');
-            } else {
+            } 
+            else {
                 ingredient.setCustomValidity('');
             }
             this.props.updateIngredientQuantity(Number(this.props.index), event.target.value);
@@ -176,7 +177,8 @@ class IngredientInput extends React.Component {
             }
             else if (amount.value.trim().length === 0) {
                 amount.setCustomValidity('Ingredient cannot be empty.');
-            } else {
+            } 
+            else {
                 amount.setCustomValidity('');
             }
             this.props.updateIngredient(Number(this.props.index), event.target.value);

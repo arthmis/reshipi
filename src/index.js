@@ -40,11 +40,13 @@ async function main() {
       id SERIAL PRIMARY KEY,
       username TEXT NOT NULL,
       title TEXT NOT NULL,
-      ingredients TEXT NOT NULL,
-      directions TEXT NOT NULL,
       description TEXT NOT NULL,
-      food_category TEXT NOT NULL,
-      tags TEXT
+      ingredients TEXT NOT NULL,
+      ingredients_amount TEXT NOT NULL,
+      directions TEXT NOT NULL,
+      food_category TEXT,
+      image TEXT NOT NULL,
+      url TEXT NOT NULL
     )`;
 
   // need to put unique for sid or will get error

@@ -112,9 +112,8 @@ export default class Directions extends React.Component {
                                 updateDirections={this.updateDirections} 
                                 index={index} 
                             />
-                            <span className="draggable-icon">
+                            <span className="draggable-icon"> 
                                 <i className="fas fa-grip-lines"></i>
-                                {/* <i className="fas fa-grip-vertical"></i> */}
                             </span>
                         </div>
                         <span className="remove-input-wrapper">
@@ -152,7 +151,8 @@ class DirectionInput extends React.Component {
         }
         else if (direction.value.trim().length === 0) {
             direction.setCustomValidity('Title cannot only contain empty spaces.'); 
-        } else {
+        } 
+        else {
             direction.setCustomValidity(''); 
         }
         this.props.updateDirections(Number(this.props.index), direction.value);

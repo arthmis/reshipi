@@ -63,22 +63,19 @@ class NewRecipeForm extends React.Component {
 
         const form = ReactDom.findDOMNode(this);
 
-        if(form.reportValidity()) {
-            form.submit();
+        if (form.reportValidity()) {
+            let formData = new FormData(form);
+            formData.append("image", this.state.image);
+            fetch('/add_recipe', {
+                method: "POST",
+                body: formData,
+                mode: 'same-origin',
+                credentials: 'same-origin',
+            }).then(response => {
+                console.log(response.body);
+                document.location.href = '/recipes';
+            });
         }
-        // if (form.reportValidity()) {
-        //     let formData = new FormData(form);
-        //     // console.log(this.state.image);
-        //     formData.append("image", this.state.image);
-        //     fetch('/add_recipe', {
-        //         method: "POST",
-        //         body: formData,
-        //         mode: 'same-origin',
-        //         credentials: 'same-origin',
-        //     }).then(response => {
-        //         console.log(response.body);
-        //     });
-        // }
     }
     handleChange (event) {
         event.preventDefault();
@@ -248,7 +245,7 @@ class ImageInput extends React.Component {
                     <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
                     <button className="image-input-button" onClick={this.props.handleFileInput}>Upload Image</button>
                     <input 
-                        style={{display: 'none'}} 
+                        style={{visibility: 'hidden'}} 
                         onChange={this.props.handleChange} 
                         type="file" 
                         id="recipe-image" 
