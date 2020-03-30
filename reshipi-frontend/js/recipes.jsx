@@ -32,6 +32,7 @@ class App extends React.Component {
                 <main>
                     <h2>Reshipi recipe cards</h2>
                     <AddNewRecipe />
+                    <Recipes />
                 </main>
             </div>
         );
@@ -48,6 +49,51 @@ class AddNewRecipe extends React.Component {
             <form action="/new_recipe" method="get">
                 <input id="new-recipe" type="submit" name="new_recipe" value="Add new recipe"/>
             </form>
+        )
+    }
+}
+
+class Recipes extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            recipes: [],
+        }
+    }
+
+    componentDidMount() {
+        fetch('/all_recipes', {
+            method: "GET",
+            mode: 'same-origin',
+            credentials: 'same-origin',
+        })
+        .then(response => response.json())
+        .then(recipes => { this.setState({ recipes })});
+    }
+
+    render() {
+        return (
+            <div className="all-recipes">
+                {this.state.recipes.map((recipe, index) => {
+                    return (<Recipe key={index.toString()} recipe={recipe} />);
+                })}
+            </div>
+        )
+    }
+}
+
+class Recipe extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render () {
+        return (
+            <div className="recipe-wrapper">
+                <p>{this.props.recipe.title}</p>
+                <img className="recipe-image" src={this.props.recipe.image} alt="recipe image" />
+                <p className="description">{this.props.recipe.description}</p>
+            </div>
         )
     }
 }

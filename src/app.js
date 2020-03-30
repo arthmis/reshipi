@@ -23,7 +23,20 @@ const PgSession = require('connect-pg-simple')(session);
 const multer = require('multer');
 const validator = require('validator');
 
-const upload = multer({ dest: 'uploads/' });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    // console.log(file);
+    const originalNameSplit = file.originalname.split('.');
+    const extension = originalNameSplit[originalNameSplit.length - 1];
+    const newFileName = `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1E9)}.${extension}`;
+    cb(null, newFileName);
+  },
+});
+const upload = multer({ storage });
+
 
 module.exports = (users, db) => {
   const app = express();
@@ -171,12 +184,10 @@ module.exports = (users, db) => {
       });
       return;
     }
-    console.log(`old id: ${req.session.id}`);
     req.session.regenerate((err) => {
       if (err) {
         console.log(err);
       }
-      console.log(`new id: ${req.session.id}`);
       req.session.user = credentials.email;
       res.redirect(303, '/recipes');
     });
@@ -245,7 +256,7 @@ module.exports = (users, db) => {
   });
 
   const addRecipe = (req, res) => {
-    req.sessionStore.get(req.session.id, (err, sess) => {
+    req.sessionStore.get(req.session.id, async (err, sess) => {
       if (err) {
         console.log(`err: ${err}`);
         return;
@@ -257,6 +268,7 @@ module.exports = (users, db) => {
       const validationErrors = validationResult(req);
       const recipe = req.body;
       if (!validationErrors.isEmpty()) {
+        console.log(validationErrors);
         res.status(401);
         return;
       }
@@ -282,7 +294,8 @@ module.exports = (users, db) => {
         }
         recipe.ingredient_amount = quantities;
       }
-      users.addRecipe(recipe, req.session.user, req.files);
+
+      await users.addRecipe(recipe, req.session.user, req.files);
       res.status(200);
       res.render('pages/recipes');
     });
@@ -358,7 +371,7 @@ module.exports = (users, db) => {
       body('title').trim().not().isEmpty()
         .escape()
         .isLength({ min: 3, max: 50 }),
-      body('description').trim().escape().isLength({ min: 0, max: 100 }),
+      body('description').trim().escape().isLength({ min: 0, max: 240 }),
       body('ingredients', 'Provided ingredient must not be empty.')
         .custom(checkIngredients),
       body('ingredient_amount', 'Provided ingredient quantity cannot be empty.')
@@ -375,17 +388,16 @@ module.exports = (users, db) => {
     addRecipe,
   );
 
+  app.get('/all_recipes', async (req, res) => {
+    const recipes = await users.getRecipes(req.session.user, 15);
+    res.status(200);
+    res.send(recipes);
+  });
+
 
   return { app };
 };
 
-// module.exports = function(app, usersDatabase) {
-//   return new App(app, usersDatabase);
-// }
-// deleteUser
-// updateUserInfo
-// readUserInfo
-// addUserRecipesTable
 // updateUserRecipe
 // deleteUserRecipe
 // addUserRecipe

@@ -63,6 +63,7 @@ async function main() {
   await db.none(createSessionsTable).catch((err) => err);
 
   app.use(express.static('reshipi-frontend'));
+  app.use(express.static('uploads'));
   app.listen(port);
 
   return null;

@@ -133,10 +133,8 @@ module.exports = (db) => {
       if (image.length === 0) {
         recipe.image = '';
       } else {
-        console.log(image[0]);
-        recipe.image = image[0];
+        recipe.image = image[0].path;
       }
-      console.log(recipe);
       const insertNewRecipe = new pg.ParameterizedQuery(
         {
           text: `INSERT INTO recipes (
@@ -159,13 +157,37 @@ module.exports = (db) => {
             recipe.ingredient_amount,
             recipe.directions,
             recipe.food_category,
-            recipe.image.path,
+            recipe.image,
             recipe.original_url,
           ],
         },
       );
 
-      await db.none(insertNewRecipe).catch((err) => err);
+      await db.none(insertNewRecipe).catch((err) => console.log(err));
+    },
+    getRecipes: async (user, numberOfRecipes) => {
+      const findRecipes = new pg.ParameterizedQuery(
+        {
+          text: 'SELECT * FROM recipes WHERE username=$1 LIMIT 15',
+          values: [user],
+        },
+      );
+      const recipesData = await db.any(findRecipes).catch((err) => err);
+      const recipes = [];
+      for (const recipeData of recipesData) {
+        const recipe = {};
+        recipe.title = recipeData.title;
+        recipe.description = recipeData.description;
+        recipe.ingredients = recipeData.ingredients;
+        recipe.ingredients_amount = recipeData.ingredients_amount;
+        recipe.directions = recipeData.directions;
+        recipe.food_category = recipeData.food_category;
+        recipe.original_url = recipeData.original_url;
+        recipe.image = recipeData.image.replace('uploads\\', '');
+
+        recipes.push(recipe);
+      }
+      return recipes;
     },
   };
   return users;

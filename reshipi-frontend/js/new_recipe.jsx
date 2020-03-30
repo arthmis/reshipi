@@ -142,7 +142,6 @@ class NewRecipeForm extends React.Component {
 
     render() {
         return(
-            // <form id="new-recipe" action="/add_recipe" method="post">
             <form id="new-recipe" action="/add_recipe" onSubmit={this.handleSubmit} method="post" encType="multipart/form-data">
                 <div id="form-inputs">
                     <div className="input-group">
