@@ -10,8 +10,6 @@
 // link to recipe if there is a url for the original recipe URL
 // Related Account ID
 
-// const bcryptjs = require('bcryptjs');
-
 require('dotenv').config();
 
 const express = require('express');
@@ -28,7 +26,6 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    // console.log(file);
     const originalNameSplit = file.originalname.split('.');
     const extension = originalNameSplit[originalNameSplit.length - 1];
     const newFileName = `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1E9)}.${extension}`;
@@ -272,7 +269,6 @@ module.exports = (users, db) => {
         res.status(401);
         return;
       }
-      // console.log(req.files);
       if (Array.isArray(recipe.ingredients)) {
         let ingredients = '';
         for (const ingredient of recipe.ingredients) {
@@ -383,7 +379,10 @@ module.exports = (users, db) => {
         .not()
         .isEmpty()
         .isURL(),
-      body('food_category').isEmpty().trim().escape(),
+      body('food_category').if(body('food_category').not().isEmpty())
+        .trim()
+        .isEmpty()
+        .escape(),
     ],
     addRecipe,
   );
@@ -391,6 +390,15 @@ module.exports = (users, db) => {
   app.get('/all_recipes', async (req, res) => {
     const recipes = await users.getRecipes(req.session.user, 15);
     res.status(200);
+    for (let i = 0; i < recipes.length; i += 1) {
+      recipes[i].title = validator.unescape(recipes[i].title);
+      recipes[i].description = validator.unescape(recipes[i].description);
+      // recipes[i].ingredients = validator.unescape(recipes[i].ingredients);
+      // recipes[i].directions = validator.unescape(recipes[i].directions);
+      // recipes[i].ingredients_amount = validator.unescape(recipes[i].ingredients_amount);
+      // recipes[i].url = validator.unescape(recipes[i].url);
+      // recipes[i].food_category = validator.unescape(recipes[i].food_category);
+    }
     res.send(recipes);
   });
 

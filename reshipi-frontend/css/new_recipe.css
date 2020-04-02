@@ -264,6 +264,27 @@ textarea {
     background-color: #df1e05;
 }
 
+#invalid-image {
+    font-size: 0.8em;
+    color: red;
+}
+
+#remove-invalid-image {
+    background-color: #a32b1b;
+    color: white;
+    font-family: inherit;
+    font-size: 1em;
+    max-width: 9em;
+    width: 100%;
+    max-height: 3em;
+    height: 100%;
+    border: none;
+    border-radius: 5px
+}
+#remove-invalid-image:hover {
+    background-color: #df1e05;
+}
+
 .image-input-button:hover, .add-new-input:hover {
     background-color: #838383;
 }

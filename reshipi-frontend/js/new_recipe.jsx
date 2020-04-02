@@ -51,17 +51,33 @@ class NewRecipeForm extends React.Component {
             imageName: '',
             image: null,
         };
-        this.handleChange = this.handleChange.bind(this);
+        this.handleImageChange = this.handleImageChange.bind(this);
         this.removeImage = this.removeImage.bind(this);
         this.handleFileInput = this.handleFileInput.bind(this);
         this.handleTitle = this.handleTitle.bind(this);
         this.handleDescription = this.handleDescription.bind(this);
+        this.clearImage = this.clearImage.bind(this);
     }
 
     handleSubmit (event) {
         event.preventDefault();
 
         const form = ReactDom.findDOMNode(this);
+
+        let inputImage = document.getElementById('recipe-image');
+        let split = this.state.imageName.split('.');
+        if (this.state.imageName !== '') {
+            if (split.length > 1) {
+                let extension = split[split.length - 1].toLowerCase();
+                if (extension === 'jpeg' || extension === 'jpg' || extension === 'png') {
+                    inputImage.setCustomValidity('');
+                } else {
+                    inputImage.setCustomValidity('Image has to have a file extension of jpeg, jpg, or png.');
+                }
+            } else {
+                inputImage.setCustomValidity('Image has to have a valid file extension.');
+            }
+        }
 
         if (form.reportValidity()) {
             let formData = new FormData(form);
@@ -77,7 +93,7 @@ class NewRecipeForm extends React.Component {
             });
         }
     }
-    handleChange (event) {
+    handleImageChange (event) {
         event.preventDefault();
         const file = event.target.files[0];
         let imageName = file.name;
@@ -94,6 +110,18 @@ class NewRecipeForm extends React.Component {
         event.preventDefault();
         this.setState((prevState, props) => {
             prevState.imageUrl = '';
+            prevState.imageName = '';
+            prevState.image = null;
+            return (prevState);
+        });
+    }
+
+    clearImage (event) {
+        event.preventDefault();
+        this.setState((prevState, props) => {
+            prevState.imageUrl = '';
+            prevState.imageName = '';
+            prevState.image = null;
             return (prevState);
         });
     }
@@ -156,11 +184,12 @@ class NewRecipeForm extends React.Component {
                     <Directions />
                     <FoodCategory />
                     <ImageInput 
-                        handleChange={this.handleChange} 
+                        handleImageChange={this.handleImageChange} 
                         removeImage={this.removeImage} 
                         handleFileInput={this.handleFileInput}
                         imageUrl={this.state.imageUrl}
                         imageName={this.state.imageName}
+                        clearImage={this.clearImage}
                     />
                     <OriginalUrl />
                     <input id="submit-button" type="submit" value="Save Recipe" />
@@ -219,6 +248,14 @@ class ImageInput extends React.Component {
     }
 
     render () {
+        let imageName = this.props.imageName;
+        let extension = '';
+        const imageNameSplit = imageName.split('.');
+
+        if (imageNameSplit.length > 1) {
+            extension = imageNameSplit[imageNameSplit.length - 1].toLowerCase();
+        }
+
         if (this.props.imageUrl === '') {
             return (
                 <div className="input-group">
@@ -227,7 +264,7 @@ class ImageInput extends React.Component {
                     <div>
                         <input 
                             style={{visibility: 'hidden'}} 
-                            onChange={this.props.handleChange} 
+                            onChange={this.props.handleImageChange} 
                             type="file" 
                             id="recipe-image" 
                             name="recipe_image" 
@@ -239,27 +276,52 @@ class ImageInput extends React.Component {
                 </div>
             )
         } else {
-            return (
-                <div className="input-group">
-                    <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
-                    <button className="image-input-button" onClick={this.props.handleFileInput}>Upload Image</button>
-                    <input 
-                        style={{visibility: 'hidden'}} 
-                        onChange={this.props.handleChange} 
-                        type="file" 
-                        id="recipe-image" 
-                        name="recipe_image" 
-                        accept=".png, .jpg, .jpeg" 
-                        form="new-recipe"
-                        htmlFor="new-recipe"
-                    />
-                    <div id="image-input">
-                        <img id="user-image" src={this.props.imageUrl} alt="user uploaded image" />
-                        <p id="image-name">{this.props.imageName}</p>
-                        <button id="remove-image" className="image-input-button" onClick={this.props.removeImage}>Remove Image</button> 
+            if (extension === 'jpeg' || extension === 'jpg' || extension === 'png') {
+                return (
+                    <div className="input-group">
+                        <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
+                        <button className="image-input-button" onClick={this.props.handleFileInput}>Upload Image</button>
+                        <input 
+                            style={{visibility: 'hidden'}} 
+                            onChange={this.props.handleImageChange} 
+                            type="file" 
+                            id="recipe-image" 
+                            name="recipe_image" 
+                            accept=".png, .jpg, .jpeg" 
+                            form="new-recipe"
+                            htmlFor="new-recipe"
+                        />
+                        <div id="image-input">
+                            <img id="user-image" src={this.props.imageUrl} alt="user uploaded image" />
+                            <p id="image-name">{this.props.imageName}</p>
+                            <button id="remove-image" className="image-input-button" onClick={this.props.removeImage}>Remove Image</button> 
+                        </div>
                     </div>
-                </div>
-            );
+                );
+            } else {
+                return (
+                    <div className="input-group">
+                        <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
+                        <button className="image-input-button" onClick={this.props.handleFileInput}>Upload Image</button>
+                        <p id="invalid-image">
+                            Please provide a jpeg or png file with a valid jpg, jpeg, or png file extension.
+                        </p>
+                        <button id="remove-invalid-image" onClick={this.props.clearImage}>Remove Invalid Image</button>
+                        <div>
+                            <input 
+                                style={{visibility: 'hidden'}} 
+                                onChange={this.props.handleImageChange} 
+                                type="file" 
+                                id="recipe-image" 
+                                name="recipe_image" 
+                                accept=".png, .jpg, .jpeg" 
+                                form="new-recipe"
+                                htmlFor="new-recipe"
+                            />
+                        </div>
+                    </div>
+                )
+            }
         }
     }
 }

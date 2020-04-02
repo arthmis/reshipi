@@ -178,11 +178,11 @@ module.exports = (db) => {
         const recipe = {};
         recipe.title = recipeData.title;
         recipe.description = recipeData.description;
-        recipe.ingredients = recipeData.ingredients;
-        recipe.ingredients_amount = recipeData.ingredients_amount;
-        recipe.directions = recipeData.directions;
-        recipe.food_category = recipeData.food_category;
-        recipe.original_url = recipeData.original_url;
+        // recipe.ingredients = recipeData.ingredients;
+        // recipe.ingredients_amount = recipeData.ingredients_amount;
+        // recipe.directions = recipeData.directions;
+        // recipe.food_category = recipeData.food_category;
+        // recipe.url = recipeData.url;
         recipe.image = recipeData.image.replace('uploads\\', '');
 
         recipes.push(recipe);
