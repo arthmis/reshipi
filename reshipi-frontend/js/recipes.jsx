@@ -59,6 +59,7 @@ class Recipes extends React.Component {
         this.state = {
             recipes: [],
         }
+        this.deleteRecipe = this.deleteRecipe.bind(this);
     }
 
     componentDidMount() {
@@ -71,11 +72,31 @@ class Recipes extends React.Component {
         .then(recipes => { this.setState({ recipes })});
     }
 
+    async deleteRecipe (recipeTitle) {
+        const formData = new FormData();
+        formData.append('title', recipeTitle);
+
+        await fetch('/delete_recipe', {
+            method: "DELETE",
+            body: formData,
+            mode: 'same-origin',
+            credentials: 'same-origin',
+        });
+
+        let allRecipes = await fetch('/all_recipes', {
+                method: "GET",
+                mode: 'same-origin',
+                credentials: 'same-origin',
+        });
+        allRecipes = await allRecipes.json();
+        this.setState({recipes: allRecipes});
+    }
+
     render() {
         return (
             <div className="all-recipes">
                 {this.state.recipes.map((recipe, index) => {
-                    return (<Recipe key={index.toString()} recipe={recipe} />);
+                    return (<Recipe key={index.toString()} recipe={recipe} deleteRecipe={this.deleteRecipe}/>);
                 })}
             </div>
         )
@@ -90,11 +111,61 @@ class Recipe extends React.Component {
     render () {
         return (
             <div className="recipe-wrapper">
-                <p>{this.props.recipe.title}</p>
+                <div className="recipe-title-wrapper">
+                    <h3>{this.props.recipe.title}</h3>
+                    <RecipeMenu recipeTitle={this.props.recipe.title} deleteRecipe={this.props.deleteRecipe} />
+                </div>
                 <img className="recipe-image" src={this.props.recipe.image} alt="recipe image" />
                 <p className="description">{this.props.recipe.description}</p>
             </div>
         )
+    }
+}
+
+class RecipeMenu extends React.Component {
+    constructor(props) {
+        super(props); 
+        this.state = {
+            menu: 'invisible',
+        };
+        this.handleDropDown = this.handleDropDown.bind(this);
+        this.deleteRecipe = this.deleteRecipe.bind(this);
+    }
+
+    handleDropDown (event) {
+        event.preventDefault();
+        if (this.state.menu === 'invisible') {
+            this.setState({menu: 'visible'});
+        } else if (this.state.menu === 'visible') {
+            this.setState({menu: 'invisible'});
+        }
+    }
+
+    deleteRecipe (event) {
+        event.preventDefault();
+        this.setState({menu: 'invisible'});
+        this.props.deleteRecipe(this.props.recipeTitle);
+
+    }
+
+    render () {
+        if (this.state.menu === 'invisible') {
+            return (
+                <div>
+                    <button onClick={this.handleDropDown} className="recipe-menu"><i className="fas fa-ellipsis-v" aria-hidden="true"></i></button>
+                </div>
+            )
+        } else {
+            return (
+                <div className="recipe-dropdown">
+                    <button onClick={this.handleDropDown} className="recipe-menu"><i className="fas fa-ellipsis-v" aria-hidden="true"></i></button>
+                    <div className="recipe-buttons">
+                        <button onClick={this.deleteRecipe}>Delete</button>
+                        <button>Edit</button>
+                    </div>
+                </div>
+            )
+        }
     }
 }
 

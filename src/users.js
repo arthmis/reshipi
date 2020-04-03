@@ -189,6 +189,23 @@ module.exports = (db) => {
       }
       return recipes;
     },
+
+    deleteRecipe: async (recipeTitle) => {
+      const queryResult = await db.result(
+        'DELETE FROM Recipes WHERE title = $1', [recipeTitle],
+      ).catch((err) => {
+        console.log(err);
+        return false;
+      });
+
+      const count = queryResult.rowCount;
+
+      if (count === 1) {
+        return true;
+      }
+
+      return false;
+    },
   };
   return users;
 };

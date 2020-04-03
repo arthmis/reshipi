@@ -402,6 +402,15 @@ module.exports = (users, db) => {
     res.send(recipes);
   });
 
+  app.delete('/delete_recipe', upload.none(), async (req, res) => {
+    const isDeleted = await users.deleteRecipe(req.body.title);
+    if (isDeleted) {
+      res.sendStatus(204);
+    } else {
+      res.sendStatus(404);
+    }
+  });
+
 
   return { app };
 };

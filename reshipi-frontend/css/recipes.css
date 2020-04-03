@@ -60,7 +60,33 @@ p {
     margin: 1em;
     background-color: rgb(224, 224, 224);
     border-radius: 4px;
-    padding: 1em;
+    padding-bottom: 1em;
+    padding-right: 1em;
+    padding-left: 1em;
+}
+
+.recipe-title-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+.recipe-menu {
+    width: 4em;
+    height: 2em;
+}
+
+.recipe-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.recipe-buttons {
+    /* display: none; */
+    position: absolute;
+    min-width: 10em;
+    z-index: 1;
+    background-color: gray;
 }
 
 .description {
