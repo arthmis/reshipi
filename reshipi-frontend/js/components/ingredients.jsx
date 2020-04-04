@@ -1,6 +1,4 @@
-import React from 'react';
 import {moveElementDownList, moveElementUpList} from './utility.js';
-import ReactDOM from 'react-dom';
 'use strict';
 
 class Ingredient {

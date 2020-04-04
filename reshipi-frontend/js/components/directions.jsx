@@ -1,4 +1,3 @@
-import React from 'react';
 import {moveElementDownList, moveElementUpList} from './utility.js';
 'use strict';
 

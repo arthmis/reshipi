@@ -1,6 +1,3 @@
-import React from 'react';
-import ReactDom from 'react-dom';
-
 'use strict';
 
 class Nav extends React.Component {
@@ -170,4 +167,4 @@ class RecipeMenu extends React.Component {
 }
 
 const root = document.getElementById("root");
-ReactDom.render(<App />, root);
+ReactDOM.render(<App />, root);

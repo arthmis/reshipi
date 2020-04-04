@@ -1,10 +1,7 @@
-import React from 'react';
-import ReactDom from 'react-dom';
-import Directions from './components/directions.jsx';
-import IngredientList from './components/ingredients.jsx';
+import Directions from './components/directions.js';
+import IngredientList from './components/ingredients.js';
 
 'use strict';
-
 
 class App extends React.Component {
     constructor(props) {
@@ -62,7 +59,7 @@ class NewRecipeForm extends React.Component {
     handleSubmit (event) {
         event.preventDefault();
 
-        const form = ReactDom.findDOMNode(this);
+        const form = ReactDOM.findDOMNode(this);
 
         let inputImage = document.getElementById('recipe-image');
         let split = this.state.imageName.split('.');
@@ -350,4 +347,4 @@ class OriginalUrl extends React.Component {
 }
 
 const root = document.getElementById("root");
-ReactDom.render(<App />, root);
+ReactDOM.render(<App />, root);
