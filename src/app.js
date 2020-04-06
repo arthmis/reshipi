@@ -13,7 +13,7 @@
 require('dotenv').config();
 
 const express = require('express');
-const { check, validationResult, body } = require('express-validator');
+const { check, validationResult, body, query } = require('express-validator');
 const bodyParser = require('body-parser');
 const csp = require('helmet-csp');
 const session = require('express-session');
@@ -271,29 +271,17 @@ module.exports = (users, db) => {
       const recipe = req.body;
       if (!validationErrors.isEmpty()) {
         console.log(validationErrors);
-        res.status(401);
+        res.sendStatus(401);
         return;
       }
       if (Array.isArray(recipe.ingredients)) {
-        let ingredients = '';
-        for (const ingredient of recipe.ingredients) {
-          ingredients += (`\n${ingredient}`);
-        }
-        recipe.ingredients = ingredients;
+        recipe.ingredients = recipe.ingredients.join('\n');
       }
       if (Array.isArray(recipe.directions)) {
-        let directions = '';
-        for (const direction of recipe.directions) {
-          directions += (`\n${direction}`);
-        }
-        recipe.directions = directions;
+        recipe.directions = recipe.directions.join('\n');
       }
       if (Array.isArray(recipe.ingredient_amount)) {
-        let quantities = '';
-        for (const quantity of recipe.ingredient_amount) {
-          quantities += (`\n${quantity}`);
-        }
-        recipe.ingredient_amount = quantities;
+        recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
       }
 
       await users.addRecipe(recipe, req.session.user, req.files);
@@ -386,25 +374,32 @@ module.exports = (users, db) => {
         .isURL(),
       body('food_category').if(body('food_category').not().isEmpty())
         .trim()
+        .not()
         .isEmpty()
         .escape(),
     ],
     addRecipe,
   );
 
+  // add session checking for this
   app.get('/all_recipes', async (req, res) => {
-    const recipes = await users.getRecipes(req.session.user, 15);
-    res.status(200);
-    for (let i = 0; i < recipes.length; i += 1) {
-      recipes[i].title = validator.unescape(recipes[i].title);
-      recipes[i].description = validator.unescape(recipes[i].description);
-      // recipes[i].ingredients = validator.unescape(recipes[i].ingredients);
-      // recipes[i].directions = validator.unescape(recipes[i].directions);
-      // recipes[i].ingredients_amount = validator.unescape(recipes[i].ingredients_amount);
-      // recipes[i].url = validator.unescape(recipes[i].url);
-      // recipes[i].food_category = validator.unescape(recipes[i].food_category);
-    }
-    res.send(recipes);
+    req.sessionStore.get(req.session.id, async (err, sess) => {
+      if (err) {
+        console.log(`err: ${err}`);
+        return;
+      }
+      if (!sess) {
+        res.redirect(303, '/login');
+        return;
+      }
+      const recipes = await users.getRecipes(req.session.user, 15);
+      res.status(200);
+      for (let i = 0; i < recipes.length; i += 1) {
+        recipes[i].title = validator.unescape(recipes[i].title);
+        recipes[i].description = validator.unescape(recipes[i].description);
+      }
+      res.send(recipes);
+    });
   });
 
   app.delete('/delete_recipe', upload.none(), async (req, res) => {
@@ -415,6 +410,59 @@ module.exports = (users, db) => {
       res.sendStatus(404);
     }
   });
+
+  app.get(
+    '/edit_recipe',
+    [
+      query('title').trim().not().isEmpty(),
+    ],
+    async (req, res) => {
+      // console.log(req.query);
+      req.sessionStore.get(req.session.id, async (err, sess) => {
+        if (err) {
+          console.log(`err: ${err}`);
+          return;
+        }
+        if (!sess) {
+          res.redirect(303, '/login');
+          return;
+        }
+        const validationErrors = validationResult(req);
+        if (!validationErrors.isEmpty()) {
+          console.log(validationErrors);
+          res.sendStatus(401);
+          return;
+        }
+
+        res.status(200);
+        res.render('pages/edit_recipe');
+      });
+    },
+  );
+  app.get('/get_recipe', [query('title').trim().not().isEmpty()], async (req, res) => {
+    req.sessionStore.get(req.session.id, async (err, sess) => {
+      if (err) {
+        console.log(`err: ${err}`);
+        return;
+      }
+      if (!sess) {
+        res.redirect(303, '/login');
+        return;
+      }
+      const validationErrors = validationResult(req);
+      if (!validationErrors.isEmpty()) {
+        console.log(validationErrors);
+        res.sendStatus(401);
+        return;
+      }
+
+      const recipe = await users.getRecipe(req.query.title);
+      // res.sendStatus(200);
+      res.status(200);
+      res.send(JSON.stringify(recipe));
+    });
+  });
+
 
 
   return { app };

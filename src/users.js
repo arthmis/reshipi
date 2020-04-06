@@ -190,6 +190,17 @@ module.exports = (db) => {
       return recipes;
     },
 
+    getRecipe: async (recipeTitle) => {
+      const recipe = await db.one(
+        'SELECT title, description, ingredients, ingredients_amount, directions, food_category, image, url FROM Recipes WHERE title = $1', 
+        [recipeTitle],
+      ).catch((err) => {
+        console.log(err);
+      });
+
+      return recipe;
+    },
+
     deleteRecipe: async (recipeTitle) => {
       const queryResult = await db.result(
         'DELETE FROM Recipes WHERE title = $1', [recipeTitle],
