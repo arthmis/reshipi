@@ -1,4 +1,4 @@
-import {moveElementDownList, moveElementUpList} from './utility.js';
+import {moveElementDownList, moveElementUpList} from '../utility.js';
 'use strict';
 
 export default class Directions extends React.Component {

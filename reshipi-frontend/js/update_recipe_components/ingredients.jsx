@@ -1,101 +1,34 @@
-import {moveElementDownList, moveElementUpList} from './utility.js';
+import {moveElementDownList, moveElementUpList} from '../utility.js';
 'use strict';
 
-class Ingredient {
+export class Ingredient {
     constructor(ingredient, quantity) {
         this.ingredient = ingredient;
         this.quantity = quantity;
     }
 }
 
-export default class IngredientList extends React.Component {
+export class IngredientList extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {ingredients: [new Ingredient('', '')]};
-        this.addNewIngredientInput = this.addNewIngredientInput.bind(this);
-        this.removeIngredientInput = this.removeIngredientInput.bind(this);
-        this.updateIngredient = this.updateIngredient.bind(this);
-        this.updateIngredientQuantity = this.updateIngredientQuantity.bind(this);
-        this.handleDragOver = this.handleDragOver.bind(this);
-        this.onDragStart = this.onDragStart.bind(this);
-        this.onDrop = this.onDrop.bind(this);
     }
-
-    addNewIngredientInput(event) {
-        event.preventDefault();
-        this.setState((prevState, props) => {
-            prevState.ingredients.push(new Ingredient('', ''));
-            return (prevState);
-        });
-    }
-
-    removeIngredientInput(event, index) {
-        event.preventDefault();
-        if (this.state.ingredients.length > 1) {
-            this.setState((prevState, props) => {
-                prevState.ingredients.splice(index, 1);
-                return (prevState);
-            });
-        }
-    }
-
-    updateIngredient(index, ingredient) {
-        this.setState((prevState, props) => {
-            prevState.ingredients[index].ingredient = ingredient;
-            return (prevState);
-        });
-    }
-    updateIngredientQuantity(index, quantity) {
-        this.setState((prevState, props) => {
-            prevState.ingredients[index].quantity = quantity;
-            return (prevState);
-        });
-    }
-
-    handleDragOver (event) {
-        event.preventDefault();
-    }
-
-    onDragStart (event, index) {
-        event.dataTransfer.setData("text/plain", index);
-    }
-
-    onDrop(event, dropIndex) {
-        event.preventDefault();
-
-        // dataTransfer turns the data into a DOMstring
-        const element_index = Number(event.dataTransfer.getData("text/plain"));
-
-        const ingredients = this.state.ingredients;
-
-        // if greater than dropIndex I will have to right shift
-        // the array elements up to index
-        if (element_index > dropIndex) {
-            moveElementUpList(ingredients, element_index, dropIndex);
-            this.setState({ingredients});
-        } else if (element_index < dropIndex) { // left shifts elements
-            moveElementDownList(ingredients, element_index, dropIndex);
-            this.setState({ingredients});
-        }
-    }
-
 
     render() {
         let ingredientList = null;
-        if (this.state.ingredients.length === 1) {
-            ingredientList = this.state.ingredients.map((ingredient, index) => {
+        if (this.props.ingredients.length === 1) {
+            ingredientList = this.props.ingredients.map((ingredient, index) => {
                 return (
                     <li className="list-item" key={index.toString()}>
                         <div className="drag-item"
                             draggable
-                            onDragStart={(e) => this.onDragStart(e, index)}
-                            onDragOver={this.handleDragOver}
-                            onDrop={(e) => this.onDrop(e, index)}
+                            onDragStart={(e) => this.props.onDragStart(e, index)}
+                            onDragOver={this.props.handleDragOver}
+                            onDrop={(e) => this.props.onDrop(e, index)}
                         >
                             <IngredientInput
                                 ingredient={ingredient} 
-                                updateIngredient={this.updateIngredient} 
-                                updateIngredientQuantity={this.updateIngredientQuantity}
+                                updateIngredient={this.props.updateIngredient} 
+                                updateIngredientQuantity={this.props.updateIngredientQuantity}
                                 index={index} 
                             />
                             <span className="draggable-icon">
@@ -103,25 +36,25 @@ export default class IngredientList extends React.Component {
                             </span>
                         </div>
                         <span className="remove-input-wrapper">
-                            <button onClick={(e) => this.removeIngredientInput(e, index)} className="remove-input-button" disabled><i className="fas fa-times"></i></button>
+                            <button onClick={(e) => this.props.removeIngredientInput(e, index)} className="remove-input-button" disabled><i className="fas fa-times"></i></button>
                         </span>
                     </li>
                 )
             });
         } else {
-            ingredientList = this.state.ingredients.map((ingredient, index) => {
+            ingredientList = this.props.ingredients.map((ingredient, index) => {
                 return (
                     <li className="list-item" key={index.toString()}>
                         <div className="drag-item"
                             draggable
-                            onDragStart={(e) => this.onDragStart(e, index)}
-                            onDragOver={this.handleDragOver}
-                            onDrop={(e) => this.onDrop(e, index)}
+                            onDragStart={(e) => this.props.onDragStart(e, index)}
+                            onDragOver={this.props.handleDragOver}
+                            onDrop={(e) => this.props.onDrop(e, index)}
                         >
                             <IngredientInput
                                 ingredient={ingredient} 
-                                updateIngredient={this.updateIngredient} 
-                                updateIngredientQuantity={this.updateIngredientQuantity}
+                                updateIngredient={this.props.updateIngredient} 
+                                updateIngredientQuantity={this.props.updateIngredientQuantity}
                                 index={index} 
                             />
                             <span className="draggable-icon">
@@ -129,7 +62,7 @@ export default class IngredientList extends React.Component {
                             </span>
                         </div>
                         <span className="remove-input-wrapper">
-                            <button onClick={(e) => this.removeIngredientInput(e, index)} className="remove-input-button"><i className="fas fa-times"></i></button>
+                            <button onClick={(e) => this.props.removeIngredientInput(e, index)} className="remove-input-button"><i className="fas fa-times"></i></button>
                         </span>
                     </li>
                 )
@@ -141,7 +74,7 @@ export default class IngredientList extends React.Component {
                 <ul className="ingredient-list">
                     {ingredientList}
                 </ul>
-                <button className="add-new-input" onClick={this.addNewIngredientInput}>Add ingredient</button>
+                <button className="add-new-input" onClick={this.props.addNewIngredientInput}>Add ingredient</button>
             </div>
         );
     }
