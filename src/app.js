@@ -462,13 +462,62 @@ module.exports = (users, db) => {
       res.send(JSON.stringify(recipe));
     });
   });
+  app.put(
+    '/update_recipe',
+    upload.any('recipe_image'),
+    [
+      body('title').trim().not().isEmpty()
+        .escape()
+        .isLength({ min: 3, max: 50 }),
+      body('description').trim().escape().isLength({ min: 0, max: 240 }),
+      body('ingredients', 'Provided ingredient must not be empty.')
+        .custom(checkIngredients),
+      body('ingredient_amount', 'Provided ingredient quantity cannot be empty.')
+        .custom(checkIngredientQuantity),
+      body('directions', 'Provided direction cannot be empty.')
+        .custom(checkDirections),
+      body('original_url').if(body('original_url').not().isEmpty())
+        .trim()
+        .not()
+        .isEmpty()
+        .isURL(),
+      body('food_category').if(body('food_category').not().isEmpty())
+        .trim()
+        .not()
+        .isEmpty()
+        .escape(),
+    ],
+    (req, res) => {
+      req.sessionStore.get(req.session.id, async (err, sess) => {
+        if (err) {
+          console.log(`err: ${err}`);
+          return;
+        }
+        if (!sess) {
+          res.redirect(303, '/login');
+          return;
+        }
+        const validationErrors = validationResult(req);
+        const recipe = req.body;
+        if (!validationErrors.isEmpty()) {
+          console.log(validationErrors);
+          res.sendStatus(401);
+          return;
+        }
+        if (Array.isArray(recipe.ingredients)) {
+          recipe.ingredients = recipe.ingredients.join('\n');
+        }
+        if (Array.isArray(recipe.directions)) {
+          recipe.directions = recipe.directions.join('\n');
+        }
+        if (Array.isArray(recipe.ingredient_amount)) {
+          recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
+        }
 
-
-
+        await users.updateRecipe(recipe, req.session.user, req.files);
+        res.sendStatus(200);
+      });
+    },
+  );
   return { app };
 };
-
-// updateUserRecipe
-// deleteUserRecipe
-// addUserRecipe
-// get7RandomRecipes

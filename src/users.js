@@ -178,11 +178,6 @@ module.exports = (db) => {
         const recipe = {};
         recipe.title = recipeData.title;
         recipe.description = recipeData.description;
-        // recipe.ingredients = recipeData.ingredients;
-        // recipe.ingredients_amount = recipeData.ingredients_amount;
-        // recipe.directions = recipeData.directions;
-        // recipe.food_category = recipeData.food_category;
-        // recipe.url = recipeData.url;
         recipe.image = recipeData.image.replace('uploads\\', '');
 
         recipes.push(recipe);
@@ -192,12 +187,13 @@ module.exports = (db) => {
 
     getRecipe: async (recipeTitle) => {
       const recipe = await db.one(
-        'SELECT title, description, ingredients, ingredients_amount, directions, food_category, image, url FROM Recipes WHERE title = $1', 
+        'SELECT title, description, ingredients, ingredients_amount, directions, food_category, image, url FROM Recipes WHERE title = $1',
         [recipeTitle],
       ).catch((err) => {
         console.log(err);
       });
 
+      recipe.image = recipe.image.replace('uploads\\', '');
       return recipe;
     },
 
@@ -216,6 +212,49 @@ module.exports = (db) => {
       }
 
       return false;
+    },
+
+    updateRecipe: async (recipe, user, image) => {
+      if (image.length === 0) {
+        recipe.image = '';
+        if (recipe.original_image !== '' && !recipe.image_is_deleted) {
+          recipe.image = `uploads/${recipe.original_image}`;
+        }
+      } else {
+        recipe.image = image[0].path;
+      }
+
+      const updateRecipe = new pg.ParameterizedQuery(
+        {
+          text: `
+            UPDATE recipes
+            SET 
+              title = $1, 
+              description = $2, 
+              ingredients = $3, 
+              ingredients_amount = $4, 
+              directions = $5, 
+              food_category = $6,
+              image = $7,
+              url = $8
+            WHERE username=$9 and title=$10
+          `,
+          values: [
+            recipe.title,
+            recipe.description,
+            recipe.ingredients,
+            recipe.ingredient_amount,
+            recipe.directions,
+            recipe.food_category,
+            recipe.image,
+            recipe.original_url,
+            user,
+            recipe.original_title,
+          ],
+        },
+      );
+
+      await db.none(updateRecipe).catch((err) => console.log(err));
     },
   };
   return users;

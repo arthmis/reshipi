@@ -93,19 +93,8 @@ class Recipes extends React.Component {
         const formData = new FormData();
         formData.append('title', recipeTitle);
 
-        console.log(encodeURIComponent(recipeTitle));
         const encodedTitle = encodeURIComponent(recipeTitle);
         const newUrl = `/edit_recipe?title=${encodedTitle}`;
-
-        let recipe = await fetch(`/get_recipe?title=${encodedTitle}`, {
-            method: "GET",
-            mode: 'same-origin',
-            credentials: 'same-origin',
-        });
-        recipe = await recipe.json();
-        recipe = JSON.stringify(recipe);
-        console.log(recipe);
-        sessionStorage.setItem('recipe', recipe);
 
         await fetch(newUrl, {
             method: "GET",
@@ -119,7 +108,14 @@ class Recipes extends React.Component {
         return (
             <div className="all-recipes">
                 {this.state.recipes.map((recipe, index) => {
-                    return (<Recipe key={index.toString()} recipe={recipe} deleteRecipe={this.deleteRecipe} editRecipe={this.editRecipe}/>);
+                    return (
+                        <Recipe 
+                            key={index.toString()} 
+                            recipe={recipe} 
+                            deleteRecipe={this.deleteRecipe} 
+                            editRecipe={this.editRecipe}
+                        />
+                    );
                 })}
             </div>
         )

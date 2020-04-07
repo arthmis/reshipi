@@ -7,7 +7,6 @@ export default class Directions extends React.Component {
     }
 
     render() {
-        console.log(this.props.directions);
         let directionList = null;
         if (this.props.directions.length === 1) {
             directionList = this.props.directions.map((direction, index) => {

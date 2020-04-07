@@ -72,6 +72,9 @@ class NewRecipeForm extends React.Component {
             imageUrl: '',
             imageName: '',
             image: null,
+            originalImage: '',
+            originalTitle: '',
+            imageIsDeleted: false,
         };
         this.handleSubmit = this.handleSubmit.bind(this);
 
@@ -103,7 +106,6 @@ class NewRecipeForm extends React.Component {
     }
 
     async componentDidMount() {
-        // let recipe = JSON.parse(sessionStorage.getItem('recipe'));
         const urlKeys = new URLSearchParams(window.location.search);
         const title = urlKeys.get('title');
         const encodedTitle = encodeURIComponent(title);
@@ -114,7 +116,6 @@ class NewRecipeForm extends React.Component {
             credentials: 'same-origin',
         });
         let recipe = await response.json();
-        console.log(recipe.ingredients);
         recipe.ingredients = recipe.ingredients.split('\n');
         recipe.ingredients_amount = recipe.ingredients_amount.split('\n');
         recipe.directions = recipe.directions.split('\n');
@@ -125,13 +126,23 @@ class NewRecipeForm extends React.Component {
         }
 
         recipe.ingredients = ingredientAndQuantity;
-        console.log(recipe.ingredients);
         delete recipe.ingredients_amount;
 
-        // console.log(recipe);
         this.setState((prevState, props) => {
             prevState.recipe = recipe;
             prevState.originalTitle = recipe.title;
+            prevState.originalImage = recipe.image;
+            prevState.imageUrl = recipe.image;
+
+            // only update recipe image name if there is an original one
+            // otherwise the made up name interferes with client
+            // validation when submitting the form
+            if (recipe.image !== '') {
+                let imageNameSplit = recipe.image.split('.');
+                let imageExtenstion = imageNameSplit[imageNameSplit.length - 1];
+                prevState.imageName = `${recipe.title}.${imageExtenstion}`;
+            }
+
             return(prevState);
         });
     }
@@ -158,9 +169,13 @@ class NewRecipeForm extends React.Component {
 
         if (form.reportValidity()) {
             let formData = new FormData(form);
-            formData.append("image", this.state.image);
+            formData.append('image', this.state.image);
+            formData.append('original_title', this.state.originalTitle);
+            formData.append('original_image', this.state.originalImage);
+            formData.append('image_is_deleted', this.state.imageIsDeleted);
+
             fetch('/update_recipe', {
-                method: "POST",
+                method: 'PUT',
                 body: formData,
                 mode: 'same-origin',
                 credentials: 'same-origin',
@@ -179,6 +194,7 @@ class NewRecipeForm extends React.Component {
             prevState.imageUrl = imageUrl;
             prevState.imageName = imageName;
             prevState.image = file;
+            prevState.recipe.image = file;
             return (prevState);
         });
     }
@@ -189,6 +205,13 @@ class NewRecipeForm extends React.Component {
             prevState.imageUrl = '';
             prevState.imageName = '';
             prevState.image = null;
+            // this allows the server to check if a recipe
+            // image was deleted so that it will be removed
+            // on the server if the image is updated or completely 
+            // deleted
+            if (prevState.originalImage !== '') {
+                prevState.imageIsDeleted = true;
+            }
             return (prevState);
         });
     }
@@ -538,7 +561,7 @@ class ImageInput extends React.Component {
                             htmlFor="new-recipe"
                         />
                         <div id="image-input">
-                            <img id="user-image" src={this.props.imageUrl} alt="user uploaded image" />
+                            <img id="user-image" src={this.props.imageUrl} alt="recipe image" />
                             <p id="image-name">{this.props.imageName}</p>
                             <button id="remove-image" className="image-input-button" onClick={this.props.removeImage}>Remove Image</button> 
                         </div>
