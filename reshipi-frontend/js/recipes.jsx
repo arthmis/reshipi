@@ -26,30 +26,25 @@ class App extends React.Component {
                 <header>
                     <Nav />
                 </header>
-                <main>
-                    <h2>Reshipi recipe cards</h2>
-                    <AddNewRecipe />
-                    <Recipes />
-                </main>
+                <Recipes />
             </div>
         );
     }
 }
 
-class AddNewRecipe extends React.Component {
+class SearchRecipes extends React.Component {
     constructor(props) {
         super(props);
     }
 
     render() {
         return (
-            <form action="/new_recipe" method="get">
-                <input id="new-recipe" type="submit" name="new_recipe" value="Add new recipe"/>
-            </form>
+            <div id="search">
+                <input type="text" />
+            </div>
         )
     }
 }
-
 class Recipes extends React.Component {
     constructor(props) {
         super(props);
@@ -106,18 +101,28 @@ class Recipes extends React.Component {
 
     render() {
         return (
-            <div className="all-recipes">
-                {this.state.recipes.map((recipe, index) => {
-                    return (
-                        <Recipe 
-                            key={index.toString()} 
-                            recipe={recipe} 
-                            deleteRecipe={this.deleteRecipe} 
-                            editRecipe={this.editRecipe}
-                        />
-                    );
-                })}
-            </div>
+            <main>
+                <div id="search-and-new-recipe">
+                    <SearchRecipes />
+                    <form action="/new_recipe" method="get">
+                        <button id="new-recipe" type="submit" name="new_recipe" value="New ">
+                            <i className="fas fa-plus"></i> New Recipe
+                        </button>
+                    </form>
+                </div>
+                <div className="all-recipes">
+                    {this.state.recipes.map((recipe, index) => {
+                        return (
+                            <Recipe 
+                                key={index.toString()} 
+                                recipe={recipe} 
+                                deleteRecipe={this.deleteRecipe} 
+                                editRecipe={this.editRecipe}
+                            />
+                        );
+                    })}
+                </div>
+            </main>
         )
     }
 }
@@ -180,17 +185,22 @@ class RecipeMenu extends React.Component {
     render () {
         if (this.state.menu === 'invisible') {
             return (
-                <div>
-                    <button onClick={this.handleDropDown} className="recipe-menu"><i className="fas fa-ellipsis-v" aria-hidden="true"></i></button>
+                <div className="recipe-menu-button-wrapper">
+                    <button 
+                        onClick={this.handleDropDown} 
+                        className="recipe-menu"
+                    >
+                        <i className="fas fa-ellipsis-v" aria-hidden="true"></i>
+                    </button>
                 </div>
             )
         } else {
             return (
-                <div className="recipe-dropdown">
+                <div className="recipe-menu-button-wrapper recipe-dropdown">
                     <button onClick={this.handleDropDown} className="recipe-menu"><i className="fas fa-ellipsis-v" aria-hidden="true"></i></button>
                     <div className="recipe-buttons">
-                        <button onClick={this.deleteRecipe}>Delete</button>
-                        <button onClick={this.editRecipe}>Edit</button>
+                        <button className="dropdown-button" onClick={this.deleteRecipe}>Delete</button>
+                        <button className="dropdown-button" onClick={this.editRecipe}>Edit</button>
                     </div>
                 </div>
             )
