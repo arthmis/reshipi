@@ -178,7 +178,8 @@ module.exports = (db) => {
         const recipe = {};
         recipe.title = recipeData.title;
         recipe.description = recipeData.description;
-        recipe.image = recipeData.image.replace('uploads\\', '');
+        recipe.image = recipeData.image.replace('\\', '/');
+        recipe.image = recipe.image.replace('uploads/', '');
 
         recipes.push(recipe);
       }
@@ -193,7 +194,8 @@ module.exports = (db) => {
         console.log(err);
       });
 
-      recipe.image = recipe.image.replace('uploads\\', '');
+      recipe.image = recipe.image.replace('\\', '/');
+      recipe.image = recipe.image.replace('uploads/', '');
       return recipe;
     },
 
@@ -215,13 +217,17 @@ module.exports = (db) => {
     },
 
     updateRecipe: async (recipe, user, image) => {
-      if (image.length === 0) {
-        recipe.image = '';
-        if (recipe.original_image !== '' && !recipe.image_is_deleted) {
+      if (image.length !== 0) {
+        recipe.image = image[0].path;
+      } 
+      else if (recipe.original_image.length > 0) {
+        if (recipe.image_is_deleted === 'true') {
+          recipe.image = '';
+        } else {
           recipe.image = `uploads/${recipe.original_image}`;
         }
       } else {
-        recipe.image = image[0].path;
+        recipe.image = '';
       }
 
       const updateRecipe = new pg.ParameterizedQuery(
