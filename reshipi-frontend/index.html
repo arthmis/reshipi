@@ -15,21 +15,42 @@
                 <a id="reshipi" href="">Reshipi</a>
                 <div id="user-auth-actions">
                     <a href="/login" id="login">Login</a>
+                    <a href="#sign-up" id="signup">Signup</a>
                 </div>
             </nav>
         </header>
         <main>
             <div id="main-information">
-                <h1>
-                    Reshipi
-                </h1>
-                <p>
-                    Reshipi is a way to save your recipes and have them
-                    available anywhere you need.
-                </p>
-
+                <div id="reshipi-description">
+                    <h1>
+                        Reshipi
+                    </h1>
+                    <p>
+                        Create your own virtual recipe book.<br>
+                        Easily keep track of your favorite recipes.
+                    </p>
+                </div>
+                <div id="recipe-book-img">
+                    <img src="/images/recipe_book.jpg" />
+                </div>
+            </div>
+            <div id="reshipi-example-one">
+                <div id="recipe-search-img">
+                    <img src="/images/recipe_book.jpg" />
+                </div>
+                <div id="reshipi-search-description">
+                    <h2>Search Your Recipes</h2>
+                    <p>
+                        Quickly search for recipes by title, description
+                        and type. Or get a random recipe to spice things up!
+                    </p>
+                </div>
             </div>
             <div id="sign-up-wrapper">
+                <div id="signup-associated-text">
+                    <h2>Get Started!</h2>
+                    <p>Sign up today and start building your recipe collection.</p>
+                </div>
                 <form id="sign-up" action="/signup" method="post">
                     <div id="form-inputs">
                         <div class="input-group">
@@ -47,8 +68,10 @@
                         <input id="submit-button" type="submit" value="Sign Up">
                     </div>
                 </form>
-
             </div>
         </main>
+        <!-- <footer>
+            Copyright stuff
+        </footer> -->
     </body>
 </html>
