@@ -8,7 +8,7 @@ class Nav extends React.Component {
         return(
             <nav id="nav">
                 <a id="reshipi" href="/recipes">Reshipi</a>
-                <form action="/logout" method="get">
+                <form id="logout-form" action="/logout" method="get">
                     <input id="logout" type="submit" name="logout" value="Logout"/>
                 </form>
             </nav>
@@ -40,7 +40,7 @@ class SearchRecipes extends React.Component {
     render() {
         return (
             <div id="search">
-                <input type="text" />
+                <input type="text" placeholder="Search" />
             </div>
         )
     }
@@ -135,6 +135,7 @@ class Recipe extends React.Component {
     render () {
         return (
             <div className="recipe-wrapper">
+                <img className="recipe-image" src={this.props.recipe.image} alt="recipe image" />
                 <div className="recipe-title-wrapper">
                     <h3>{this.props.recipe.title}</h3>
                     <RecipeMenu 
@@ -143,7 +144,6 @@ class Recipe extends React.Component {
                         editRecipe={this.props.editRecipe} 
                     />
                 </div>
-                <img className="recipe-image" src={this.props.recipe.image} alt="recipe image" />
                 <p className="description">{this.props.recipe.description}</p>
             </div>
         )
