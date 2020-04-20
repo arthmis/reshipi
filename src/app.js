@@ -523,5 +523,32 @@ module.exports = (users, db) => {
       });
     },
   );
+  app.get(
+    '/recipe',
+    [
+      query('title').trim().not().isEmpty(),
+    ],
+    async (req, res) => {
+      req.sessionStore.get(req.session.id, async (err, sess) => {
+        if (err) {
+          console.log(`err: ${err}`);
+          return;
+        }
+        if (!sess) {
+          res.redirect(303, '/login');
+          return;
+        }
+        const validationErrors = validationResult(req);
+        if (!validationErrors.isEmpty()) {
+          console.log(validationErrors);
+          res.sendStatus(401);
+          return;
+        }
+
+        res.status(200);
+        res.render('pages/recipe');
+      });
+    },
+  );
   return { app };
 };

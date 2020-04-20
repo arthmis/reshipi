@@ -1,0 +1,163 @@
+html, body {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    font-family: "Open sans", sans-serif;
+    font-family: 'Raleway', sans-serif;
+    font-size: 16px;
+}
+
+nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    height: 4em;
+    width: 100%;
+    /* background-color: #d6d1b1; */
+}
+
+nav * {
+    height: 100%;
+}
+
+#logout-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 6em;
+    margin-right: 2em;
+}
+
+#logout {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid #777777;
+    background-color: inherit;
+    font-family: inherit;
+    font-size: 1em;
+    text-decoration: none;
+    width: 6em;
+    height: 2.3em;
+    border-radius: 3px;
+}
+#logout:visited {
+    color: #363636;
+}
+#logout:hover {
+    cursor: pointer;
+    color: #000000;
+    border: 2px solid #f1db5d;
+    background-color: #f1db5d;
+}
+
+#reshipi {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 1em;
+    background-color: inherit;
+    font-family: inherit;
+    font-size: 1em;
+    text-decoration: none;
+    /* color: #292929; */
+}
+#reshipi:visited {
+    /* color: #292929; */
+    color: black;
+}
+#reshipi:hover {
+    color: #3463bb;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    width: 100%;
+    justify-content: flex-start;
+    align-items: center;
+    /* background-image: linear-gradient(to left, #ff9267, #ffa791); */
+    /* background-color: #eef5db; */
+    /* background-color: #ee9480; */
+    /* background-image: url(/images/abstract-antique-backdrop-background-129731.jpg); */
+    background-position: center;
+    opacity: 0.9;
+}
+
+#title {
+    align-self: center;
+}
+
+#recipe {
+    min-width: 80%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: #f9f9f9;
+    /* align-items: center; */
+}
+
+#recipe > img {
+    max-width: 70%;
+    min-width: 40%;
+    height: auto;
+    align-self: center;
+}
+
+#description {
+    margin-top: 2em;
+    margin-left: 2em;
+    margin-right: 2em;
+    padding-bottom: 2em;
+    font-size: 1.2em;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+#ingredients {
+    font-size: 1.1em;
+    margin-left: 2em;
+    margin-right: 2em;
+    font-family: 'Raleway', sans-serif;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+#ingredients > ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ingredient {
+    font-weight: 600;
+    /* margin-bottom: 2em; */
+}
+
+.ingredient-item {
+    margin-bottom: 2em;
+}
+
+#directions {
+    font-size: 1.1em;
+    font-family: 'Raleway', sans-serif;
+    margin-left: 2em;
+    margin-right: 2em;
+}
+
+#ingredients > h4, #directions > h4 {
+    font-size: 1.5em;
+    font-weight: 500;
+}
+
+#directions > ol {
+    margin: 0;
+    padding: 0;
+}
+
+.direction {
+    margin-left: 1em;
+    margin-bottom: 2em;
+    max-width: 70ch;
+}

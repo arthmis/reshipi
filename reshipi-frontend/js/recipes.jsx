@@ -130,6 +130,25 @@ class Recipes extends React.Component {
 class Recipe extends React.Component {
     constructor(props) {
         super(props);
+        this.recipeLink = this.recipeLink.bind(this);
+    }
+
+    async recipeLink(event) {
+        event.preventDefault();
+
+        let recipeTitle = this.props.recipe.title;
+        const formData = new FormData();
+        formData.append('title', recipeTitle);
+
+        const encodedTitle = encodeURIComponent(recipeTitle);
+        const newUrl = `/recipe?title=${encodedTitle}`;
+
+        let result = await fetch(newUrl, {
+            method: "GET",
+            mode: 'same-origin',
+            credentials: 'same-origin',
+        });
+        document.location.href = newUrl;
     }
 
     render () {
@@ -137,7 +156,9 @@ class Recipe extends React.Component {
             <div className="recipe-wrapper">
                 <img className="recipe-image" src={this.props.recipe.image} alt="recipe image" />
                 <div className="recipe-title-wrapper">
-                    <h3>{this.props.recipe.title}</h3>
+                    <h3>
+                        <a onClick={this.recipeLink} href="/recipe">{this.props.recipe.title}</a>
+                    </h3>
                     <RecipeMenu 
                         recipeTitle={this.props.recipe.title} 
                         deleteRecipe={this.props.deleteRecipe} 
