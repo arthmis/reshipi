@@ -457,7 +457,11 @@ module.exports = (users, db) => {
       }
 
       const recipe = await users.getRecipe(req.query.title);
-      // res.sendStatus(200);
+
+      for (const [key, value] of Object.entries(recipe)) {
+        recipe[key] = validator.unescape(value);
+      }
+
       res.status(200);
       res.send(JSON.stringify(recipe));
     });
