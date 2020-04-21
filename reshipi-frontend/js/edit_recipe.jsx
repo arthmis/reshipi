@@ -7,18 +7,6 @@ import {moveElementDownList, moveElementUpList} from './utility.js';
 class App extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            recipe: {
-                title: '',
-                description: '',
-                ingredients: [],
-                ingredients_amount: [],
-                directions: [],
-                food_category: '',
-                image: '',
-                url: '',
-            },
-        };
     }
 
 

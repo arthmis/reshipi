@@ -284,6 +284,9 @@ module.exports = (users, db) => {
         recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
       }
 
+      if (await users.isDuplicateTitle(recipe.title)) {
+        res.sendStatus(203);
+      }
       await users.addRecipe(recipe, req.session.user, req.files);
       res.status(200);
       res.render('pages/recipes');
@@ -464,6 +467,31 @@ module.exports = (users, db) => {
 
       res.status(200);
       res.send(JSON.stringify(recipe));
+    });
+  });
+  app.post('/check_duplicate_recipe', upload.none('title'), [body('title').trim().escape()], async (req, res) => {
+    req.sessionStore.get(req.session.id, async (err, sess) => {
+      if (err) {
+        console.log(`err: ${err}`);
+        return;
+      }
+      if (!sess) {
+        res.redirect(303, '/login');
+        return;
+      }
+      const validationErrors = validationResult(req);
+      if (!validationErrors.isEmpty()) {
+        console.log(validationErrors);
+        res.sendStatus(401);
+        return;
+      }
+
+      // let recipeTitle = req.body;
+      // console.log(recipeTitle);
+      const isDuplicate = await users.isDuplicateTitle(req.body.title);
+
+      res.status(200);
+      res.send(JSON.stringify({ isDuplicate }));
     });
   });
   app.put(

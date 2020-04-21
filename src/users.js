@@ -199,6 +199,21 @@ module.exports = (db) => {
       return recipe;
     },
 
+    isDuplicateTitle: async (recipeTitle) => {
+      const title = await db.oneOrNone(
+        'SELECT title FROM Recipes WHERE LOWER(title) = LOWER($1)',
+        [recipeTitle],
+      ).catch((err) => {
+        console.log(err);
+      });
+
+      if (title) {
+        return true;
+      }
+
+      return false;
+    },
+
     deleteRecipe: async (recipeTitle) => {
       const queryResult = await db.result(
         'DELETE FROM Recipes WHERE title = $1', [recipeTitle],

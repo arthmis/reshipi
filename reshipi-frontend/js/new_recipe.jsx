@@ -76,6 +76,23 @@ class NewRecipeForm extends React.Component {
             }
         }
 
+        let recipeTitle = new FormData();
+        recipeTitle.append("title", this.state.title);
+        fetch('/check_duplicate_recipe', {
+            method: "POST",
+            body: formData,
+            mode: 'same-origin',
+            credentials: 'same-origin',
+        })
+        .then((response) => response.json())
+        .then((result) => {
+            if (result.isDuplicate) {
+                title.setCustomValidity('That recipe name is already in use.');
+            } else {
+                title.setCustomValidity('');
+            }
+        });
+
         if (form.reportValidity()) {
             let formData = new FormData(form);
             formData.append("image", this.state.image);
@@ -129,21 +146,41 @@ class NewRecipeForm extends React.Component {
     }
 
     handleTitle(event) {
-        const title = event.target; 
-        if (title.value.length === 0) {
-            title.setCustomValidity('Please provide a title.');
-        }
-        else if (title.value.trim().length === 0) {
-            title.setCustomValidity('Title cannot only contain empty spaces.'); 
-        } else {
-            title.setCustomValidity(''); 
-        }
-
+        // const title = event.target.value; 
         const value = event.target.value;
-        this.setState((prevState, props) => {
-            prevState.title = value;
-            return (prevState);
+        console.log(value);
+
+        let formData = new FormData();
+        formData.append("title", value);
+        fetch('/check_duplicate_recipe', {
+            method: "POST",
+            body: formData,
+            mode: 'same-origin',
+            credentials: 'same-origin',
+        })
+        .then((response) => response.json())
+        .then((result) => {
+            if (result.isDuplicate) {
+                title.setCustomValidity('That recipe name is already in use.');
+            }
+            else if (value.length === 0) {
+                title.setCustomValidity('Please provide a title.');
+            }
+            else if (value.trim().length === 0) {
+                title.setCustomValidity('Title cannot only contain empty spaces.'); 
+            } 
+            else {
+                title.setCustomValidity(''); 
+            }
+
+            this.setState((prevState, props) => {
+                prevState.title = value;
+                return (prevState);
+            });
+
         });
+
+        // if (title.value.length === 0) {
     }
 
     handleDescription(event) {
