@@ -274,6 +274,16 @@ module.exports = (users, db) => {
         res.sendStatus(401);
         return;
       }
+
+      if (await users.isDuplicateTitle(recipe.title)) {
+        res.status(203);
+        res.send(JSON.stringify({
+          recipe,
+          error: 'recipe title cannot be a duplicate of another recipe',
+        }));
+        return;
+      }
+
       if (Array.isArray(recipe.ingredients)) {
         recipe.ingredients = recipe.ingredients.join('\n');
       }
@@ -284,9 +294,6 @@ module.exports = (users, db) => {
         recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
       }
 
-      if (await users.isDuplicateTitle(recipe.title)) {
-        res.sendStatus(203);
-      }
       await users.addRecipe(recipe, req.session.user, req.files);
       res.status(200);
       res.render('pages/recipes');

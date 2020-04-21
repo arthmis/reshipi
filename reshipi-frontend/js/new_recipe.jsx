@@ -80,7 +80,7 @@ class NewRecipeForm extends React.Component {
         recipeTitle.append("title", this.state.title);
         fetch('/check_duplicate_recipe', {
             method: "POST",
-            body: formData,
+            body: recipeTitle,
             mode: 'same-origin',
             credentials: 'same-origin',
         })
@@ -146,7 +146,6 @@ class NewRecipeForm extends React.Component {
     }
 
     handleTitle(event) {
-        // const title = event.target.value; 
         const value = event.target.value;
         console.log(value);
 
@@ -177,10 +176,7 @@ class NewRecipeForm extends React.Component {
                 prevState.title = value;
                 return (prevState);
             });
-
         });
-
-        // if (title.value.length === 0) {
     }
 
     handleDescription(event) {
