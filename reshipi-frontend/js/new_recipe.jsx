@@ -91,22 +91,23 @@ class NewRecipeForm extends React.Component {
             } else {
                 title.setCustomValidity('');
             }
-        });
 
-        if (form.reportValidity()) {
-            let formData = new FormData(form);
-            formData.append("image", this.state.image);
-            fetch('/add_recipe', {
-                method: "POST",
-                body: formData,
-                mode: 'same-origin',
-                credentials: 'same-origin',
-            }).then(response => {
-                console.log(response.body);
-                document.location.href = '/recipes';
-            });
-        }
+            if (form.reportValidity()) {
+                let formData = new FormData(form);
+                formData.append("image", this.state.image);
+                fetch('/add_recipe', {
+                    method: "POST",
+                    body: formData,
+                    mode: 'same-origin',
+                    credentials: 'same-origin',
+                }).then(response => {
+                    console.log(response.body);
+                    document.location.href = '/recipes';
+                });
+            }
+        });
     }
+
     handleImageChange (event) {
         event.preventDefault();
         const file = event.target.files[0];
@@ -149,33 +150,19 @@ class NewRecipeForm extends React.Component {
         const value = event.target.value;
         console.log(value);
 
-        let formData = new FormData();
-        formData.append("title", value);
-        fetch('/check_duplicate_recipe', {
-            method: "POST",
-            body: formData,
-            mode: 'same-origin',
-            credentials: 'same-origin',
-        })
-        .then((response) => response.json())
-        .then((result) => {
-            if (result.isDuplicate) {
-                title.setCustomValidity('That recipe name is already in use.');
-            }
-            else if (value.length === 0) {
-                title.setCustomValidity('Please provide a title.');
-            }
-            else if (value.trim().length === 0) {
-                title.setCustomValidity('Title cannot only contain empty spaces.'); 
-            } 
-            else {
-                title.setCustomValidity(''); 
-            }
+        if (value.length === 0) {
+            title.setCustomValidity('Please provide a title.');
+        }
+        else if (value.trim().length === 0) {
+            title.setCustomValidity('Title cannot only contain empty spaces.'); 
+        } 
+        else {
+            title.setCustomValidity(''); 
+        }
 
-            this.setState((prevState, props) => {
-                prevState.title = value;
-                return (prevState);
-            });
+        this.setState((prevState, props) => {
+            prevState.title = value;
+            return (prevState);
         });
     }
 

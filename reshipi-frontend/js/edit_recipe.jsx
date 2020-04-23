@@ -155,24 +155,62 @@ class NewRecipeForm extends React.Component {
             }
         }
 
-        if (form.reportValidity()) {
-            let formData = new FormData(form);
-            formData.append('image', this.state.image);
-            formData.append('original_title', this.state.originalTitle);
-            formData.append('original_image', this.state.originalImage);
-            formData.append('image_is_deleted', this.state.imageIsDeleted);
-
-            fetch('/update_recipe', {
-                method: 'PUT',
-                body: formData,
+        if (this.state.recipe.title.toLowerCase().trim() !== this.state.originalTitle.toLowerCase().trim()) {
+            let recipeTitle = new FormData();
+            recipeTitle.append("title", this.state.recipe.title);
+            fetch('/check_duplicate_recipe', {
+                method: "POST",
+                body: recipeTitle,
                 mode: 'same-origin',
                 credentials: 'same-origin',
-            }).then(response => {
-                console.log(response.body);
-                document.location.href = '/recipes';
+            })
+            .then((response) => response.json())
+            .then((result) => {
+                if (result.isDuplicate) {
+                    title.setCustomValidity('That recipe name is already in use.');
+                } else {
+                    title.setCustomValidity('');
+                }
+
+                if (form.reportValidity()) {
+                    let formData = new FormData(form);
+                    formData.append('image', this.state.image);
+                    formData.append('original_title', this.state.originalTitle);
+                    formData.append('original_image', this.state.originalImage);
+                    formData.append('image_is_deleted', this.state.imageIsDeleted);
+
+                    fetch('/update_recipe', {
+                        method: 'PUT',
+                        body: formData,
+                        mode: 'same-origin',
+                        credentials: 'same-origin',
+                    }).then(response => {
+                        console.log(response.body);
+                        document.location.href = '/recipes';
+                    });
+                }
             });
+        } else {
+            if (form.reportValidity()) {
+                let formData = new FormData(form);
+                formData.append('image', this.state.image);
+                formData.append('original_title', this.state.originalTitle);
+                formData.append('original_image', this.state.originalImage);
+                formData.append('image_is_deleted', this.state.imageIsDeleted);
+
+                fetch('/update_recipe', {
+                    method: 'PUT',
+                    body: formData,
+                    mode: 'same-origin',
+                    credentials: 'same-origin',
+                }).then(response => {
+                    console.log(response.body);
+                    document.location.href = '/recipes';
+                });
+            }
         }
     }
+
     handleImageChange (event) {
         event.preventDefault();
         const file = event.target.files[0];

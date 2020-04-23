@@ -214,7 +214,7 @@ module.exports = (db) => {
       return false;
     },
 
-    ifImageNameDuplicate: async (imageName) => {
+    isImageNameDuplicate: async (imageName) => {
       const findImageName = await db.oneOrNone(
         'SELECT image FROM Recipes WHERE image = $1',
         [imageName],

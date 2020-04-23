@@ -23,7 +23,7 @@ module.exports = (users, db) => {
       const originalNameSplit = file.originalname.split('.');
       const extension = originalNameSplit[originalNameSplit.length - 1];
       let newFileName = `image-${Date.now()}-${Math.round(Math.random() * 1E9)}.${extension}`;
-      while (await users.ifImageNameDuplicate(`uploads/${newFileName}`)) {
+      while (await users.isImageNameDuplicate(`uploads/${newFileName}`)) {
         newFileName = `image-${Date.now()}-${Math.round(Math.random() * 1E9)}.${extension}`;
       }
       cb(null, newFileName);
@@ -627,8 +627,6 @@ module.exports = (users, db) => {
         return;
       }
 
-      // let recipeTitle = req.body;
-      // console.log(recipeTitle);
       const isDuplicate = await users.isDuplicateTitle(req.body.title);
 
       res.status(200);
