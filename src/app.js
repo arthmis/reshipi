@@ -1,15 +1,3 @@
-// Database schema
-// Title TEXT
-// Description TEXT
-// Ingredients TEXT
-// Directions TEXT
-// Image(Optional) TEXT(path to image)
-// Food Category
-// Tags TEXT
-// The amount of times this recipe has been accessed/searched INT
-// link to recipe if there is a url for the original recipe URL
-// Related Account ID
-
 require('dotenv').config();
 
 const express = require('express');
@@ -21,24 +9,64 @@ const PgSession = require('connect-pg-simple')(session);
 const multer = require('multer');
 const validator = require('validator');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const originalNameSplit = file.originalname.split('.');
-    const extension = originalNameSplit[originalNameSplit.length - 1];
-    const newFileName = `${file.fieldname}-${Date.now()}-${Math.round(Math.random() * 1E9)}.${extension}`;
-    cb(null, newFileName);
-  },
-});
-const upload = multer({ storage });
+const { RateLimiterPostgres } = require('rate-limiter-flexible');
 
+const maxConsecutiveLoginAttempts = 5;
+const maxLoginAttempts = 15;
 
 module.exports = (users, db) => {
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, 'uploads/');
+    },
+    filename: async (req, file, cb) => {
+      const originalNameSplit = file.originalname.split('.');
+      const extension = originalNameSplit[originalNameSplit.length - 1];
+      let newFileName = `image-${Date.now()}-${Math.round(Math.random() * 1E9)}.${extension}`;
+      while (await users.ifImageNameDuplicate(`uploads/${newFileName}`)) {
+        newFileName = `image-${Date.now()}-${Math.round(Math.random() * 1E9)}.${extension}`;
+      }
+      cb(null, newFileName);
+    },
+  });
+
+  const upload = multer({ storage });
+
   const app = express();
 
-  // app.use(bodyParser.json());
+  const loginRateLimitingOptions = {
+    storeClient: db.$pool,
+    points: maxConsecutiveLoginAttempts, // number of points
+    duration: 60, // per seconds
+
+    tableName: 'rate_limited',
+    keyPrefix: 'consecutive_ip_login_fail',
+
+    blockDuration: 60, // in seconds
+  };
+  const maxLoginRateLimitingOptions = {
+    storeClient: db.$pool,
+    points: maxLoginAttempts, // number of points
+    duration: 120, // per seconds
+
+    tableName: 'max_rate_limited',
+    keyPrefix: 'max_ip_login_fail',
+
+    blockDuration: 120, // in seconds
+  };
+
+  // TODO make another ready function for the max login attempts limiter
+  const ready = (err) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log('rate limiting table is ready');
+    }
+  };
+
+  const loginRateLimiter = new RateLimiterPostgres(loginRateLimitingOptions, ready);
+  const maxLoginRateLimiter = new RateLimiterPostgres(maxLoginRateLimitingOptions, ready);
+
   app.use(bodyParser.urlencoded({ extended: true }));
 
   function getMinutesInMilliseconds(minutes) {
@@ -175,23 +203,117 @@ module.exports = (users, db) => {
       return;
     }
 
-    if (!(await users.isValidLogin(credentials))) {
+    // Todo refactor this login user function to make it more
+    // straightforward and also have the two different limiters
+    // await at the same time instead of sequentially. They don't
+    // rely on each other
+    const resMaxLoginLimiter = await maxLoginRateLimiter.get(req.ip);
+
+    if (resMaxLoginLimiter && resMaxLoginLimiter.consumedPoints > maxLoginAttempts) {
+      await maxLoginRateLimiter.consume(req.ip)
+        .catch((error) => console.log(error));
+
       const user = {
         email: credentials.email,
         errorMessage: 'email or password is incorrect',
       };
-      res.status(401);
+      const timeBeforeTry = Math.round(resMaxLoginLimiter.msBeforeNext / 1000);
+      user.timeBeforeTry = `${timeBeforeTry} seconds`;
+      res.status(429);
       res.render('pages/login', {
         user,
       });
       return;
     }
-    req.session.regenerate((err) => {
+
+    const resLoginLimiter = await loginRateLimiter.get(req.ip);
+    if (resLoginLimiter && resLoginLimiter.consumedPoints > maxConsecutiveLoginAttempts) {
+      const user = {
+        email: credentials.email,
+        errorMessage: 'email or password is incorrect',
+      };
+      const timeBeforeTry = Math.round(resLoginLimiter.msBeforeNext / 1000);
+      user.timeBeforeTry = `${timeBeforeTry} seconds`;
+      res.status(429);
+      res.render('pages/login', {
+        user,
+      });
+      return;
+    }
+
+
+
+
+
+    if (!(await users.isValidLogin(credentials))) {
+      await loginRateLimiter.consume(req.ip)
+        .catch((error) => console.log(error));
+
+      await maxLoginRateLimiter.consume(req.ip)
+        .catch((error) => console.log(error));
+
+      const consecutiveLoginRes = await loginRateLimiter.get(req.ip)
+        .catch((error) => console.log(error));
+
+      if (!consecutiveLoginRes) {
+        await loginRateLimiter.set(req.ip)
+          .catch((error) => console.log(error));
+      }
+
+      const maxLoginRes = await maxLoginRateLimiter.get(req.ip)
+        .catch((error) => console.log(error));
+
+      if (!maxLoginRes) {
+        await maxLoginRateLimiter.set(req.ip)
+          .catch((error) => console.log(error));
+      }
+
+      const user = {
+        email: credentials.email,
+        errorMessage: 'email or password is incorrect',
+      };
+
+      if (maxLoginRes !== null && maxLoginRes.consumedPoints > maxLoginAttempts) {
+        const timeBeforeTry = Math.round(maxLoginRes.msBeforeNext / 1000);
+        user.timeBeforeTry = `${timeBeforeTry} seconds`;
+        res.status(429);
+        console.log(user);
+        res.render('pages/login', {
+          user,
+        });
+      } else if (consecutiveLoginRes !== null && consecutiveLoginRes.consumedPoints > maxConsecutiveLoginAttempts) {
+        const timeBeforeTry = Math.round(consecutiveLoginRes.msBeforeNext / 1000);
+        user.timeBeforeTry = `${timeBeforeTry} seconds`;
+        res.status(429);
+        console.log(user);
+        res.render('pages/login', {
+          user,
+        });
+      } else {
+        res.status(401);
+        res.render('pages/login', {
+          user,
+        });
+      }
+      return;
+    }
+    req.session.regenerate(async (err) => {
       if (err) {
         console.log(err);
       }
-      req.session.user = credentials.email;
-      res.redirect(303, '/recipes');
+      const rlResponseUsername = await loginRateLimiter.get(credentials.email)
+        .catch((error) => console.log(error));
+
+      if (rlResponseUsername !== null) {
+        await loginRateLimiter.delete(req.ip)
+          .catch((error) => console.log(error));
+
+        await maxLoginRateLimiter.delete(req.ip)
+          .catch((error) => console.log(error));
+
+        req.session.user = credentials.email;
+        res.redirect(303, '/recipes');
+      }
     });
   };
 
@@ -270,7 +392,7 @@ module.exports = (users, db) => {
       const validationErrors = validationResult(req);
       const recipe = req.body;
       if (!validationErrors.isEmpty()) {
-        console.log(validationErrors);
+        console.log('validation error: ', validationErrors);
         res.sendStatus(401);
         return;
       }
@@ -368,9 +490,9 @@ module.exports = (users, db) => {
     upload.any('recipe_image'),
     [
       body('title').trim().not().isEmpty()
-        .escape()
-        .isLength({ min: 3, max: 50 }),
-      body('description').trim().escape().isLength({ min: 0, max: 240 }),
+        .isLength({ min: 3, max: 100 })
+        .escape(),
+      body('description').trim().isLength({ min: 0, max: 240 }).escape(),
       body('ingredients', 'Provided ingredient must not be empty.')
         .custom(checkIngredients),
       body('ingredient_amount', 'Provided ingredient quantity cannot be empty.')
@@ -412,14 +534,23 @@ module.exports = (users, db) => {
     });
   });
 
-  app.delete('/delete_recipe', upload.none(), async (req, res) => {
-    const isDeleted = await users.deleteRecipe(req.body.title);
-    if (isDeleted) {
-      res.sendStatus(204);
-    } else {
-      res.sendStatus(404);
-    }
-  });
+  app.delete('/delete_recipe',
+    upload.none(),
+    [
+      body('title').trim().not().isEmpty()
+        .escape()
+        .isLength({ min: 3, max: 50 }),
+    ],
+    async (req, res) => {
+      console.log(req.body.title);
+      const isDeleted = await users.deleteRecipe(req.body.title);
+      if (isDeleted) {
+        res.sendStatus(204);
+      } else {
+        res.sendStatus(404);
+      }
+    },
+  );
 
   app.get(
     '/edit_recipe',
@@ -449,7 +580,7 @@ module.exports = (users, db) => {
       });
     },
   );
-  app.get('/get_recipe', [query('title').trim().not().isEmpty()], async (req, res) => {
+  app.get('/get_recipe', [query('title').trim().not().isEmpty().escape()], async (req, res) => {
     req.sessionStore.get(req.session.id, async (err, sess) => {
       if (err) {
         console.log(`err: ${err}`);
@@ -506,9 +637,9 @@ module.exports = (users, db) => {
     upload.any('recipe_image'),
     [
       body('title').trim().not().isEmpty()
-        .escape()
-        .isLength({ min: 3, max: 50 }),
-      body('description').trim().escape().isLength({ min: 0, max: 240 }),
+        .isLength({ min: 3, max: 100 })
+        .escape(),
+      body('description').trim().isLength({ min: 0, max: 240 }).escape(),
       body('ingredients', 'Provided ingredient must not be empty.')
         .custom(checkIngredients),
       body('ingredient_amount', 'Provided ingredient quantity cannot be empty.')
@@ -524,6 +655,9 @@ module.exports = (users, db) => {
         .trim()
         .not()
         .isEmpty()
+        .escape(),
+      body('original_title').trim().not().isEmpty()
+        .isLength({ min: 3, max: 100 })
         .escape(),
     ],
     (req, res) => {
@@ -553,6 +687,8 @@ module.exports = (users, db) => {
           recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
         }
 
+        console.log(recipe);
+
         await users.updateRecipe(recipe, req.session.user, req.files);
         res.sendStatus(200);
       });
@@ -561,7 +697,7 @@ module.exports = (users, db) => {
   app.get(
     '/recipe',
     [
-      query('title').trim().not().isEmpty(),
+      query('title').trim().not().isEmpty().escape(),
     ],
     async (req, res) => {
       req.sessionStore.get(req.session.id, async (err, sess) => {

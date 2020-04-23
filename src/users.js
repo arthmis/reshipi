@@ -214,6 +214,21 @@ module.exports = (db) => {
       return false;
     },
 
+    ifImageNameDuplicate: async (imageName) => {
+      const findImageName = await db.oneOrNone(
+        'SELECT image FROM Recipes WHERE image = $1',
+        [imageName],
+      ).catch((err) => {
+        console.log(err);
+      });
+
+      if (findImageName) {
+        return true;
+      }
+
+      return false;
+    },
+
     deleteRecipe: async (recipeTitle) => {
       const queryResult = await db.result(
         'DELETE FROM Recipes WHERE title = $1', [recipeTitle],
