@@ -301,19 +301,22 @@ module.exports = (users, db) => {
       if (err) {
         console.log(err);
       }
-      const rlResponseUsername = await loginRateLimiter.get(credentials.email)
-        .catch((error) => console.log(error));
 
-      if (rlResponseUsername !== null) {
+      const consecutiveLoginRes = await loginRateLimiter.get(req.ip)
+        .catch((error) => console.log(error));
+      if (consecutiveLoginRes !== null) {
         await loginRateLimiter.delete(req.ip)
           .catch((error) => console.log(error));
+      }
 
+      const maxLoginRes = await maxLoginRateLimiter.get(req.ip)
+        .catch((error) => console.log(error));
+      if (maxLoginRes !== null) {
         await maxLoginRateLimiter.delete(req.ip)
           .catch((error) => console.log(error));
-
-        req.session.user = credentials.email;
-        res.redirect(303, '/recipes');
       }
+      req.session.user = credentials.email;
+      res.redirect(303, '/recipes');
     });
   };
 
