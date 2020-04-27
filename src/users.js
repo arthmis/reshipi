@@ -172,7 +172,7 @@ module.exports = (db) => {
           values: [user],
         },
       );
-      const recipesData = await db.any(findRecipes).catch((err) => err);
+      const recipesData = await db.any(findRecipes).catch((err) => console.log(err));
       const recipes = [];
       for (const recipeData of recipesData) {
         const recipe = {};
