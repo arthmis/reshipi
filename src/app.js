@@ -101,6 +101,7 @@ module.exports = (users, db) => {
 
     tableName: 'rate_limited',
     keyPrefix: 'consecutive_ip_login_fail',
+    storeType: 'client',
 
     blockDuration: 60, // in seconds
   };
@@ -111,6 +112,7 @@ module.exports = (users, db) => {
 
     tableName: 'max_rate_limited',
     keyPrefix: 'max_ip_login_fail',
+    storeType: 'client',
 
     blockDuration: 120, // in seconds
   };
@@ -301,10 +303,6 @@ module.exports = (users, db) => {
       return;
     }
 
-
-
-
-
     if (!(await users.isValidLogin(credentials))) {
       await loginRateLimiter.consume(req.ip)
         .catch((error) => console.log(error));
@@ -492,7 +490,7 @@ module.exports = (users, db) => {
         ].join(' ').split('-').join(' ');
       };
 
-      const replacedTitle = recipe.title.split(' ').join('-');
+      const replacedTitle = recipe.title.split(' ').join('+');
       const objectId = [user, replacedTitle].join(':');
 
       await sonicChannelIngest.push(
@@ -854,7 +852,6 @@ module.exports = (users, db) => {
           const recipes = [];
           const fullRecipes = await Promise.all(possibleRecipes);
           for (const fullRecipe of fullRecipes) {
-            // console.log(fullRecipe);
             const recipe = {
               title: validator.unescape(fullRecipe.title),
               description: fullRecipe.description,
@@ -865,9 +862,7 @@ module.exports = (users, db) => {
           }
 
           res.status(200);
-          // res.send(JSON.stringify(recipes));
           res.json(recipes);
-          // return;
         } else {
           res.sendStatus(401);
         }
