@@ -101,6 +101,7 @@ module.exports = (users, db) => {
 
     tableName: 'rate_limited',
     keyPrefix: 'consecutive_ip_login_fail',
+    storeType: 'client',
 
     blockDuration: 60, // in seconds
   };
@@ -111,6 +112,7 @@ module.exports = (users, db) => {
 
     tableName: 'max_rate_limited',
     keyPrefix: 'max_ip_login_fail',
+    storeType: 'client',
 
     blockDuration: 120, // in seconds
   };
@@ -301,10 +303,6 @@ module.exports = (users, db) => {
       return;
     }
 
-
-
-
-
     if (!(await users.isValidLogin(credentials))) {
       await loginRateLimiter.consume(req.ip)
         .catch((error) => console.log(error));
@@ -492,7 +490,7 @@ module.exports = (users, db) => {
         ].join(' ').split('-').join(' ');
       };
 
-      const replacedTitle = recipe.title.split(' ').join('-');
+      const replacedTitle = recipe.title.split(' ').join('+');
       const objectId = [user, replacedTitle].join(':');
 
       await sonicChannelIngest.push(
@@ -640,13 +638,34 @@ module.exports = (users, db) => {
         .isLength({ min: 3, max: 50 }),
     ],
     async (req, res) => {
-      console.log(req.body.title);
-      const isDeleted = await users.deleteRecipe(req.body.title);
-      if (isDeleted) {
-        res.sendStatus(204);
-      } else {
-        res.sendStatus(404);
-      }
+      req.sessionStore.get(req.session.id, async (err, sess) => {
+        if (err) {
+          console.log(`err: ${err}`);
+          return;
+        }
+        if (!sess) {
+          res.redirect(303, '/login');
+          return;
+        }
+        const validationErrors = validationResult(req);
+        const recipe = req.body;
+        if (!validationErrors.isEmpty()) {
+          console.log('validation error: ', validationErrors);
+          res.sendStatus(401);
+          return;
+        }
+
+        await sonicChannelIngest.flusho('recipes', sess.user, [sess.user, recipe.title.split(' ').join('+')].join(':'))
+          .catch((error) => console.log(error));
+
+        const isDeleted = await users.deleteRecipe(req.body.title);
+
+        if (isDeleted) {
+          res.sendStatus(204);
+        } else {
+          res.sendStatus(404);
+        }
+      });
     },
   );
 
@@ -773,6 +792,60 @@ module.exports = (users, db) => {
           res.sendStatus(401);
           return;
         }
+
+        // makes sure updated recipe title is not a duplicate
+        if (await users.isDuplicateTitle(recipe.title)) {
+          res.status(203);
+          res.send(JSON.stringify({
+            recipe,
+            error: 'recipe title cannot be a duplicate of another recipe',
+          }));
+          return;
+        }
+
+        const user = sess.user;
+
+        const makeRecipeString = (searchRecipe) => {
+          let ingredients = '';
+          if (Array.isArray(searchRecipe.ingredients)) {
+            ingredients = searchRecipe.ingredients.join(' ');
+          } else {
+            ingredients = searchRecipe.ingredients;
+          }
+          let directions = '';
+          if (Array.isArray(searchRecipe.directions)) {
+            directions = searchRecipe.directions.join(' ');
+          } else {
+            directions = searchRecipe.directions;
+          }
+
+          return [
+            searchRecipe.title,
+            searchRecipe.description,
+            ingredients,
+            directions,
+          ].join(' ').split('-').join(' ');
+        };
+
+        const replacedTitle = recipe.title.split(' ').join('+');
+        const objectId = [user, replacedTitle].join(':');
+
+        await sonicChannelIngest.push(
+          'recipes',
+          user,
+          objectId,
+          makeRecipeString(recipe),
+          'eng',
+        )
+        .catch((error) => console.error(error));
+
+        await sonicChannelIngest.flusho(
+          'recipes',
+          user,
+          [user, recipe.original_title.split(' ').join('+')].join(':'),
+        )
+        .catch((error) => console.error(error));
+
         if (Array.isArray(recipe.ingredients)) {
           recipe.ingredients = recipe.ingredients.join('\n');
         }
@@ -782,8 +855,6 @@ module.exports = (users, db) => {
         if (Array.isArray(recipe.ingredient_amount)) {
           recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
         }
-
-        console.log(recipe);
 
         await users.updateRecipe(recipe, req.session.user, req.files);
         res.sendStatus(200);
@@ -840,7 +911,8 @@ module.exports = (users, db) => {
       const searchTerms = req.query.search;
 
       if (searchTerms) {
-        const objectId = await sonicChannelSearch.query('recipes', sess.user, searchTerms);
+        const objectId = await sonicChannelSearch.query('recipes', sess.user, searchTerms)
+          .catch((error) => console.log(error));
 
         if (objectId.length > 0) {
           const possibleRecipes = [];
@@ -852,9 +924,10 @@ module.exports = (users, db) => {
           }
 
           const recipes = [];
-          const fullRecipes = await Promise.all(possibleRecipes);
+          const fullRecipes = await Promise.all(possibleRecipes)
+            .catch((error) => console.log(error));
+
           for (const fullRecipe of fullRecipes) {
-            // console.log(fullRecipe);
             const recipe = {
               title: validator.unescape(fullRecipe.title),
               description: fullRecipe.description,
@@ -865,9 +938,7 @@ module.exports = (users, db) => {
           }
 
           res.status(200);
-          // res.send(JSON.stringify(recipes));
           res.json(recipes);
-          // return;
         } else {
           res.sendStatus(401);
         }
