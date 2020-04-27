@@ -40,7 +40,7 @@ class SearchRecipes extends React.Component {
     render() {
         return (
             <div id="search">
-                <input type="text" placeholder="Search" />
+                <input type="text" placeholder="Search" onChange={this.props.searchRecipes} />
             </div>
         )
     }
@@ -53,6 +53,7 @@ class Recipes extends React.Component {
         }
         this.deleteRecipe = this.deleteRecipe.bind(this);
         this.editRecipe = this.editRecipe.bind(this);
+        this.searchRecipes = this.searchRecipes.bind(this);
     }
 
     componentDidMount() {
@@ -84,6 +85,7 @@ class Recipes extends React.Component {
         allRecipes = await allRecipes.json();
         this.setState({recipes: allRecipes});
     }
+
     async editRecipe(recipeTitle) {
         const formData = new FormData();
         formData.append('title', recipeTitle);
@@ -99,11 +101,39 @@ class Recipes extends React.Component {
         document.location.href = newUrl;
     }
 
+    async searchRecipes(event) {
+        event.preventDefault();
+
+        const searchParameters = event.target.value;
+
+        const newUrl = `/search_recipes?search=${searchParameters}`;
+
+        const res = await fetch(newUrl, {
+            method: 'GET',
+            mode: 'same-origin',
+            credentials: 'same-origin',
+        });
+
+        if (res.ok) {
+            const recipes = await res.json();
+
+            this.setState((prevState, props) => {
+                prevState.recipes = recipes;
+                return (prevState);
+            });
+        } else {
+            this.setState((prevState, props) => {
+                prevState.recipes = [];
+                return (prevState);
+            });
+        }
+    }
+
     render() {
         return (
             <main>
                 <div id="search-and-new-recipe">
-                    <SearchRecipes />
+                    <SearchRecipes searchRecipes={this.searchRecipes} />
                     <form action="/new_recipe" method="get">
                         <button id="new-recipe" type="submit" name="new_recipe" value="New ">
                             <i className="fas fa-plus"></i> New Recipe

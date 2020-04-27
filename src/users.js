@@ -165,7 +165,7 @@ module.exports = (db) => {
 
       await db.none(insertNewRecipe).catch((err) => console.log(err));
     },
-    getRecipes: async (user, numberOfRecipes) => {
+    getRecipes: async (user) => {
       const findRecipes = new pg.ParameterizedQuery(
         {
           text: 'SELECT * FROM recipes WHERE username=$1 LIMIT 15',
@@ -186,6 +186,7 @@ module.exports = (db) => {
       return recipes;
     },
 
+    // needs user argument to know which user recipes to search under
     getRecipe: async (recipeTitle) => {
       const recipe = await db.one(
         'SELECT title, description, ingredients, ingredients_amount, directions, food_category, image, url FROM Recipes WHERE title = $1',
@@ -199,6 +200,7 @@ module.exports = (db) => {
       return recipe;
     },
 
+    // needs user argument to know which user recipes to search under
     isDuplicateTitle: async (recipeTitle) => {
       const title = await db.oneOrNone(
         'SELECT title FROM Recipes WHERE LOWER(title) = LOWER($1)',

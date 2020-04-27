@@ -9,6 +9,66 @@ const PgSession = require('connect-pg-simple')(session);
 const multer = require('multer');
 const validator = require('validator');
 
+const SonicChannelSearch = require('sonic-channel').Search;
+const SonicChannelIngest = require('sonic-channel').Ingest;
+
+const sonicChannelSearch = new SonicChannelSearch({
+  host: '::1',
+  port: 1491,
+  auth: 'SecretPassword',
+}).connect({
+  connected: () => {
+    console.info('sonic channel connected to host for search');
+  },
+
+  disconnected: () => {
+    console.error('sonic channel is now disconnected');
+  },
+
+  timeout: () => {
+    console.error('sonic channel connection timed out');
+  },
+
+  retrying: () => {
+    console.error('trying to reconnect to sonic channel');
+  },
+
+  error: () => {
+    console.error('sonic channel failed to connect to host');
+  },
+});
+
+const sonicChannelIngest = new SonicChannelIngest({
+  host: '::1', // Or '127.0.0.1' if you are still using IPv4
+  port: 1491, // Default port is '1491'
+  auth: 'SecretPassword', // Authentication password (if any)
+}).connect({
+  connected: () => {
+    // Connected handler
+    console.info('Sonic Channel succeeded to connect to host (ingest).');
+  },
+
+  disconnected: () => {
+    // Disconnected handler
+    console.error('Sonic Channel is now disconnected (ingest).');
+  },
+
+  timeout: () => {
+    // Timeout handler
+    console.error('Sonic Channel connection timed out (ingest).');
+  },
+
+  retrying: () => {
+    // Retry handler
+    console.error('Trying to reconnect to Sonic Channel (ingest)...');
+  },
+
+  error: (error) => {
+    // Failure handler
+    console.error('Sonic Channel failed to connect to host (ingest).', error);
+  },
+});
+
 const { RateLimiterPostgres } = require('rate-limiter-flexible');
 
 const maxConsecutiveLoginAttempts = 5;
@@ -408,6 +468,41 @@ module.exports = (users, db) => {
         }));
         return;
       }
+      const user = sess.user;
+
+      const makeRecipeString = (searchRecipe) => {
+        let ingredients = '';
+        if (Array.isArray(searchRecipe.ingredients)) {
+          ingredients = searchRecipe.ingredients.join(' ');
+        } else {
+          ingredients = searchRecipe.ingredients;
+        }
+        let directions = '';
+        if (Array.isArray(searchRecipe.directions)) {
+          directions = searchRecipe.directions.join(' ');
+        } else {
+          directions = searchRecipe.directions;
+        }
+
+        return [
+          searchRecipe.title,
+          searchRecipe.description,
+          ingredients,
+          directions,
+        ].join(' ').split('-').join(' ');
+      };
+
+      const replacedTitle = recipe.title.split(' ').join('-');
+      const objectId = [user, replacedTitle].join(':');
+
+      await sonicChannelIngest.push(
+        'recipes',
+        user,
+        objectId,
+        makeRecipeString(recipe),
+        'eng',
+      )
+      .catch((error) => console.error(error));
 
       if (Array.isArray(recipe.ingredients)) {
         recipe.ingredients = recipe.ingredients.join('\n');
@@ -419,7 +514,7 @@ module.exports = (users, db) => {
         recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
       }
 
-      await users.addRecipe(recipe, req.session.user, req.files);
+      await users.addRecipe(recipe, user, req.files);
       res.status(200);
       res.render('pages/recipes');
     });
@@ -527,7 +622,7 @@ module.exports = (users, db) => {
         res.redirect(303, '/login');
         return;
       }
-      const recipes = await users.getRecipes(req.session.user, 15);
+      const recipes = await users.getRecipes(req.session.user);
       res.status(200);
       for (let i = 0; i < recipes.length; i += 1) {
         recipes[i].title = validator.unescape(recipes[i].title);
@@ -722,5 +817,71 @@ module.exports = (users, db) => {
       });
     },
   );
+
+  app.get('/search_recipes', query('search').trim(), async (req, res) => {
+    req.sessionStore.get(req.session.id, async (err, sess) => {
+      if (err) {
+        console.log(`err: ${err}`);
+        return;
+      }
+      if (!sess) {
+        res.redirect(303, '/login');
+        return;
+      }
+
+      const validationErrors = validationResult(req);
+      if (!validationErrors.isEmpty()) {
+        console.log(validationErrors);
+        res.sendStatus(401);
+        return;
+      }
+
+      const user = sess.user;
+      const searchTerms = req.query.search;
+
+      if (searchTerms) {
+        const objectId = await sonicChannelSearch.query('recipes', sess.user, searchTerms);
+
+        if (objectId.length > 0) {
+          const possibleRecipes = [];
+          for (const item of objectId) {
+            const recipePromise = users.getRecipe(
+              validator.escape(item.split(':')[1].split('+').join(' ')),
+            );
+            possibleRecipes.push(recipePromise);
+          }
+
+          const recipes = [];
+          const fullRecipes = await Promise.all(possibleRecipes);
+          for (const fullRecipe of fullRecipes) {
+            // console.log(fullRecipe);
+            const recipe = {
+              title: validator.unescape(fullRecipe.title),
+              description: fullRecipe.description,
+            };
+            recipe.image = fullRecipe.image.replace('\\', '/');
+            recipe.image = recipe.image.replace('uploads/', '');
+            recipes.push(recipe);
+          }
+
+          res.status(200);
+          // res.send(JSON.stringify(recipes));
+          res.json(recipes);
+          // return;
+        } else {
+          res.sendStatus(401);
+        }
+      } else {
+        const recipes = await users.getRecipes(req.session.user);
+        res.status(200);
+        for (let i = 0; i < recipes.length; i += 1) {
+          recipes[i].title = validator.unescape(recipes[i].title);
+          recipes[i].description = validator.unescape(recipes[i].description);
+        }
+        res.send(recipes);
+      }
+    });
+  });
+
   return { app };
 };
