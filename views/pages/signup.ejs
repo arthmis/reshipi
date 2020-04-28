@@ -8,27 +8,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.5, user-scalable=no"/>
         <link rel="stylesheet" type="text/css" href="/css/signup.css"/>
         <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet"/>
-
     </head>
     <body>
         <header>
             <nav id="nav">
                 <a id="reshipi" href="/">Reshipi</a>
-                <!-- <div id="user-auth-actions"> -->
+                <div id="user-auth-actions">
                     <a href="/login" id="login">Login</a>
-                <!-- </div> -->
+                </div>
             </nav>
         </header>
         <main>
             <div id="sign-up-wrapper">
                 <form id="sign-up" method="post">
                     <div id="form-inputs">
-                        <div class="input-group">
-                            <div class="label-and-unavailable">
-                                <label class="sign-up-label" form="sign-up" for="username">Name</label>
-                            </div>
-                            <input class="sign-up-input" value="<%= user.username %>" form="sign-up" id="username" name="username" type="text" minlength="4" maxlength="30" required><br>
-                        </div>
                         <div class="input-group">
                             <div class="label-and-unavailable">
                                 <label class="sign-up-label" form="sign-up" for="email">Email</label>

@@ -30,7 +30,6 @@ async function main() {
   const createUserTable = `CREATE TABLE IF NOT EXISTS
     Users(
       id SERIAL PRIMARY KEY,
-      username TEXT NOT NULL,
       email TEXT NOT NULL,
       hash TEXT NOT NULL
     )`;

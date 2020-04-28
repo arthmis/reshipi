@@ -1,7 +1,12 @@
 require('dotenv').config();
 
 const express = require('express');
-const { check, validationResult, body, query } = require('express-validator');
+const {
+  check,
+  validationResult,
+  body,
+  query,
+} = require('express-validator');
 const bodyParser = require('body-parser');
 const csp = require('helmet-csp');
 const session = require('express-session');
@@ -72,7 +77,7 @@ const sonicChannelIngest = new SonicChannelIngest({
 const { RateLimiterPostgres } = require('rate-limiter-flexible');
 
 const maxConsecutiveLoginAttempts = 5;
-const maxLoginAttempts = 15;
+const maxLoginAttempts = 10;
 
 module.exports = (users, db) => {
   const storage = multer.diskStorage({
@@ -202,7 +207,6 @@ module.exports = (users, db) => {
     const userData = req.body;
 
     const user = {
-      username: userData.username,
       email: userData.email,
       emailSpan: '',
     };
@@ -221,7 +225,7 @@ module.exports = (users, db) => {
 
     const previouslyUsedEmail = await users
       .checkCredentialsExist(userData)
-      .catch((err) => err);
+      .catch((err) => console.log(err));
 
     if (previouslyUsedEmail) {
       user.emailSpan = 'Email not available';
@@ -230,18 +234,13 @@ module.exports = (users, db) => {
       res.status(200);
       res.render('pages/signup', { user });
     } else {
-      await users.addUser(userData).catch((err) => err);
-      // console.log('response: successfully added user');
+      await users.addUser(userData).catch((err) => console.log(err));
       res.status(201);
-      user.username = '';
-      user.email = '';
-      res.render('pages/login', { user });
+      res.render('pages/login_plain');
     }
   };
   app.post('/signup',
     [
-      check('username').trim().escape().stripLow()
-        .isLength({ min: 4, max: 30 }),
       check('email').isEmail().normalizeEmail(),
       check('password').isLength({ min: 8, max: 50 }),
     ],
@@ -251,7 +250,6 @@ module.exports = (users, db) => {
   const loginUser = async (req, res) => {
     const credentials = req.body;
 
-    // console.log(validationResult(req));
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
       const user = {
@@ -279,6 +277,7 @@ module.exports = (users, db) => {
         email: credentials.email,
         errorMessage: 'email or password is incorrect',
       };
+
       const timeBeforeTry = Math.round(resMaxLoginLimiter.msBeforeNext / 1000);
       user.timeBeforeTry = `${timeBeforeTry} seconds`;
       res.status(429);
@@ -289,7 +288,13 @@ module.exports = (users, db) => {
     }
 
     const resLoginLimiter = await loginRateLimiter.get(req.ip);
+    console.log(resLoginLimiter);
+    console.log(resMaxLoginLimiter);
+
     if (resLoginLimiter && resLoginLimiter.consumedPoints > maxConsecutiveLoginAttempts) {
+      await loginRateLimiter.delete(req.ip)
+        .catch((error) => console.log(error));
+
       const user = {
         email: credentials.email,
         errorMessage: 'email or password is incorrect',

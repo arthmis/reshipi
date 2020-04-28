@@ -39,10 +39,9 @@ module.exports = (db) => {
         .catch((err) => err);
 
       const insertNewUser = new pg.ParameterizedQuery({
-        text: `INSERT INTO Users (username, email, hash)
-                VALUES ($1, $2, $3)`,
+        text: `INSERT INTO Users (email, hash)
+                VALUES ($1, $2)`,
         values: [
-          userData.username,
           userData.email,
           hashResult,
         ],
