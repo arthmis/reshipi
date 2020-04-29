@@ -639,7 +639,7 @@ module.exports = (users, db) => {
         await sonicChannelIngest.flusho('recipes', sess.user, [sess.user, recipe.title.split(' ').join('+')].join(':'))
           .catch((error) => console.log(error));
 
-        const isDeleted = await users.deleteRecipe(req.body.title);
+        const isDeleted = await users.deleteRecipe(req.body.title, sess.user);
 
         if (isDeleted) {
           res.sendStatus(204);
@@ -695,7 +695,7 @@ module.exports = (users, db) => {
         return;
       }
 
-      const recipe = await users.getRecipe(req.query.title);
+      const recipe = await users.getRecipe(req.query.title, sess.user);
 
       for (const [key, value] of Object.entries(recipe)) {
         recipe[key] = validator.unescape(value);
@@ -900,6 +900,7 @@ module.exports = (users, db) => {
           for (const item of objectId) {
             const recipePromise = users.getRecipe(
               validator.escape(item.split(':')[1].split('+').join(' ')),
+              user,
             );
             possibleRecipes.push(recipePromise);
           }

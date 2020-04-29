@@ -186,10 +186,10 @@ module.exports = (db) => {
     },
 
     // needs user argument to know which user recipes to search under
-    getRecipe: async (recipeTitle) => {
+    getRecipe: async (recipeTitle, user) => {
       const recipe = await db.one(
-        'SELECT title, description, ingredients, ingredients_amount, directions, food_category, image, url FROM Recipes WHERE title = $1',
-        [recipeTitle],
+        'SELECT title, description, ingredients, ingredients_amount, directions, food_category, image, url FROM Recipes WHERE title = $1 AND username = $2',
+        [recipeTitle, user],
       ).catch((err) => {
         console.log(err);
       });
@@ -230,9 +230,9 @@ module.exports = (db) => {
       return false;
     },
 
-    deleteRecipe: async (recipeTitle) => {
+    deleteRecipe: async (recipeTitle, user) => {
       const queryResult = await db.result(
-        'DELETE FROM Recipes WHERE title = $1', [recipeTitle],
+        'DELETE FROM Recipes WHERE title = $1 AND username = $2', [recipeTitle, user],
       ).catch((err) => {
         console.log(err);
         return false;
