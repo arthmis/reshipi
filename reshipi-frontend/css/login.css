@@ -145,6 +145,10 @@ p {
     background-color: #17772f;
 }
 
+#countdown {
+    font-size: 0.9em;
+}
+
 @media all and (max-width: 1200px) {
 
     main {

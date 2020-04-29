@@ -263,23 +263,16 @@ module.exports = (users, db) => {
       return;
     }
 
-    // Todo refactor this login user function to make it more
-    // straightforward and also have the two different limiters
-    // await at the same time instead of sequentially. They don't
-    // rely on each other
     const resMaxLoginLimiter = await maxLoginRateLimiter.get(req.ip);
 
     if (resMaxLoginLimiter && resMaxLoginLimiter.consumedPoints > maxLoginAttempts) {
-      await maxLoginRateLimiter.consume(req.ip)
-        .catch((error) => console.log(error));
-
       const user = {
         email: credentials.email,
         errorMessage: 'email or password is incorrect',
       };
 
       const timeBeforeTry = Math.round(resMaxLoginLimiter.msBeforeNext / 1000);
-      user.timeBeforeTry = `${timeBeforeTry} seconds`;
+      user.timeBeforeTry = `Try logging in after ${timeBeforeTry} seconds`;
       res.status(429);
       res.render('pages/login', {
         user,
@@ -288,19 +281,14 @@ module.exports = (users, db) => {
     }
 
     const resLoginLimiter = await loginRateLimiter.get(req.ip);
-    console.log(resLoginLimiter);
-    console.log(resMaxLoginLimiter);
 
     if (resLoginLimiter && resLoginLimiter.consumedPoints > maxConsecutiveLoginAttempts) {
-      await loginRateLimiter.delete(req.ip)
-        .catch((error) => console.log(error));
-
       const user = {
         email: credentials.email,
         errorMessage: 'email or password is incorrect',
       };
       const timeBeforeTry = Math.round(resLoginLimiter.msBeforeNext / 1000);
-      user.timeBeforeTry = `${timeBeforeTry} seconds`;
+      user.timeBeforeTry = `Try logging in after ${timeBeforeTry} seconds`;
       res.status(429);
       res.render('pages/login', {
         user,
@@ -309,46 +297,34 @@ module.exports = (users, db) => {
     }
 
     if (!(await users.isValidLogin(credentials))) {
-      await loginRateLimiter.consume(req.ip)
+      await Promise.all([
+        loginRateLimiter.consume(req.ip),
+        maxLoginRateLimiter.consume(req.ip),
+      ])
         .catch((error) => console.log(error));
 
-      await maxLoginRateLimiter.consume(req.ip)
+      const [consecutiveLoginRes, maxLoginRes] = await Promise.all([
+        loginRateLimiter.get(req.ip),
+        maxLoginRateLimiter.get(req.ip),
+      ])
         .catch((error) => console.log(error));
-
-      const consecutiveLoginRes = await loginRateLimiter.get(req.ip)
-        .catch((error) => console.log(error));
-
-      if (!consecutiveLoginRes) {
-        await loginRateLimiter.set(req.ip)
-          .catch((error) => console.log(error));
-      }
-
-      const maxLoginRes = await maxLoginRateLimiter.get(req.ip)
-        .catch((error) => console.log(error));
-
-      if (!maxLoginRes) {
-        await maxLoginRateLimiter.set(req.ip)
-          .catch((error) => console.log(error));
-      }
 
       const user = {
         email: credentials.email,
         errorMessage: 'email or password is incorrect',
       };
 
-      if (maxLoginRes !== null && maxLoginRes.consumedPoints > maxLoginAttempts) {
+      if (maxLoginRes && maxLoginRes.consumedPoints > maxLoginAttempts) {
         const timeBeforeTry = Math.round(maxLoginRes.msBeforeNext / 1000);
-        user.timeBeforeTry = `${timeBeforeTry} seconds`;
+        user.timeBeforeTry = `Try logging in after ${timeBeforeTry} seconds`;
         res.status(429);
-        console.log(user);
         res.render('pages/login', {
           user,
         });
-      } else if (consecutiveLoginRes !== null && consecutiveLoginRes.consumedPoints > maxConsecutiveLoginAttempts) {
+      } else if (consecutiveLoginRes && consecutiveLoginRes.consumedPoints > maxConsecutiveLoginAttempts) {
         const timeBeforeTry = Math.round(consecutiveLoginRes.msBeforeNext / 1000);
-        user.timeBeforeTry = `${timeBeforeTry} seconds`;
+        user.timeBeforeTry = `Try logging in after ${timeBeforeTry} seconds`;
         res.status(429);
-        console.log(user);
         res.render('pages/login', {
           user,
         });
@@ -367,14 +343,14 @@ module.exports = (users, db) => {
 
       const consecutiveLoginRes = await loginRateLimiter.get(req.ip)
         .catch((error) => console.log(error));
-      if (consecutiveLoginRes !== null) {
+      if (consecutiveLoginRes) {
         await loginRateLimiter.delete(req.ip)
           .catch((error) => console.log(error));
       }
 
       const maxLoginRes = await maxLoginRateLimiter.get(req.ip)
         .catch((error) => console.log(error));
-      if (maxLoginRes !== null) {
+      if (maxLoginRes) {
         await maxLoginRateLimiter.delete(req.ip)
           .catch((error) => console.log(error));
       }
