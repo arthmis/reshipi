@@ -287,6 +287,96 @@ p {
     background-color: #17772f;
 }
 
+#delete-prompt-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    padding: 0;
+    z-index: 100;
+    background-color: rgba(54, 54, 54, 0.301);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#delete-prompt {
+    max-width: 90%;
+    min-width: 20ch;
+    max-width: 40ch;
+    min-height: 15em;
+    background-color: white;
+    border-radius: 3px;
+}
+
+#close-delete-prompt-wrapper {
+    display: flex;
+    height: 3em;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    background-color: #e9e9e9;
+}
+#close-delete-prompt {
+    /* margin-right: 0.7em; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    border: none;
+    background-color: #e9e9e9;
+    height: 100%;
+    width: 2.5em;
+    padding: 0;
+}
+#close-delete-prompt:hover {
+    color: white;
+    background-color: red;
+}
+
+#user-delete-options-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+}
+
+#user-delete-options-wrapper > p {
+    text-align: center;
+}
+
+#user-delete-options {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 100%;
+}
+.delete-options {
+    height: 2em;
+    width: 5em;
+    font-size: 1.2em;
+    /* border: none; */
+    border: 2px solid #777777;
+    border-radius: 3px;
+}
+#yes-delete {
+    background-color: rgb(253, 146, 146);
+    color: white;
+}
+#yes-delete:hover {
+    background-color: red;
+    color: white;
+}
+#no-delete {
+    background-color: gray;
+    color: white;
+}
+#no-delete:hover {
+    background-color: rgb(78, 78, 78);
+    color: white;
+}
+
 @media all and (max-width: 700px) {
 
     main {

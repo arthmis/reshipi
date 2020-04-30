@@ -206,24 +206,36 @@ class RecipeMenu extends React.Component {
         super(props); 
         this.state = {
             menu: 'invisible',
+            isDeletePromptVisible: false,
         };
         this.handleDropDown = this.handleDropDown.bind(this);
         this.deleteRecipe = this.deleteRecipe.bind(this);
         this.editRecipe = this.editRecipe.bind(this);
+        this.openDeletePrompt = this.openDeletePrompt.bind(this);
+        this.closePrompt = this.closePrompt.bind(this);
     }
 
     handleDropDown (event) {
         event.preventDefault();
         if (this.state.menu === 'invisible') {
-            this.setState({menu: 'visible'});
+            this.setState((prevState, props) => {
+                prevState.menu = 'visible';
+                return (prevState);
+            });
         } else if (this.state.menu === 'visible') {
-            this.setState({menu: 'invisible'});
+            this.setState((prevState, props) => {
+                prevState.menu = 'invisible';
+                return (prevState);
+            });
         }
     }
 
     deleteRecipe (event) {
         event.preventDefault();
-        this.setState({menu: 'invisible'});
+        this.setState((prevState, props) => {
+            prevState.menu = 'invisible';
+            prevState.isDeletePromptVisible = false;
+        });
         this.props.deleteRecipe(this.props.recipeTitle);
     }
 
@@ -233,8 +245,36 @@ class RecipeMenu extends React.Component {
         this.props.editRecipe(this.props.recipeTitle);
     }
 
+    openDeletePrompt() {
+        this.setState((prevState, props) => {
+            prevState.isDeletePromptVisible = true;
+            return (prevState);
+        });
+    }
+
+    closePrompt(event) {
+        event.preventDefault();
+        const closePrompt = document.getElementById("close-delete-prompt");
+        const deletePromptWrapper = document.getElementById("delete-prompt-wrapper");
+        const noDelete = document.getElementById("no-delete");
+
+        if (
+            event.target === deletePromptWrapper ||
+            event.target === closePrompt ||
+            event.target === closePrompt.children[0] ||
+            event.target === noDelete
+        ) {
+            this.setState((prevState, props) => {
+                prevState.menu = 'invisible';
+                prevState.isDeletePromptVisible = false;
+                return (prevState);
+            });
+        }
+    }
+
     render () {
-        if (this.state.menu === 'invisible') {
+
+        if (this.state.isDeletePromptVisible) {
             return (
                 <div className="recipe-menu-button-wrapper">
                     <button 
@@ -243,18 +283,49 @@ class RecipeMenu extends React.Component {
                     >
                         <i className="fas fa-ellipsis-v" aria-hidden="true"></i>
                     </button>
-                </div>
-            )
-        } else {
-            return (
-                <div className="recipe-menu-button-wrapper recipe-dropdown">
-                    <button onClick={this.handleDropDown} className="recipe-menu"><i className="fas fa-ellipsis-v" aria-hidden="true"></i></button>
-                    <div className="recipe-buttons">
-                        <button className="dropdown-button" onClick={this.deleteRecipe}>Delete</button>
-                        <button className="dropdown-button" onClick={this.editRecipe}>Edit</button>
+                    <div id="delete-prompt-wrapper" onClick={this.closePrompt}>
+                        <div id="delete-prompt">
+                            <div id="close-delete-prompt-wrapper">
+                                <button id="close-delete-prompt" onClick={this.closePrompt}><i className="fa fa-times" aria-hidden="true"></i></button>
+                            </div>
+                            <div id="user-delete-options-wrapper">
+                                <p>Are you sure you want to delete this recipe?</p>
+                                <div id="user-delete-options">
+                                    <button onClick={this.deleteRecipe} id="yes-delete" className="delete-options">
+                                        Yes
+                                    </button>
+                                    <button onClick={this.closePrompt} id="no-delete" className="delete-options">
+                                        No
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )
+        }
+        else {
+            if (this.state.menu === 'invisible') {
+                return (
+                    <div className="recipe-menu-button-wrapper">
+                        <button 
+                            onClick={this.handleDropDown} 
+                            className="recipe-menu">
+                            <i className="fas fa-ellipsis-v" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                )
+            } else {
+                return (
+                    <div className="recipe-menu-button-wrapper recipe-dropdown">
+                        <button onClick={this.handleDropDown} className="recipe-menu"><i className="fas fa-ellipsis-v" aria-hidden="true"></i></button>
+                        <div className="recipe-buttons">
+                            <button className="dropdown-button" onClick={this.openDeletePrompt}>Delete</button>
+                            <button className="dropdown-button" onClick={this.editRecipe}>Edit</button>
+                        </div>
+                    </div>
+                )
+            }
         }
     }
 }
