@@ -1,4 +1,5 @@
 require('dotenv').config();
+const fs = require('fs');
 
 const express = require('express');
 const {
@@ -605,9 +606,12 @@ module.exports = (users, db) => {
       res.status(200);
       for (let i = 0; i < recipes.length; i += 1) {
         recipes[i].title = validator.unescape(recipes[i].title);
-        recipes[i].description = validator.unescape(recipes[i].description);
       }
-      res.send(recipes);
+      const images = fs.readdirSync('./reshipi-frontend/images/food_image_substitutes');
+      for (let i = 0; i < images.length; i += 1) {
+        images[i] = `images/food_image_substitutes/${images[i]}`;
+      }
+      res.json({ recipes, images });
     });
   });
 
@@ -870,7 +874,7 @@ module.exports = (users, db) => {
     },
   );
 
-  app.get('/search_recipes', query('search').trim(), async (req, res) => {
+  app.get('/search_recipes', query('search').trim(), (req, res) => {
     req.sessionStore.get(req.session.id, async (err, sess) => {
       if (err) {
         console.log(`err: ${err}`);
@@ -892,7 +896,7 @@ module.exports = (users, db) => {
       const searchTerms = req.query.search;
 
       if (searchTerms) {
-        const objectId = await sonicChannelSearch.query('recipes', sess.user, searchTerms)
+        const objectId = await sonicChannelSearch.query('recipes', user, searchTerms)
           .catch((error) => console.log(error));
 
         if (objectId.length > 0) {
@@ -925,11 +929,11 @@ module.exports = (users, db) => {
           res.sendStatus(401);
         }
       } else {
-        const recipes = await users.getRecipes(req.session.user);
+        const recipes = await users.getRecipes(req.session.user)
+          .catch((error) => console.log(error));
         res.status(200);
         for (let i = 0; i < recipes.length; i += 1) {
           recipes[i].title = validator.unescape(recipes[i].title);
-          recipes[i].description = validator.unescape(recipes[i].description);
         }
         res.send(recipes);
       }

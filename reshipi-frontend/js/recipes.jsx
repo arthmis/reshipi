@@ -63,7 +63,17 @@ class Recipes extends React.Component {
             credentials: 'same-origin',
         })
         .then(response => response.json())
-        .then(recipes => { this.setState({ recipes })});
+        .then(res => { 
+            const recipes = res.recipes;
+            const substituteImages = res.images;
+            for (let i = 0; i < recipes.length; i +=1) {
+                if (recipes[i].image === '') {
+                    let ranNumber = Math.round((Math.random() * (substituteImages.length - 1)));
+                    recipes[i].image = substituteImages[ranNumber];
+                }
+            }
+            this.setState({ recipes });
+        });
     }
 
     async deleteRecipe (recipeTitle) {
@@ -77,13 +87,15 @@ class Recipes extends React.Component {
             credentials: 'same-origin',
         });
 
-        let allRecipes = await fetch('/all_recipes', {
+        let recipes = await fetch('/all_recipes', {
                 method: "GET",
                 mode: 'same-origin',
                 credentials: 'same-origin',
         });
-        allRecipes = await allRecipes.json();
-        this.setState({recipes: allRecipes});
+
+        recipes = await recipes.json();
+        recipes = recipes.recipes;
+        this.setState({ recipes });
     }
 
     async editRecipe(recipeTitle) {
@@ -182,22 +194,44 @@ class Recipe extends React.Component {
     }
 
     render () {
-        return (
-            <div className="recipe-wrapper">
-                <img className="recipe-image" src={this.props.recipe.image} alt="recipe image" />
-                <div className="recipe-title-wrapper">
-                    <h3>
-                        <a onClick={this.recipeLink} href="/recipe">{this.props.recipe.title}</a>
-                    </h3>
-                    <RecipeMenu 
-                        recipeTitle={this.props.recipe.title} 
-                        deleteRecipe={this.props.deleteRecipe} 
-                        editRecipe={this.props.editRecipe} 
-                    />
-                </div>
-                <p className="description">{this.props.recipe.description}</p>
-            </div>
-        )
+        if (this.props.recipe.image === undefined) {
+            return ( <div></div> );
+        } else {
+            if (this.props.recipe.image.split('.')[1] === 'svg') {
+                return (
+                    <div className="recipe-wrapper">
+                        <img className="recipe-image svg-recipe-image" src={this.props.recipe.image} alt="recipe image" />
+                        <div className="recipe-title-wrapper">
+                            <h3>
+                                <a onClick={this.recipeLink} href="/recipe">{this.props.recipe.title}</a>
+                            </h3>
+                            <RecipeMenu 
+                                recipeTitle={this.props.recipe.title} 
+                                deleteRecipe={this.props.deleteRecipe} 
+                                editRecipe={this.props.editRecipe} 
+                            />
+                        </div>
+                    </div>
+                )
+            }
+            else {
+                return (
+                    <div className="recipe-wrapper">
+                        <img className="recipe-image" src={this.props.recipe.image} alt="recipe image" />
+                        <div className="recipe-title-wrapper">
+                            <h3>
+                                <a onClick={this.recipeLink} href="/recipe">{this.props.recipe.title}</a>
+                            </h3>
+                            <RecipeMenu 
+                                recipeTitle={this.props.recipe.title} 
+                                deleteRecipe={this.props.deleteRecipe} 
+                                editRecipe={this.props.editRecipe} 
+                            />
+                        </div>
+                    </div>
+                )
+            }
+        }
     }
 }
 

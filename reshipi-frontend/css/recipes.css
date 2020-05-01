@@ -185,6 +185,7 @@ p {
 .recipe-title-wrapper > h3 > a {
     font-family: "Open sans", sans-serif;
     font-weight: 600;
+    font-size: 1.2em;
     color: #3f78e0;
     text-decoration: underline;
 }
@@ -243,48 +244,14 @@ p {
     background-color: #e9e9e9;
 }
 
-.description {
-    font-family: inherit;
-    font-size: 1.1em;
-    min-height: 4em;
-    max-height: 6em;
-    max-width: 100%;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    hyphens: auto;
-    overflow: hidden;
-    /* white-space: nowrap; */
-    text-overflow: ellipsis;
-    margin-right: 1em;
-    margin-left: 1em;
-}
-
 .recipe-image {
     width: 100%;
     height: 20em;
     object-fit: cover;
+    /* object-fit: contain; */
 }
-
-/* #submit-button {
-    font-family: inherit;
-    font-size: 1em;
-    width: 100%;
-    height: 3em;
-    color: white;
-    background-color: #1f9b3e;
-    font-size: 1.35em;
-    border: 1px solid #777777;
-    border-radius: 4px;
-}
-
-#submit-button:active {
-    position: relative;
-    top: 1px;
-    right: 1px;
-} */
-
-#submit-button:hover {
-    background-color: #17772f;
+.svg-recipe-image {
+    object-fit: contain;
 }
 
 #delete-prompt-wrapper {

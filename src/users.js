@@ -167,7 +167,7 @@ module.exports = (db) => {
     getRecipes: async (user) => {
       const findRecipes = new pg.ParameterizedQuery(
         {
-          text: 'SELECT * FROM recipes WHERE username=$1 LIMIT 15',
+          text: 'SELECT title, image FROM recipes WHERE username=$1',
           values: [user],
         },
       );
@@ -176,7 +176,6 @@ module.exports = (db) => {
       for (const recipeData of recipesData) {
         const recipe = {};
         recipe.title = recipeData.title;
-        recipe.description = recipeData.description;
         recipe.image = recipeData.image.replace('\\', '/');
         recipe.image = recipe.image.replace('uploads/', '');
 
