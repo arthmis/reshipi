@@ -125,14 +125,16 @@ p {
 }
 
 
-.sign-up-input:invalid {
-    /* border-color: #c50700; */
+
+.sign-up-input:focus:invalid {
     box-shadow: 0px 0px 9px 2px #c50700;
 }
 
+.sign-up-input:focus:valid {
+    box-shadow: 0px 0px 4px 2px #2ec500;
+}
+
 .sign-up-input:focus {
-    /* border: 3px solid; */
-    /* border-color: #3f99ff; */
     box-shadow: 0px 0px 9px 2px #3f99ff;
 }
 

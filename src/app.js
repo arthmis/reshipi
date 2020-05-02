@@ -210,6 +210,7 @@ module.exports = (users, db) => {
     const user = {
       email: userData.email,
       emailSpan: '',
+      confirmPassword: '',
     };
 
     // console.log(validationResult(req));
@@ -232,6 +233,11 @@ module.exports = (users, db) => {
       user.emailSpan = 'Email not available';
       console.log('found duplicate user');
 
+      res.status(200);
+      res.render('pages/signup', { user });
+    } else if (userData.password !== userData.confirm_password) {
+      user.confirmPassword = 'Confirmed password must match password.';
+      console.log('found duplicate user');
       res.status(200);
       res.render('pages/signup', { user });
     } else {
