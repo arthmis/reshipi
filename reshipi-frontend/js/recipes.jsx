@@ -7,7 +7,7 @@ class Nav extends React.Component {
     render() {
         return(
             <nav id="nav">
-                <a id="reshipi" href="/recipes">Reshipi</a>
+                <a id="reshipi" href="/recipes">RE&middot;SHI&middot;PI</a>
                 <form id="logout-form" action="/logout" method="get">
                     <input id="logout" type="submit" name="logout" value="Logout"/>
                 </form>

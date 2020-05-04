@@ -136,6 +136,7 @@ module.exports = (users, db) => {
   const maxLoginRateLimiter = new RateLimiterPostgres(maxLoginRateLimitingOptions, ready);
 
   app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.json({ type: ['json', 'application/csp-report'] }));
 
   function getMinutesInMilliseconds(minutes) {
     return minutes * 60 * 1000;
@@ -174,24 +175,27 @@ module.exports = (users, db) => {
         defaultSrc: ["'self'"],
         scriptSrc: [
           "'self'",
-          "'unsafe-inline'",
           'https://unpkg.com/react@16/umd/react.development.js',
           'https://unpkg.com/react-dom@16/umd/react-dom.development.js',
         ],
         imgSrc: ["'self'", 'blob:'],
         styleSrc: [
           "'self'",
-          "'unsafe-inline'",
           'https://fonts.googleapis.com',
         ],
         fontSrc: [
           'https://fonts.gstatic.com',
           "'self'",
         ],
-        // upgradeInsecureRequests: true,
+        upgradeInsecureRequests: true,
         reportUri: '/report-violation',
+        blockAllMixedContent: true,
+        connectSrc: ["'self'"],
+        formAction: ["'self"],
+        baseUri: ["'self'"],
       },
-      reportOnly: true,
+      browserSniff: false,
+      // reportOnly: true,
     }),
   );
 
@@ -199,7 +203,7 @@ module.exports = (users, db) => {
     if (req.body) {
       console.log('CSP Violation: ', req.body);
     }
-    res.status(204).end();
+    res.sendStatus(204);
   };
 
   app.post('/report-violation', reportCspViolation);
