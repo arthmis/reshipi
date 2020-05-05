@@ -1,30 +1,17 @@
-// Database schema
-// Title TEXT
-// Description TEXT
-// Ingredients TEXT
-// Directions TEXT
-// Image(Optional) TEXT(path to image)
-// Food Category
-// Tags TEXT
-// The amount of times this recipe has been accessed/searched INT
-// link to recipe if there is a url for the original recipe URL
-// Related Account ID
-
-// const bcryptjs = require('bcryptjs');
-
 require('dotenv').config();
 
 const express = require('express');
-
-
 const pgp = require('pg-promise')();
 
 const db = pgp(process.env.DATABASE_URL);
 
 const users = require('./users.js')(db);
 const { app } = require('./app.js')(users, db);
+const logger = require('./log.js');
 
-const port = 8000;
+logger.logger.emitErrs = false;
+
+const port = process.env.PORT;
 
 async function main() {
   const createUserTable = `CREATE TABLE IF NOT EXISTS
@@ -57,24 +44,22 @@ async function main() {
     )`;
 
 
-  await db.none(createUserTable).catch((err) => err);
-  await db.none(createRecipesTable).catch((err) => err);
-  await db.none(createSessionsTable).catch((err) => err);
+  await db.none(createUserTable).catch((err) => { throw err; });
+  logger.info("Created Users table if it doesn't exist");
+  await db.none(createRecipesTable).catch((err) => { throw err; });
+  logger.info("Created Recipes table if it doesn't exist");
+  await db.none(createSessionsTable).catch((err) => { throw err; });
+  logger.info("Created Sessions table if it doesn't exist");
 
   app.use(express.static('reshipi-frontend'));
   app.use(express.static('uploads'));
   app.listen(port);
-
-  return null;
 }
 
-
 main()
-  .then((err) => {
-    if (err === null) {
-      console.log('Starting server!');
-      return;
-    }
-
-    console.log(err);
+  .then(() => {
+    logger.info('Starting server!');
+  })
+  .catch((err) => {
+    logger.error(err.stack);
   });

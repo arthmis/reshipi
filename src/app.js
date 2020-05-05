@@ -14,33 +14,39 @@ const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
 const multer = require('multer');
 const validator = require('validator');
-
+const morgan = require('morgan');
+const path = require('path');
 const SonicChannelSearch = require('sonic-channel').Search;
 const SonicChannelIngest = require('sonic-channel').Ingest;
+const { RateLimiterPostgres } = require('rate-limiter-flexible');
+
+const logger = require('./log.js');
+
+logger.logger.emitErrs = false;
 
 const sonicChannelSearch = new SonicChannelSearch({
   host: '::1',
   port: 1491,
-  auth: 'SecretPassword',
+  auth: process.env.SONIC_PASSWORD,
 }).connect({
   connected: () => {
-    console.info('sonic channel connected to host for search');
+    logger.info('sonic channel connected to host for search');
   },
 
   disconnected: () => {
-    console.error('sonic channel is now disconnected');
+    logger.error('sonic channel is now disconnected');
   },
 
   timeout: () => {
-    console.error('sonic channel connection timed out');
+    logger.error('sonic channel connection timed out');
   },
 
   retrying: () => {
-    console.error('trying to reconnect to sonic channel');
+    logger.error('trying to reconnect to sonic channel');
   },
 
   error: () => {
-    console.error('sonic channel failed to connect to host');
+    logger.error('sonic channel failed to connect to host');
   },
 });
 
@@ -51,31 +57,29 @@ const sonicChannelIngest = new SonicChannelIngest({
 }).connect({
   connected: () => {
     // Connected handler
-    console.info('Sonic Channel succeeded to connect to host (ingest).');
+    logger.info('Sonic Channel succeeded to connect to host (ingest).');
   },
 
   disconnected: () => {
     // Disconnected handler
-    console.error('Sonic Channel is now disconnected (ingest).');
+    logger.error('Sonic Channel is now disconnected (ingest).');
   },
 
   timeout: () => {
     // Timeout handler
-    console.error('Sonic Channel connection timed out (ingest).');
+    logger.error('Sonic Channel connection timed out (ingest).');
   },
 
   retrying: () => {
     // Retry handler
-    console.error('Trying to reconnect to Sonic Channel (ingest)...');
+    logger.error('Trying to reconnect to Sonic Channel (ingest)...');
   },
 
   error: (error) => {
     // Failure handler
-    console.error('Sonic Channel failed to connect to host (ingest).', error);
+    logger.error('Sonic Channel failed to connect to host (ingest).', error);
   },
 });
-
-const { RateLimiterPostgres } = require('rate-limiter-flexible');
 
 const maxConsecutiveLoginAttempts = 5;
 const maxLoginAttempts = 10;
@@ -99,6 +103,10 @@ module.exports = (users, db) => {
   const upload = multer({ storage });
 
   const app = express();
+
+  app.use(morgan('combined', {
+    stream: fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' }),
+  }));
 
   const loginRateLimitingOptions = {
     storeClient: db.$pool,
@@ -124,16 +132,23 @@ module.exports = (users, db) => {
   };
 
   // TODO make another ready function for the max login attempts limiter
-  const ready = (err) => {
+  const loginRateLimiterReady = (err) => {
     if (err) {
-      console.log(err);
+      logger.error(err);
     } else {
-      console.log('rate limiting table is ready');
+      logger.info('login rate limiting table is ready');
+    }
+  };
+  const maxLoginRateLimiterReady = (err) => {
+    if (err) {
+      logger.error(err);
+    } else {
+      logger.info('max login rate limiting table is ready');
     }
   };
 
-  const loginRateLimiter = new RateLimiterPostgres(loginRateLimitingOptions, ready);
-  const maxLoginRateLimiter = new RateLimiterPostgres(maxLoginRateLimitingOptions, ready);
+  const loginRateLimiter = new RateLimiterPostgres(loginRateLimitingOptions, loginRateLimiterReady);
+  const maxLoginRateLimiter = new RateLimiterPostgres(maxLoginRateLimitingOptions, maxLoginRateLimiterReady);
 
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json({ type: ['json', 'application/csp-report'] }));
@@ -187,11 +202,11 @@ module.exports = (users, db) => {
           'https://fonts.gstatic.com',
           "'self'",
         ],
-        upgradeInsecureRequests: true,
+        // upgradeInsecureRequests: true,
         reportUri: '/report-violation',
         blockAllMixedContent: true,
         connectSrc: ["'self'"],
-        formAction: ["'self"],
+        formAction: ["'self'"],
         baseUri: ["'self'"],
       },
       browserSniff: false,
@@ -200,9 +215,9 @@ module.exports = (users, db) => {
   );
 
   const reportCspViolation = (req, res) => {
-    if (req.body) {
-      console.log('CSP Violation: ', req.body);
-    }
+    // if (req.body) {
+      // console.log('CSP Violation: ', req.body);
+    // }
     res.sendStatus(204);
   };
 

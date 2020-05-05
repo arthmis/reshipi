@@ -1,33 +1,6 @@
-// Database schema
-// Title TEXT
-// Description TEXT
-// Ingredients TEXT
-// Directions TEXT
-// Image(Optional) TEXT(path to image)
-// Food Category
-// Tags TEXT
-// The amount of times this recipe has been accessed/searched INT
-// link to recipe if there is a url for the original recipe URL
-// Related Account ID
-
-// const bcryptjs = require('bcryptjs');
 const bcrypt = require('bcrypt');
 
-// require('dotenv').config();
-
 const pg = require('pg-promise')();
-
-'use strict';
-
-// addUser
-// deleteUser
-// updateUserInfo
-// readUserInfo
-// addUserRecipesTable
-// updateUserRecipe
-// deleteUserRecipe
-// addUserRecipe
-// get7RandomRecipes
 
 module.exports = (db) => {
   const users = {
@@ -36,23 +9,18 @@ module.exports = (db) => {
       const saltRounds = 10;
 
       const hashResult = await bcrypt.hash(userData.password, saltRounds)
-        .catch((err) => err);
+        .catch((err) => { throw err; });
 
       const insertNewUser = new pg.ParameterizedQuery({
         text: `INSERT INTO Users (email, hash)
                 VALUES ($1, $2)`,
-        values: [
-          userData.email,
-          hashResult,
-        ],
+        values: [userData.email, hashResult],
       });
 
       // insert new user into users table
-      await db.none(insertNewUser).catch((err) => err);
+      await db.none(insertNewUser).catch((err) => { throw err; });
     },
 
-    // this function should use db.oneOrNone because when finding a user
-    // it is possible the username doesn't exist and this can return None
     getUser: async (userData) => {
       const getUserHash = new pg.ParameterizedQuery({
         text: 'SELECT * FROM Users WHERE email=$1 LIMIT 1',
@@ -79,21 +47,22 @@ module.exports = (db) => {
         'SELECT email FROM Users WHERE email=$1 LIMIT 1',
         [userData.email],
       )
-        .catch((err) => err);
+        .catch((err) => { throw err; });
       if (userEmail !== null) {
         return true;
       }
       return false;
     },
+
     isValidLogin: async (credentials) => {
       const user = await db.oneOrNone(
         'SELECT email, hash FROM Users WHERE email=$1 LIMIT 1',
         [credentials.email],
-      ).catch((err) => err);
+      ).catch((err) => { throw err; });
 
       if (user !== null) {
         const match = await bcrypt.compare(credentials.password, user.hash)
-          .catch((err) => err);
+          .catch((err) => { throw err; });
         if (match) {
           return true;
         }
@@ -105,7 +74,7 @@ module.exports = (db) => {
 
     deleteUser: async (userData) => {
       // checks whether user exists and whether userData is valid
-      const user = await getUser(userData).catch((err) => err);
+      const user = await getUser(userData).catch((err) => { throw err; });
       const deleteUserStatement = new pg.ParameterizedQuery({
         text: 'DELETE FROM Users WHERE username=$1 AND email=$2 AND hash=$3 AND recipes_table=$4',
         values: [user.username, user.email, user.hash, user.recipes_table],
@@ -117,13 +86,13 @@ module.exports = (db) => {
       });
 
       // first deletes user's recipes table before deleting user
-      const result = await db.one(deleteUserRecipesTable).catch((err) => err);
+      const result = await db.one(deleteUserRecipesTable).catch((err) => { throw err; });
       if (result) {
         return true;
       }
 
       // deletes user from Users table
-      const count = await db.one(deleteUserStatement).catch((err) => err);
+      const count = await db.one(deleteUserStatement).catch((err) => { throw err; });
       if (count === 1) {
         return true;
       }
@@ -162,7 +131,7 @@ module.exports = (db) => {
         },
       );
 
-      await db.none(insertNewRecipe).catch((err) => console.log(err));
+      await db.none(insertNewRecipe).catch((err) => { throw err; });
     },
     getRecipes: async (user) => {
       const findRecipes = new pg.ParameterizedQuery(
@@ -171,7 +140,7 @@ module.exports = (db) => {
           values: [user],
         },
       );
-      const recipesData = await db.any(findRecipes).catch((err) => console.log(err));
+      const recipesData = await db.any(findRecipes).catch((err) => { throw err; });
       const recipes = [];
       for (const recipeData of recipesData) {
         const recipe = {};
@@ -190,7 +159,7 @@ module.exports = (db) => {
         'SELECT title, description, ingredients, ingredients_amount, directions, food_category, image, url FROM Recipes WHERE title = $1 AND username = $2',
         [recipeTitle, user],
       ).catch((err) => {
-        console.log(err);
+        throw err;
       });
 
       recipe.image = recipe.image.replace('\\', '/');
@@ -204,7 +173,7 @@ module.exports = (db) => {
         'SELECT title FROM Recipes WHERE LOWER(title) = LOWER($1)',
         [recipeTitle],
       ).catch((err) => {
-        console.log(err);
+        throw err;
       });
 
       if (title) {
@@ -219,7 +188,7 @@ module.exports = (db) => {
         'SELECT image FROM Recipes WHERE image = $1',
         [imageName],
       ).catch((err) => {
-        console.log(err);
+        throw err;
       });
 
       if (findImageName) {
@@ -233,8 +202,7 @@ module.exports = (db) => {
       const queryResult = await db.result(
         'DELETE FROM Recipes WHERE title = $1 AND username = $2', [recipeTitle, user],
       ).catch((err) => {
-        console.log(err);
-        return false;
+        throw err;
       });
 
       const count = queryResult.rowCount;
@@ -290,7 +258,7 @@ module.exports = (db) => {
         },
       );
 
-      await db.none(updateRecipe).catch((err) => console.log(err));
+      await db.none(updateRecipe).catch((err) => { throw err; });
     },
   };
   return users;
