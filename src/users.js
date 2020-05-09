@@ -61,8 +61,7 @@ module.exports = (db) => {
       ).catch((err) => { throw err; });
 
       if (user !== null) {
-        const match = await bcrypt.compare(credentials.password, user.hash)
-          .catch((err) => { throw err; });
+        const match = await bcrypt.compare(credentials.password, user.hash);
         if (match) {
           return true;
         }
@@ -217,8 +216,7 @@ module.exports = (db) => {
     updateRecipe: async (recipe, user, image) => {
       if (image.length !== 0) {
         recipe.image = image[0].path;
-      } 
-      else if (recipe.original_image.length > 0) {
+      } else if (recipe.original_image.length > 0) {
         if (recipe.image_is_deleted === 'true') {
           recipe.image = '';
         } else {

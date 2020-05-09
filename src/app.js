@@ -131,17 +131,17 @@ module.exports = (users, db) => {
     blockDuration: 120, // in seconds
   };
 
-  // TODO make another ready function for the max login attempts limiter
   const loginRateLimiterReady = (err) => {
     if (err) {
-      logger.error(err);
+      logger.error(err.stack);
     } else {
       logger.info('login rate limiting table is ready');
     }
   };
+
   const maxLoginRateLimiterReady = (err) => {
     if (err) {
-      logger.error(err);
+      logger.error(err.stack);
     } else {
       logger.info('max login rate limiting table is ready');
     }
@@ -154,9 +154,10 @@ module.exports = (users, db) => {
   app.use(bodyParser.json({ type: ['json', 'application/csp-report'] }));
 
   function getMinutesInMilliseconds(minutes) {
+  // minutes * second * milliseconds
     return minutes * 60 * 1000;
   }
-  // millisecond * second * milliseconds
+
   const cookieAge = getMinutesInMilliseconds(120);
 
   app.use(session({
@@ -171,8 +172,6 @@ module.exports = (users, db) => {
     },
     secret: process.env.SECRET,
     name: 'id',
-    // do more research into this because it depends
-    // on the session store i use
     resave: false,
     saveUninitialized: false,
     store: new PgSession({
@@ -180,7 +179,6 @@ module.exports = (users, db) => {
       tableName: 'sessions',
     }),
   }));
-
 
   app.set('view engine', 'ejs');
 
@@ -214,14 +212,10 @@ module.exports = (users, db) => {
     }),
   );
 
-  const reportCspViolation = (req, res) => {
-    // if (req.body) {
-      // console.log('CSP Violation: ', req.body);
-    // }
+  app.post('/report-violation', (req, res) => {
+    logger.warn(req.body);
     res.sendStatus(204);
-  };
-
-  app.post('/report-violation', reportCspViolation);
+  });
 
   const signupNewUser = async (req, res) => {
     const userData = req.body;
@@ -232,10 +226,8 @@ module.exports = (users, db) => {
       confirmPassword: '',
     };
 
-    // console.log(validationResult(req));
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
-      // console.log(validationErrors);
       user.emailSpan = `${validationErrors.errors[0].value} is not a valid email`;
       res.status(200);
       res.render('pages/signup', {
@@ -244,25 +236,32 @@ module.exports = (users, db) => {
       return;
     }
 
-    const previouslyUsedEmail = await users
-      .checkCredentialsExist(userData)
-      .catch((err) => console.log(err));
+    try {
+      const previouslyUsedEmail = await users.checkCredentialsExist(userData);
 
-    if (previouslyUsedEmail) {
-      user.emailSpan = 'Email not available';
-      console.log('found duplicate user');
+      if (previouslyUsedEmail) {
+        user.emailSpan = 'Email not available';
 
-      res.status(200);
-      res.render('pages/signup', { user });
-    } else if (userData.password !== userData.confirm_password) {
-      user.confirmPassword = 'Confirmed password must match password.';
-      console.log('found duplicate user');
-      res.status(200);
-      res.render('pages/signup', { user });
-    } else {
-      await users.addUser(userData).catch((err) => console.log(err));
-      res.status(201);
-      res.render('pages/login_plain');
+        res.status(200);
+        res.render('pages/signup', { user });
+      } else if (userData.password !== userData.confirm_password) {
+        user.confirmPassword = 'Confirmed password must match password.';
+
+        res.status(200);
+        res.render('pages/signup', { user });
+      } else {
+        try {
+          await users.addUser(userData);
+          res.status(201);
+          res.render('pages/login_plain');
+        } catch (err) {
+          logger.error(err.stack);
+          res.sendStatus(500);
+        }
+      }
+    } catch (err) {
+      logger.error(err.stack);
+      res.sendStatus(500);
     }
   };
   app.post('/signup',
@@ -270,8 +269,7 @@ module.exports = (users, db) => {
       check('email').isEmail().normalizeEmail(),
       check('password').isLength({ min: 8, max: 50 }),
     ],
-    signupNewUser,
-  );
+    signupNewUser);
 
   const loginUser = async (req, res) => {
     const credentials = req.body;
@@ -282,14 +280,16 @@ module.exports = (users, db) => {
         email: credentials.email,
         errorMessage: 'email or password is incorrect',
       };
-      res.status(401);
+      res.status(200);
       res.render('pages/login', {
         user,
       });
+
       return;
     }
 
-    const resMaxLoginLimiter = await maxLoginRateLimiter.get(req.ip);
+    const resMaxLoginLimiter = await maxLoginRateLimiter.get(req.ip)
+      .catch((err) => logger.log(err.stack));
 
     if (resMaxLoginLimiter && resMaxLoginLimiter.consumedPoints > maxLoginAttempts) {
       const user = {
@@ -306,7 +306,8 @@ module.exports = (users, db) => {
       return;
     }
 
-    const resLoginLimiter = await loginRateLimiter.get(req.ip);
+    const resLoginLimiter = await loginRateLimiter.get(req.ip)
+      .catch((err) => logger.log(err.stack));
 
     if (resLoginLimiter && resLoginLimiter.consumedPoints > maxConsecutiveLoginAttempts) {
       const user = {
@@ -322,67 +323,77 @@ module.exports = (users, db) => {
       return;
     }
 
-    if (!(await users.isValidLogin(credentials))) {
-      await Promise.all([
-        loginRateLimiter.consume(req.ip),
-        maxLoginRateLimiter.consume(req.ip),
-      ])
-        .catch((error) => console.log(error));
+    try {
+      const isValidLogin = await users.isValidLogin(credentials);
 
-      const [consecutiveLoginRes, maxLoginRes] = await Promise.all([
-        loginRateLimiter.get(req.ip),
-        maxLoginRateLimiter.get(req.ip),
-      ])
-        .catch((error) => console.log(error));
+      if (!isValidLogin) {
+        await Promise.all([
+          loginRateLimiter.consume(req.ip),
+          maxLoginRateLimiter.consume(req.ip),
+        ])
+          .catch((error) => logger.error(error.stack));
 
-      const user = {
-        email: credentials.email,
-        errorMessage: 'email or password is incorrect',
-      };
+        const [consecutiveLoginRes, maxLoginRes] = await Promise.all([
+          loginRateLimiter.get(req.ip),
+          maxLoginRateLimiter.get(req.ip),
+        ])
+          .catch((error) => logger.error(error.stack));
 
-      if (maxLoginRes && maxLoginRes.consumedPoints > maxLoginAttempts) {
-        const timeBeforeTry = Math.round(maxLoginRes.msBeforeNext / 1000);
-        user.timeBeforeTry = `Try logging in after ${timeBeforeTry} seconds`;
-        res.status(429);
-        res.render('pages/login', {
-          user,
-        });
-      } else if (consecutiveLoginRes && consecutiveLoginRes.consumedPoints > maxConsecutiveLoginAttempts) {
-        const timeBeforeTry = Math.round(consecutiveLoginRes.msBeforeNext / 1000);
-        user.timeBeforeTry = `Try logging in after ${timeBeforeTry} seconds`;
-        res.status(429);
-        res.render('pages/login', {
-          user,
-        });
-      } else {
-        res.status(401);
-        res.render('pages/login', {
-          user,
-        });
+        const user = {
+          email: credentials.email,
+          errorMessage: 'email or password is incorrect',
+        };
+
+        if (maxLoginRes && maxLoginRes.consumedPoints > maxLoginAttempts) {
+          const timeBeforeTry = Math.round(maxLoginRes.msBeforeNext / 1000);
+          user.timeBeforeTry = `Try logging in after ${timeBeforeTry} seconds`;
+          res.status(429);
+          res.render('pages/login', {
+            user,
+          });
+        } else if (consecutiveLoginRes && consecutiveLoginRes.consumedPoints > maxConsecutiveLoginAttempts) {
+          const timeBeforeTry = Math.round(consecutiveLoginRes.msBeforeNext / 1000);
+          user.timeBeforeTry = `Try logging in after ${timeBeforeTry} seconds`;
+          res.status(429);
+          res.render('pages/login', {
+            user,
+          });
+        } else {
+          res.status(401);
+          res.render('pages/login', {
+            user,
+          });
+        }
+        return;
       }
-      return;
+      req.session.regenerate(async (err) => {
+        if (err) {
+          logger.error(err.stack);
+          res.status(500);
+          res.render('pages/500');
+        } else {
+          const consecutiveLoginRes = await loginRateLimiter.get(req.ip)
+            .catch((error) => logger.error(error.stack));
+          if (consecutiveLoginRes) {
+            await loginRateLimiter.delete(req.ip)
+              .catch((error) => logger.error(error.stack));
+          }
+
+          const maxLoginRes = await maxLoginRateLimiter.get(req.ip)
+            .catch((error) => logger.error(error.stack));
+          if (maxLoginRes) {
+            await maxLoginRateLimiter.delete(req.ip)
+              .catch((error) => logger.error(error.stack));
+          }
+          req.session.user = credentials.email;
+          res.redirect(303, '/recipes');
+        }
+      });
+    } catch (err) {
+      logger.error(err.stack);
+      res.status(500);
+      res.render('pages/500');
     }
-    req.session.regenerate(async (err) => {
-      if (err) {
-        console.log(err);
-      }
-
-      const consecutiveLoginRes = await loginRateLimiter.get(req.ip)
-        .catch((error) => console.log(error));
-      if (consecutiveLoginRes) {
-        await loginRateLimiter.delete(req.ip)
-          .catch((error) => console.log(error));
-      }
-
-      const maxLoginRes = await maxLoginRateLimiter.get(req.ip)
-        .catch((error) => console.log(error));
-      if (maxLoginRes) {
-        await maxLoginRateLimiter.delete(req.ip)
-          .catch((error) => console.log(error));
-      }
-      req.session.user = credentials.email;
-      res.redirect(303, '/recipes');
-    });
   };
 
   app.post('/recipes_login',
@@ -390,13 +401,14 @@ module.exports = (users, db) => {
       check('email').isEmail().normalizeEmail(),
       check('password').isLength({ min: 8, max: 50 }),
     ],
-    loginUser,
-  );
+    loginUser);
 
-  const logout = (req, res) => {
+  app.get('/logout', (req, res) => {
     req.sessionStore.get(req.session.id, (err, sesh) => {
       if (err) {
-        console.log(err);
+        logger.error(err.stack);
+        res.status(500);
+        res.render('pages/500');
         return;
       }
       if (!sesh) {
@@ -405,25 +417,26 @@ module.exports = (users, db) => {
     });
     req.sessionStore.destroy((err) => {
       if (err) {
-        console.log(err);
-        return;
+        logger.error(err.stack);
+        res.status(500);
+        res.render('pages/500');
+      } else {
+        res.redirect(303, '/');
       }
-      res.redirect(303, '/');
     });
-  };
-
-  app.get('/logout', logout);
+  });
 
   app.get('/recipes', (req, res) => {
     req.sessionStore.get(req.session.id, (err, sesh) => {
       if (err) {
-        console.log('err: ', err);
+        logger.error(err.stack);
+        res.status(500);
+        res.render('pages/500');
         return;
       }
+
       if (!sesh) {
-        // res.status(401);
         res.redirect(303, '/login');
-        // res.render('pages/login_plain');
         return;
       }
       res.status(200);
@@ -434,94 +447,113 @@ module.exports = (users, db) => {
   app.get('/new_recipe', (req, res) => {
     req.sessionStore.get(req.session.id, (err, sesh) => {
       if (err) {
-        console.log(`err: ${err}`);
+        logger.error(err.stack);
+        res.status(500);
+        res.render('pages/500');
         return;
       }
+
       if (!sesh) {
         res.redirect(303, '/login');
         return;
       }
       res.status(200);
       res.render('pages/new_recipe');
-      // res.send("got the recipe");
     });
   });
 
   const addRecipe = (req, res) => {
     req.sessionStore.get(req.session.id, async (err, sess) => {
       if (err) {
-        console.log(`err: ${err}`);
+        logger.error(err.stack);
+        res.status(500);
+        res.render('pages/500');
         return;
       }
+
       if (!sess) {
         res.redirect(303, '/login');
         return;
       }
+
       const validationErrors = validationResult(req);
       const recipe = req.body;
       if (!validationErrors.isEmpty()) {
-        console.log('validation error: ', validationErrors);
-        res.sendStatus(401);
+        logger.error('validation error: ', validationErrors);
+        res.sendStatus(400);
         return;
       }
 
-      if (await users.isDuplicateTitle(recipe.title)) {
-        res.status(203);
-        res.send(JSON.stringify({
-          recipe,
-          error: 'recipe title cannot be a duplicate of another recipe',
-        }));
-        return;
-      }
-      const user = sess.user;
+      try {
+        const isDuplicateTitle = await users.isDuplicateTitle(recipe.title);
 
-      const makeRecipeString = (searchRecipe) => {
-        let ingredients = '';
-        if (Array.isArray(searchRecipe.ingredients)) {
-          ingredients = searchRecipe.ingredients.join(' ');
-        } else {
-          ingredients = searchRecipe.ingredients;
+        if (isDuplicateTitle) {
+          res.status(203);
+          res.send(JSON.stringify({
+            recipe,
+            error: 'recipe title cannot be a duplicate of another recipe',
+          }));
+          return;
         }
-        let directions = '';
-        if (Array.isArray(searchRecipe.directions)) {
-          directions = searchRecipe.directions.join(' ');
-        } else {
-          directions = searchRecipe.directions;
+        const { user } = sess;
+
+        const makeRecipeString = (searchRecipe) => {
+          let ingredients = '';
+          if (Array.isArray(searchRecipe.ingredients)) {
+            ingredients = searchRecipe.ingredients.join(' ');
+          } else {
+            ingredients = searchRecipe.ingredients;
+          }
+          let directions = '';
+          if (Array.isArray(searchRecipe.directions)) {
+            directions = searchRecipe.directions.join(' ');
+          } else {
+            directions = searchRecipe.directions;
+          }
+
+          return [
+            searchRecipe.title,
+            searchRecipe.description,
+            ingredients,
+            directions,
+          ].join(' ').split('-').join(' ');
+        };
+
+        const replacedTitle = recipe.title.split(' ').join('+');
+        const objectId = [user, replacedTitle].join(':');
+
+        await sonicChannelIngest.push(
+          'recipes',
+          user,
+          objectId,
+          makeRecipeString(recipe),
+          'eng',
+        ).catch((error) => logger.error(error.stack));
+
+        if (Array.isArray(recipe.ingredients)) {
+          recipe.ingredients = recipe.ingredients.join('\n');
+        }
+        if (Array.isArray(recipe.directions)) {
+          recipe.directions = recipe.directions.join('\n');
+        }
+        if (Array.isArray(recipe.ingredient_amount)) {
+          recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
         }
 
-        return [
-          searchRecipe.title,
-          searchRecipe.description,
-          ingredients,
-          directions,
-        ].join(' ').split('-').join(' ');
-      };
-
-      const replacedTitle = recipe.title.split(' ').join('+');
-      const objectId = [user, replacedTitle].join(':');
-
-      await sonicChannelIngest.push(
-        'recipes',
-        user,
-        objectId,
-        makeRecipeString(recipe),
-        'eng',
-      )
-      .catch((error) => console.error(error));
-
-      if (Array.isArray(recipe.ingredients)) {
-        recipe.ingredients = recipe.ingredients.join('\n');
+        try {
+          await users.addRecipe(recipe, user, req.files);
+          res.status(200);
+          res.render('pages/recipes');
+        } catch (error) {
+          logger.error(error.stack);
+          res.status(500);
+          res.render('pages/500');
+        }
+      } catch (error) {
+        logger.error(error.stack);
+        res.status(500);
+        res.render('pages/500');
       }
-      if (Array.isArray(recipe.directions)) {
-        recipe.directions = recipe.directions.join('\n');
-      }
-      if (Array.isArray(recipe.ingredient_amount)) {
-        recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
-      }
-
-      await users.addRecipe(recipe, user, req.files);
-      res.status(200);
-      res.render('pages/recipes');
     });
   };
 
@@ -588,6 +620,7 @@ module.exports = (users, db) => {
     req.body.directions = direction;
     return true;
   };
+
   app.post(
     '/add_recipe',
     upload.any('recipe_image'),
@@ -616,27 +649,35 @@ module.exports = (users, db) => {
     addRecipe,
   );
 
-  // add session checking for this
   app.get('/all_recipes', async (req, res) => {
     req.sessionStore.get(req.session.id, async (err, sess) => {
       if (err) {
-        console.log(`err: ${err}`);
+        logger.error(err.stack);
+        res.status(500);
+        res.render('pages/500');
         return;
       }
       if (!sess) {
         res.redirect(303, '/login');
         return;
       }
-      const recipes = await users.getRecipes(req.session.user);
-      res.status(200);
-      for (let i = 0; i < recipes.length; i += 1) {
-        recipes[i].title = validator.unescape(recipes[i].title);
+      try {
+        const recipes = await users.getRecipes(req.session.user);
+        res.status(200);
+        for (let i = 0; i < recipes.length; i += 1) {
+          recipes[i].title = validator.unescape(recipes[i].title);
+        }
+        // TODO add error handling for file read
+        const images = fs.readdirSync('./reshipi-frontend/images/food_image_substitutes');
+        for (let i = 0; i < images.length; i += 1) {
+          images[i] = `images/food_image_substitutes/${images[i]}`;
+        }
+        res.json({ recipes, images });
+      } catch (error) {
+        logger.error(error.stack);
+        res.status(500);
+        res.render('pages/500');
       }
-      const images = fs.readdirSync('./reshipi-frontend/images/food_image_substitutes');
-      for (let i = 0; i < images.length; i += 1) {
-        images[i] = `images/food_image_substitutes/${images[i]}`;
-      }
-      res.json({ recipes, images });
     });
   });
 
@@ -650,9 +691,12 @@ module.exports = (users, db) => {
     async (req, res) => {
       req.sessionStore.get(req.session.id, async (err, sess) => {
         if (err) {
-          console.log(`err: ${err}`);
+          logger.error(err.stack);
+          res.status(500);
+          res.render('pages/500');
           return;
         }
+
         if (!sess) {
           res.redirect(303, '/login');
           return;
@@ -660,44 +704,51 @@ module.exports = (users, db) => {
         const validationErrors = validationResult(req);
         const recipe = req.body;
         if (!validationErrors.isEmpty()) {
-          console.log('validation error: ', validationErrors);
+          logger.error('validation error: ', validationErrors);
           res.sendStatus(401);
           return;
         }
 
         await sonicChannelIngest.flusho('recipes', sess.user, [sess.user, recipe.title.split(' ').join('+')].join(':'))
-          .catch((error) => console.log(error));
+          .catch((error) => logger.error(error.stack));
 
-        const isDeleted = await users.deleteRecipe(req.body.title, sess.user);
+        try {
+          const isDeleted = await users.deleteRecipe(req.body.title, sess.user);
 
-        if (isDeleted) {
-          res.sendStatus(204);
-        } else {
-          res.sendStatus(404);
+          if (isDeleted) {
+            res.sendStatus(204);
+          } else {
+            res.sendStatus(404);
+          }
+        } catch (error) {
+          logger.error(error.stack);
+          res.status(500);
+          res.render('pages/500');
         }
       });
-    },
-  );
+    });
 
   app.get(
     '/edit_recipe',
     [
       query('title').trim().not().isEmpty(),
     ],
-    async (req, res) => {
-      // console.log(req.query);
-      req.sessionStore.get(req.session.id, async (err, sess) => {
+    (req, res) => {
+      req.sessionStore.get(req.session.id, (err, sess) => {
         if (err) {
-          console.log(`err: ${err}`);
+          logger.error(err.stack);
+          res.status(500);
+          res.render('pages/500');
           return;
         }
+
         if (!sess) {
           res.redirect(303, '/login');
           return;
         }
         const validationErrors = validationResult(req);
         if (!validationErrors.isEmpty()) {
-          console.log(validationErrors);
+          logger.error(validationErrors);
           res.sendStatus(401);
           return;
         }
@@ -707,37 +758,52 @@ module.exports = (users, db) => {
       });
     },
   );
-  app.get('/get_recipe', [query('title').trim().not().isEmpty().escape()], async (req, res) => {
+
+  app.get('/get_recipe', [query('title').trim().not().isEmpty()
+    .escape()], (req, res) => {
     req.sessionStore.get(req.session.id, async (err, sess) => {
       if (err) {
-        console.log(`err: ${err}`);
+        logger.error(err.stack);
+        res.status(500);
+        res.render('pages/500');
         return;
       }
+
       if (!sess) {
         res.redirect(303, '/login');
         return;
       }
+
       const validationErrors = validationResult(req);
       if (!validationErrors.isEmpty()) {
-        console.log(validationErrors);
+        logger.error(validationErrors);
         res.sendStatus(401);
         return;
       }
 
-      const recipe = await users.getRecipe(req.query.title, sess.user);
+      try {
+        const recipe = await users.getRecipe(req.query.title, sess.user);
 
-      for (const [key, value] of Object.entries(recipe)) {
-        recipe[key] = validator.unescape(value);
+        for (const [key, value] of Object.entries(recipe)) {
+          recipe[key] = validator.unescape(value);
+        }
+
+        res.status(200);
+        res.send(JSON.stringify(recipe));
+      } catch (error) {
+        logger.log(error.stack);
+        res.status(500);
+        res.render('pages/500');
       }
-
-      res.status(200);
-      res.send(JSON.stringify(recipe));
     });
   });
+
   app.post('/check_duplicate_recipe', upload.none('title'), [body('title').trim().escape()], async (req, res) => {
     req.sessionStore.get(req.session.id, async (err, sess) => {
       if (err) {
-        console.log(`err: ${err}`);
+        logger.error(err.stack);
+        res.status(500);
+        res.render('pages/500');
         return;
       }
       if (!sess) {
@@ -746,7 +812,7 @@ module.exports = (users, db) => {
       }
       const validationErrors = validationResult(req);
       if (!validationErrors.isEmpty()) {
-        console.log(validationErrors);
+        logger.error(validationErrors);
         res.sendStatus(401);
         return;
       }
@@ -757,6 +823,7 @@ module.exports = (users, db) => {
       res.send(JSON.stringify({ isDuplicate }));
     });
   });
+
   app.put(
     '/update_recipe',
     upload.any('recipe_image'),
@@ -788,7 +855,9 @@ module.exports = (users, db) => {
     (req, res) => {
       req.sessionStore.get(req.session.id, async (err, sess) => {
         if (err) {
-          console.log(`err: ${err}`);
+          logger.error(err.stack);
+          res.status(500);
+          res.render('pages/500');
           return;
         }
         if (!sess) {
@@ -798,88 +867,105 @@ module.exports = (users, db) => {
         const validationErrors = validationResult(req);
         const recipe = req.body;
         if (!validationErrors.isEmpty()) {
-          console.log(validationErrors);
+          logger.error(validationErrors);
           res.sendStatus(401);
           return;
         }
 
-        // makes sure updated recipe title is not a duplicate
-        if (await users.isDuplicateTitle(recipe.title)) {
-          res.status(203);
-          res.send(JSON.stringify({
-            recipe,
-            error: 'recipe title cannot be a duplicate of another recipe',
-          }));
-          return;
-        }
+        try {
+          // makes sure updated recipe title is not a duplicate
+          const isDuplicateTitle = await users.isDuplicateTitle(recipe.title);
 
-        const user = sess.user;
-
-        const makeRecipeString = (searchRecipe) => {
-          let ingredients = '';
-          if (Array.isArray(searchRecipe.ingredients)) {
-            ingredients = searchRecipe.ingredients.join(' ');
-          } else {
-            ingredients = searchRecipe.ingredients;
-          }
-          let directions = '';
-          if (Array.isArray(searchRecipe.directions)) {
-            directions = searchRecipe.directions.join(' ');
-          } else {
-            directions = searchRecipe.directions;
+          if (isDuplicateTitle) {
+            res.status(203);
+            res.send(JSON.stringify({
+              recipe,
+              error: 'recipe title cannot be a duplicate of another recipe',
+            }));
+            return;
           }
 
-          return [
-            searchRecipe.title,
-            searchRecipe.description,
-            ingredients,
-            directions,
-          ].join(' ').split('-').join(' ');
-        };
+          const { user } = sess;
 
-        const replacedTitle = recipe.title.split(' ').join('+');
-        const objectId = [user, replacedTitle].join(':');
+          const makeRecipeString = (searchRecipe) => {
+            let ingredients = '';
+            if (Array.isArray(searchRecipe.ingredients)) {
+              ingredients = searchRecipe.ingredients.join(' ');
+            } else {
+              ingredients = searchRecipe.ingredients;
+            }
+            let directions = '';
+            if (Array.isArray(searchRecipe.directions)) {
+              directions = searchRecipe.directions.join(' ');
+            } else {
+              directions = searchRecipe.directions;
+            }
 
-        await sonicChannelIngest.push(
-          'recipes',
-          user,
-          objectId,
-          makeRecipeString(recipe),
-          'eng',
-        )
-        .catch((error) => console.error(error));
+            return [
+              searchRecipe.title,
+              searchRecipe.description,
+              ingredients,
+              directions,
+            ].join(' ').split('-').join(' ');
+          };
 
-        await sonicChannelIngest.flusho(
-          'recipes',
-          user,
-          [user, recipe.original_title.split(' ').join('+')].join(':'),
-        )
-        .catch((error) => console.error(error));
+          const replacedTitle = recipe.title.split(' ').join('+');
+          const objectId = [user, replacedTitle].join(':');
 
-        if (Array.isArray(recipe.ingredients)) {
-          recipe.ingredients = recipe.ingredients.join('\n');
+          await sonicChannelIngest.push(
+            'recipes',
+            user,
+            objectId,
+            makeRecipeString(recipe),
+            'eng',
+          )
+            .catch((error) => logger.error(error.stack));
+
+          await sonicChannelIngest.flusho(
+            'recipes',
+            user,
+            [user, recipe.original_title.split(' ').join('+')].join(':'),
+          )
+            .catch((error) => logger.error(error.stack));
+
+          if (Array.isArray(recipe.ingredients)) {
+            recipe.ingredients = recipe.ingredients.join('\n');
+          }
+          if (Array.isArray(recipe.directions)) {
+            recipe.directions = recipe.directions.join('\n');
+          }
+          if (Array.isArray(recipe.ingredient_amount)) {
+            recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
+          }
+
+          try {
+            await users.updateRecipe(recipe, req.session.user, req.files);
+            res.sendStatus(200);
+          } catch (error) {
+            logger.error(error.stack);
+            res.status(500);
+            res.render('pages/500');
+          }
+        } catch (error) {
+          logger.error(error.stack);
+          res.status(500);
+          res.render('pages/500');
         }
-        if (Array.isArray(recipe.directions)) {
-          recipe.directions = recipe.directions.join('\n');
-        }
-        if (Array.isArray(recipe.ingredient_amount)) {
-          recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
-        }
-
-        await users.updateRecipe(recipe, req.session.user, req.files);
-        res.sendStatus(200);
       });
     },
   );
   app.get(
     '/recipe',
     [
-      query('title').trim().not().isEmpty().escape(),
+      query('title').trim().not().isEmpty()
+        .escape(),
     ],
     async (req, res) => {
       req.sessionStore.get(req.session.id, async (err, sess) => {
         if (err) {
-          console.log(`err: ${err}`);
+          logger.error(err.stack);
+          res.status(500);
+          res.render('pages/500');
           return;
         }
         if (!sess) {
@@ -888,7 +974,7 @@ module.exports = (users, db) => {
         }
         const validationErrors = validationResult(req);
         if (!validationErrors.isEmpty()) {
-          console.log(validationErrors);
+          logger.error(validationErrors);
           res.sendStatus(401);
           return;
         }
@@ -902,7 +988,9 @@ module.exports = (users, db) => {
   app.get('/search_recipes', query('search').trim(), (req, res) => {
     req.sessionStore.get(req.session.id, async (err, sess) => {
       if (err) {
-        console.log(`err: ${err}`);
+        logger.error(err.stack);
+        res.status(500);
+        res.render('pages/500');
         return;
       }
       if (!sess) {
@@ -912,17 +1000,17 @@ module.exports = (users, db) => {
 
       const validationErrors = validationResult(req);
       if (!validationErrors.isEmpty()) {
-        console.log(validationErrors);
+        logger.error(validationErrors);
         res.sendStatus(401);
         return;
       }
 
-      const user = sess.user;
+      const { user } = sess;
       const searchTerms = req.query.search;
 
-      if (searchTerms) {
+      if (searchTerms !== '') {
         const objectId = await sonicChannelSearch.query('recipes', user, searchTerms)
-          .catch((error) => console.log(error));
+          .catch((error) => logger.error(error.stack));
 
         if (objectId.length > 0) {
           const possibleRecipes = [];
@@ -935,32 +1023,40 @@ module.exports = (users, db) => {
           }
 
           const recipes = [];
-          const fullRecipes = await Promise.all(possibleRecipes)
-            .catch((error) => console.log(error));
+          try {
+            const fullRecipes = await Promise.all(possibleRecipes);
 
-          for (const fullRecipe of fullRecipes) {
-            const recipe = {
-              title: validator.unescape(fullRecipe.title),
-              description: fullRecipe.description,
-            };
-            recipe.image = fullRecipe.image.replace('\\', '/');
-            recipe.image = recipe.image.replace('uploads/', '');
-            recipes.push(recipe);
+            for (const fullRecipe of fullRecipes) {
+              const recipe = {
+                title: validator.unescape(fullRecipe.title),
+                description: fullRecipe.description,
+              };
+              recipe.image = fullRecipe.image.replace('\\', '/');
+              recipe.image = recipe.image.replace('uploads/', '');
+              recipes.push(recipe);
+            }
+            res.status(200);
+            res.json(recipes);
+          } catch (error) {
+            logger.error(error.stack);
+            res.status(500);
+            // maybe think about about sending an empty recipe
           }
-
-          res.status(200);
-          res.json(recipes);
         } else {
-          res.sendStatus(401);
+          res.sendStatus(404);
         }
       } else {
-        const recipes = await users.getRecipes(req.session.user)
-          .catch((error) => console.log(error));
-        res.status(200);
-        for (let i = 0; i < recipes.length; i += 1) {
-          recipes[i].title = validator.unescape(recipes[i].title);
+        try {
+          const recipes = await users.getRecipes(req.session.user);
+          res.status(200);
+          for (let i = 0; i < recipes.length; i += 1) {
+            recipes[i].title = validator.unescape(recipes[i].title);
+          }
+          res.send(recipes);
+        } catch (error) {
+          logger.error(error.stack);
+          res.status(500);
         }
-        res.send(recipes);
       }
     });
   });

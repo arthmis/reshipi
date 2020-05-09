@@ -1,6 +1,14 @@
-const { createLogger, format, transports } = require('winston');
+const {
+  createLogger,
+  format,
+  transports
+} = require('winston');
 
-const { combine, timestamp, prettyPrint } = format;
+const {
+  combine,
+  timestamp,
+  prettyPrint
+} = format;
 
 class Logger {
   constructor() {
@@ -23,8 +31,7 @@ class Logger {
         new transports.Console(),
       ],
     });
-    this.logger.rejections.handle(
-    );
+    this.logger.rejections.handle();
   }
 
   debug(log) {

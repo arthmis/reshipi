@@ -13,6 +13,20 @@ logger.logger.emitErrs = false;
 
 const port = process.env.PORT;
 
+process.on('uncaughtException', (err) => {
+  logger.error(err.stack);
+  // send email
+  process.exit(1);
+  // restart
+});
+
+process.on('unhandledRejection', (err) => {
+  logger.error(err.stack);
+  // send email
+  process.exit(1);
+  // restart
+});
+
 async function main() {
   const createUserTable = `CREATE TABLE IF NOT EXISTS
     Users(
@@ -43,12 +57,19 @@ async function main() {
       expire TIMESTAMP(6) NOT NULL
     )`;
 
-
-  await db.none(createUserTable).catch((err) => { throw err; });
+  await db.none(createUserTable).catch((err) => {
+    throw err;
+  });
   logger.info("Created Users table if it doesn't exist");
-  await db.none(createRecipesTable).catch((err) => { throw err; });
+
+  await db.none(createRecipesTable).catch((err) => {
+    throw err;
+  });
   logger.info("Created Recipes table if it doesn't exist");
-  await db.none(createSessionsTable).catch((err) => { throw err; });
+
+  await db.none(createSessionsTable).catch((err) => {
+    throw err;
+  });
   logger.info("Created Sessions table if it doesn't exist");
 
   app.use(express.static('reshipi-frontend'));
