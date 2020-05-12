@@ -143,9 +143,10 @@ p {
     min-height: 100vh;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(25em, 1fr));
-    grid-gap: 2em;
-    background-color: #e9e9e9;
-    padding-bottom: 2em;
+    grid-template-rows: repeat(auto-fill, minmax(18em, 25em));
+    grid-gap: 1em;
+    background-color: #ececec;
+    padding-bottom: 5em;
 }
 
 .recipe-wrapper {
@@ -155,21 +156,13 @@ p {
     max-width: 30em;
     width: 100%;
 
-    min-height: 15em;
-    max-height: 40em;
-    height: 100%;
+    height: 26em;
 
     margin-top: 1em;
     margin-left: auto;
     margin-right: auto;
-
-    /* padding-bottom: 1em;
-    padding-right: 1em;
-    padding-left: 1em; */
-
-    /* border-radius: 4px; */
-    background-color: #e7e7e7;
-    /* box-shadow: -4px 4px 15px 0px #8f8f8f; */
+    background-color: #f8f8f8;
+    box-shadow: -4px 4px 15px 0px #cccccc;
 }
 
 .recipe-title-wrapper {
@@ -177,7 +170,8 @@ p {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    height: 3.5em;
+    height: 5em;
+    /* height: 100%; */
     margin-left: 1em;
     margin-right: 1em;
     background-color: inherit;

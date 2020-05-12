@@ -1,77 +1,81 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Reshipi</title>
-        <meta content="text/html;charset=UTF-8" http-equiv="Content-Type"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.5, user-scalable=no"/>
-        <link rel="stylesheet" type="text/css" href="/css/index.css"/>
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet"/>
-        <script src="/js/index.js" type="module" defer></script>
-    </head>
 
-    <body>
-        <header>
-            <nav id="nav">
-                <a id="reshipi" href="/">RE&middot;SHI&middot;PI</a>
-                <div id="user-auth-actions">
-                    <a href="/login" id="login">Login</a>
-                    <a href="#sign-up" id="signup">Signup</a>
-                </div>
-            </nav>
-        </header>
-        <main>
-            <div id="main-information">
-                <div id="reshipi-description">
-                    <h1>
-                        RE&middot;SHI&middot;PI
-                    </h1>
-                    <p>
-                        Create your own virtual recipe book.<br>
-                        Easily keep track of your favorite recipes.
-                    </p>
-                </div>
-                <div id="recipe-book-img">
-                    <img src="/images/recipe_book.jpg" />
-                </div>
+<head>
+    <title>Reshipi</title>
+    <meta content="text/html;charset=UTF-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.5, user-scalable=no" />
+    <link rel="stylesheet" type="text/css" href="/css/index.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet" />
+    <script src="/js/index.js" type="module" defer></script>
+</head>
+
+<body>
+    <header>
+        <nav id="nav">
+            <a id="reshipi" href="/">RE&middot;SHI&middot;PI</a>
+            <div id="user-auth-actions">
+                <a href="/login" id="login">Login</a>
+                <a href="#sign-up" id="signup">Signup</a>
             </div>
-            <div id="reshipi-example-one">
-                <div id="recipe-search-img">
-                    <img src="/images/recipe_book.jpg" />
-                </div>
-                <div id="reshipi-search-description">
-                    <h2>Search Your Recipes</h2>
-                    <p>
-                        Quickly search for recipes by title, description
-                        and type. Or get a random recipe to spice things up!
-                    </p>
-                </div>
+        </nav>
+    </header>
+    <main>
+        <div id="main-information">
+            <div id="reshipi-description">
+                <h1>
+                    RE&middot;SHI&middot;PI
+                </h1>
+                <p>
+                    Create your own virtual recipe book.<br>
+                    Easily keep track of your favorite recipes.
+                </p>
             </div>
-            <div id="sign-up-wrapper">
-                <div id="signup-associated-text">
-                    <h2>Get Started!</h2>
-                    <p>Sign up today and start building your recipe collection.</p>
-                </div>
-                <form id="sign-up" action="/signup" method="post">
-                    <div id="form-inputs">
-                        <div class="input-group">
-                            <label class="sign-up-label" form="sign-up" for="email">Email</label><br>
-                            <input class="sign-up-input" form="sign-up" id="email" name="email" type="email" required><br>
-                        </div>
-                        <div class="input-group">
-                            <label class="sign-up-label" form="sign-up" for="password">Password</label><br> 
-                            <input class="sign-up-input" form="sign-up" id="password" name="password" type="password" minlength="8" maxlength="50" required><br>
-                        </div>
-                        <div class="input-group">
-                            <label class="sign-up-label" form="sign-up" for="password">Confirm Password</label><br> 
-                            <input class="sign-up-input" form="sign-up" id="confirm-password" name="confirm_password" type="password" minlength="8" maxlength="50" required><br>
-                        </div>
-                        <input id="submit-button" type="submit" value="Sign Up">
+            <div id="recipe-book-img">
+                <img src="/images/recipe_book.jpg" />
+            </div>
+        </div>
+        <div id="reshipi-example-one">
+            <div id="reshipi-search-video">
+                <video src="/video/search.mp4" autoplay loop />
+            </div>
+            <div id="reshipi-search-description">
+                <h2>Search Your Recipes</h2>
+                <p>
+                    Quickly search for recipes by title, description
+                    and type.
+                </p>
+            </div>
+        </div>
+        <div id="sign-up-wrapper">
+            <div id="signup-associated-text">
+                <h2>Get Started!</h2>
+                <p>Sign up today and start building your recipe collection.</p>
+            </div>
+            <form id="sign-up" action="/signup" method="post">
+                <div id="form-inputs">
+                    <div class="input-group">
+                        <label class="sign-up-label" form="sign-up" for="email">Email</label><br>
+                        <input class="sign-up-input" form="sign-up" id="email" name="email" type="email" required><br>
                     </div>
-                </form>
-            </div>
-        </main>
-        <!-- <footer>
+                    <div class="input-group">
+                        <label class="sign-up-label" form="sign-up" for="password">Password</label><br>
+                        <input class="sign-up-input" form="sign-up" id="password" name="password" type="password"
+                            minlength="8" maxlength="50" required><br>
+                    </div>
+                    <div class="input-group">
+                        <label class="sign-up-label" form="sign-up" for="password">Confirm Password</label><br>
+                        <input class="sign-up-input" form="sign-up" id="confirm-password" name="confirm_password"
+                            type="password" minlength="8" maxlength="50" required><br>
+                    </div>
+                    <input id="submit-button" type="submit" value="Sign Up">
+                </div>
+            </form>
+        </div>
+    </main>
+    <!-- <footer>
             Copyright stuff
         </footer> -->
-    </body>
+</body>
+
 </html>
