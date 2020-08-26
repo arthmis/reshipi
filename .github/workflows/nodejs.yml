@@ -43,3 +43,4 @@ jobs:
         CI: true
         TESTING_DATABASE_URL: postgresql://testdb:postgres@localhost:5432/testdb
         SECRET: secret
+        PGPASSWORD: postgres
