@@ -154,7 +154,7 @@ module.exports = (users, db) => {
   app.use(bodyParser.json({ type: ['json', 'application/csp-report'] }));
 
   function getMinutesInMilliseconds(minutes) {
-  // minutes * second * milliseconds
+    // minutes * second * milliseconds
     return minutes * 60 * 1000;
   }
 
@@ -761,42 +761,42 @@ module.exports = (users, db) => {
 
   app.get('/get_recipe', [query('title').trim().not().isEmpty()
     .escape()], (req, res) => {
-    req.sessionStore.get(req.session.id, async (err, sess) => {
-      if (err) {
-        logger.error(err.stack);
-        res.status(500);
-        res.render('pages/500');
-        return;
-      }
-
-      if (!sess) {
-        res.redirect(303, '/login');
-        return;
-      }
-
-      const validationErrors = validationResult(req);
-      if (!validationErrors.isEmpty()) {
-        logger.error(validationErrors);
-        res.sendStatus(401);
-        return;
-      }
-
-      try {
-        const recipe = await users.getRecipe(req.query.title, sess.user);
-
-        for (const [key, value] of Object.entries(recipe)) {
-          recipe[key] = validator.unescape(value);
+      req.sessionStore.get(req.session.id, async (err, sess) => {
+        if (err) {
+          logger.error(err.stack);
+          res.status(500);
+          res.render('pages/500');
+          return;
         }
 
-        res.status(200);
-        res.send(JSON.stringify(recipe));
-      } catch (error) {
-        logger.log(error.stack);
-        res.status(500);
-        res.render('pages/500');
-      }
+        if (!sess) {
+          res.redirect(303, '/login');
+          return;
+        }
+
+        const validationErrors = validationResult(req);
+        if (!validationErrors.isEmpty()) {
+          logger.error(validationErrors);
+          res.sendStatus(401);
+          return;
+        }
+
+        try {
+          const recipe = await users.getRecipe(req.query.title, sess.user);
+
+          for (const [key, value] of Object.entries(recipe)) {
+            recipe[key] = validator.unescape(value);
+          }
+
+          res.status(200);
+          res.send(JSON.stringify(recipe));
+        } catch (error) {
+          logger.log(error.stack);
+          res.status(500);
+          res.render('pages/500');
+        }
+      });
     });
-  });
 
   app.post('/check_duplicate_recipe', upload.none('title'), [body('title').trim().escape()], async (req, res) => {
     req.sessionStore.get(req.session.id, async (err, sess) => {

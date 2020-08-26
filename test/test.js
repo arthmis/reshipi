@@ -16,7 +16,7 @@ require('dotenv').config();
 const users = require('../src/users.js')(pgp(process.env.TESTING_DATABASE_URL));
 const { app } = require('../src/app.js')(users);
 
-'use strict'; 
+'use strict';
 
 const testRecipe = JSON.stringify({
   title: 'Steak Brisket',
@@ -148,9 +148,9 @@ describe('reshipi', function () {
           password: 'secret_passy',
         })
         .expect(200);
-        // .then((res) => {
-        //   t.assert(res.status === 200);
-        // });
+      // .then((res) => {
+      //   t.assert(res.status === 200);
+      // });
       assert(res.status === 200);
     });
 
