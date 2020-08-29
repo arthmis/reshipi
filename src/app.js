@@ -561,7 +561,6 @@ module.exports = (users, db) => {
     if (Array.isArray(ingredients)) {
       for (let i = 0; i < ingredients.length; i += 1) {
         ingredients[i] = validator.trim(ingredients[i]);
-        ingredients[i] = validator.escape(ingredients[i]);
 
         if (validator.isEmpty(ingredients[i])) {
           return false;
@@ -571,7 +570,6 @@ module.exports = (users, db) => {
     }
 
     ingredients = validator.trim(ingredients);
-    ingredients = validator.escape(ingredients);
     if (validator.isEmpty(ingredients)) {
       return false;
     }
@@ -582,7 +580,6 @@ module.exports = (users, db) => {
     if (Array.isArray(quantities)) {
       for (let i = 0; i < quantities.length; i += 1) {
         quantities[i] = validator.trim(quantities[i]);
-        quantities[i] = validator.escape(quantities[i]);
 
         if (validator.isEmpty(quantities[i])) {
           return false;
@@ -592,7 +589,6 @@ module.exports = (users, db) => {
     }
 
     let quantity = validator.trim(quantities);
-    quantity = validator.escape(quantity);
     if (validator.isEmpty(quantity)) {
       return false;
     }
@@ -603,7 +599,6 @@ module.exports = (users, db) => {
     if (Array.isArray(directions)) {
       for (let i = 0; i < directions.length; i += 1) {
         directions[i] = validator.trim(directions[i]);
-        directions[i] = validator.escape(directions[i]);
 
         if (validator.isEmpty(directions[i])) {
           return false;
@@ -613,7 +608,6 @@ module.exports = (users, db) => {
     }
 
     let direction = validator.trim(directions);
-    direction = validator.escape(direction);
     if (validator.isEmpty(direction)) {
       return false;
     }
@@ -626,9 +620,8 @@ module.exports = (users, db) => {
     upload.any('recipe_image'),
     [
       body('title').trim().not().isEmpty()
-        .isLength({ min: 3, max: 100 })
-        .escape(),
-      body('description').trim().isLength({ min: 0, max: 240 }).escape(),
+        .isLength({ min: 3, max: 100 }),
+      body('description').trim().isLength({ min: 0, max: 240 }),
       body('ingredients', 'Provided ingredient must not be empty.')
         .custom(checkIngredients),
       body('ingredient_amount', 'Provided ingredient quantity cannot be empty.')
@@ -643,8 +636,7 @@ module.exports = (users, db) => {
       body('food_category').if(body('food_category').not().isEmpty())
         .trim()
         .not()
-        .isEmpty()
-        .escape(),
+        .isEmpty(),
     ],
     addRecipe,
   );
@@ -664,9 +656,6 @@ module.exports = (users, db) => {
       try {
         const recipes = await users.getRecipes(req.session.user);
         res.status(200);
-        for (let i = 0; i < recipes.length; i += 1) {
-          recipes[i].title = validator.unescape(recipes[i].title);
-        }
         // TODO add error handling for file read
         const images = fs.readdirSync('./reshipi-frontend/images/food_image_substitutes');
         for (let i = 0; i < images.length; i += 1) {
@@ -685,7 +674,6 @@ module.exports = (users, db) => {
     upload.none(),
     [
       body('title').trim().not().isEmpty()
-        .escape()
         .isLength({ min: 3, max: 50 }),
     ],
     async (req, res) => {
@@ -759,46 +747,41 @@ module.exports = (users, db) => {
     },
   );
 
-  app.get('/get_recipe', [query('title').trim().not().isEmpty()
-    .escape()], (req, res) => {
-      req.sessionStore.get(req.session.id, async (err, sess) => {
-        if (err) {
-          logger.error(err.stack);
-          res.status(500);
-          res.render('pages/500');
-          return;
-        }
+  app.get('/get_recipe', [query('title').trim().not().isEmpty()], (req, res) => {
+    req.sessionStore.get(req.session.id, async (err, sess) => {
+      if (err) {
+        logger.error(err.stack);
+        res.status(500);
+        res.render('pages/500');
+        return;
+      }
 
-        if (!sess) {
-          res.redirect(303, '/login');
-          return;
-        }
+      if (!sess) {
+        res.redirect(303, '/login');
+        return;
+      }
 
-        const validationErrors = validationResult(req);
-        if (!validationErrors.isEmpty()) {
-          logger.error(validationErrors);
-          res.sendStatus(401);
-          return;
-        }
+      const validationErrors = validationResult(req);
+      if (!validationErrors.isEmpty()) {
+        logger.error(validationErrors);
+        res.sendStatus(401);
+        return;
+      }
 
-        try {
-          const recipe = await users.getRecipe(req.query.title, sess.user);
+      try {
+        const recipe = await users.getRecipe(req.query.title, sess.user);
 
-          for (const [key, value] of Object.entries(recipe)) {
-            recipe[key] = validator.unescape(value);
-          }
-
-          res.status(200);
-          res.send(JSON.stringify(recipe));
-        } catch (error) {
-          logger.log(error.stack);
-          res.status(500);
-          res.render('pages/500');
-        }
-      });
+        res.status(200);
+        res.send(JSON.stringify(recipe));
+      } catch (error) {
+        logger.log(error.stack);
+        res.status(500);
+        res.render('pages/500');
+      }
     });
+  });
 
-  app.post('/check_duplicate_recipe', upload.none('title'), [body('title').trim().escape()], async (req, res) => {
+  app.post('/check_duplicate_recipe', upload.none('title'), [body('title').trim()], async (req, res) => {
     req.sessionStore.get(req.session.id, async (err, sess) => {
       if (err) {
         logger.error(err.stack);
@@ -829,9 +812,8 @@ module.exports = (users, db) => {
     upload.any('recipe_image'),
     [
       body('title').trim().not().isEmpty()
-        .isLength({ min: 3, max: 100 })
-        .escape(),
-      body('description').trim().isLength({ min: 0, max: 240 }).escape(),
+        .isLength({ min: 3, max: 100 }),
+      body('description').trim().isLength({ min: 0, max: 240 }),
       body('ingredients', 'Provided ingredient must not be empty.')
         .custom(checkIngredients),
       body('ingredient_amount', 'Provided ingredient quantity cannot be empty.')
@@ -846,11 +828,9 @@ module.exports = (users, db) => {
       body('food_category').if(body('food_category').not().isEmpty())
         .trim()
         .not()
-        .isEmpty()
-        .escape(),
+        .isEmpty(),
       body('original_title').trim().not().isEmpty()
-        .isLength({ min: 3, max: 100 })
-        .escape(),
+        .isLength({ min: 3, max: 100 }),
     ],
     (req, res) => {
       req.sessionStore.get(req.session.id, async (err, sess) => {
@@ -956,10 +936,7 @@ module.exports = (users, db) => {
   );
   app.get(
     '/recipe',
-    [
-      query('title').trim().not().isEmpty()
-        .escape(),
-    ],
+    [query('title').trim().not().isEmpty()],
     async (req, res) => {
       req.sessionStore.get(req.session.id, async (err, sess) => {
         if (err) {
@@ -1016,7 +993,7 @@ module.exports = (users, db) => {
           const possibleRecipes = [];
           for (const item of objectId) {
             const recipePromise = users.getRecipe(
-              validator.escape(item.split(':')[1].split('+').join(' ')),
+              item.split(':')[1].split('+').join(' '),
               user,
             );
             possibleRecipes.push(recipePromise);
@@ -1028,7 +1005,7 @@ module.exports = (users, db) => {
 
             for (const fullRecipe of fullRecipes) {
               const recipe = {
-                title: validator.unescape(fullRecipe.title),
+                title: fullRecipe.title,
                 description: fullRecipe.description,
               };
               recipe.image = fullRecipe.image.replace('\\', '/');
@@ -1049,9 +1026,6 @@ module.exports = (users, db) => {
         try {
           const recipes = await users.getRecipes(req.session.user);
           res.status(200);
-          for (let i = 0; i < recipes.length; i += 1) {
-            recipes[i].title = validator.unescape(recipes[i].title);
-          }
           res.send(recipes);
         } catch (error) {
           logger.error(error.stack);
