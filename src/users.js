@@ -182,20 +182,6 @@ module.exports = (db) => {
       return false;
     },
 
-    isImageNameDuplicate: async (imageName) => {
-      const findImageName = await db.oneOrNone(
-        'SELECT image FROM Recipes WHERE image = $1',
-        [imageName],
-      ).catch((err) => {
-        throw err;
-      });
-
-      if (findImageName) {
-        return true;
-      }
-
-      return false;
-    },
 
     deleteRecipe: async (recipeTitle, user) => {
       const queryResult = await db.result(
@@ -257,6 +243,21 @@ module.exports = (db) => {
       );
 
       await db.none(updateRecipe).catch((err) => { throw err; });
+    },
+
+    isImageNameDuplicate: async (imageName) => {
+      const findImageName = await db.oneOrNone(
+        'SELECT image FROM Recipes WHERE image = $1',
+        [imageName],
+      ).catch((err) => {
+        throw err;
+      });
+
+      if (findImageName) {
+        return true;
+      }
+
+      return false;
     },
   };
   return users;

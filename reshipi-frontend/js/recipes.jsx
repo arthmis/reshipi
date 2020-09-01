@@ -5,11 +5,11 @@ class Nav extends React.Component {
         super(props);
     }
     render() {
-        return(
+        return (
             <nav id="nav">
                 <a id="reshipi" href="/recipes">RE&middot;SHI&middot;PI</a>
-                <form id="logout-form" action="/logout" method="get">
-                    <input id="logout" type="submit" name="logout" value="Logout"/>
+                <form id="logout-form" action="/logout" method="post">
+                    <input id="logout" type="submit" name="logout" value="Logout" />
                 </form>
             </nav>
         );
@@ -21,7 +21,7 @@ class App extends React.Component {
         super(props);
     }
     render() {
-        return(
+        return (
             <div>
                 <header>
                     <Nav />
@@ -62,21 +62,21 @@ class Recipes extends React.Component {
             mode: 'same-origin',
             credentials: 'same-origin',
         })
-        .then(response => response.json())
-        .then(res => { 
-            const recipes = res.recipes;
-            const substituteImages = res.images;
-            for (let i = 0; i < recipes.length; i +=1) {
-                if (recipes[i].image === '') {
-                    let ranNumber = Math.round((Math.random() * (substituteImages.length - 1)));
-                    recipes[i].image = substituteImages[ranNumber];
+            .then(response => response.json())
+            .then(res => {
+                const recipes = res.recipes;
+                const substituteImages = res.images;
+                for (let i = 0; i < recipes.length; i += 1) {
+                    if (recipes[i].image === '') {
+                        let ranNumber = Math.round((Math.random() * (substituteImages.length - 1)));
+                        recipes[i].image = substituteImages[ranNumber];
+                    }
                 }
-            }
-            this.setState({ recipes });
-        });
+                this.setState({ recipes });
+            });
     }
 
-    async deleteRecipe (recipeTitle) {
+    async deleteRecipe(recipeTitle) {
         const formData = new FormData();
         formData.append('title', recipeTitle);
 
@@ -88,9 +88,9 @@ class Recipes extends React.Component {
         });
 
         let recipes = await fetch('/all_recipes', {
-                method: "GET",
-                mode: 'same-origin',
-                credentials: 'same-origin',
+            method: "GET",
+            mode: 'same-origin',
+            credentials: 'same-origin',
         });
 
         recipes = await recipes.json();
@@ -155,10 +155,10 @@ class Recipes extends React.Component {
                 <div className="all-recipes">
                     {this.state.recipes.map((recipe, index) => {
                         return (
-                            <Recipe 
-                                key={index.toString()} 
-                                recipe={recipe} 
-                                deleteRecipe={this.deleteRecipe} 
+                            <Recipe
+                                key={index.toString()}
+                                recipe={recipe}
+                                deleteRecipe={this.deleteRecipe}
                                 editRecipe={this.editRecipe}
                             />
                         );
@@ -193,9 +193,9 @@ class Recipe extends React.Component {
         document.location.href = newUrl;
     }
 
-    render () {
+    render() {
         if (this.props.recipe.image === undefined) {
-            return ( <div></div> );
+            return (<div></div>);
         } else {
             if (this.props.recipe.image.split('.')[1] === 'svg') {
                 return (
@@ -205,10 +205,10 @@ class Recipe extends React.Component {
                             <h3>
                                 <a onClick={this.recipeLink} href="/recipe">{this.props.recipe.title}</a>
                             </h3>
-                            <RecipeMenu 
-                                recipeTitle={this.props.recipe.title} 
-                                deleteRecipe={this.props.deleteRecipe} 
-                                editRecipe={this.props.editRecipe} 
+                            <RecipeMenu
+                                recipeTitle={this.props.recipe.title}
+                                deleteRecipe={this.props.deleteRecipe}
+                                editRecipe={this.props.editRecipe}
                             />
                         </div>
                     </div>
@@ -222,10 +222,10 @@ class Recipe extends React.Component {
                             <h3>
                                 <a onClick={this.recipeLink} href="/recipe">{this.props.recipe.title}</a>
                             </h3>
-                            <RecipeMenu 
-                                recipeTitle={this.props.recipe.title} 
-                                deleteRecipe={this.props.deleteRecipe} 
-                                editRecipe={this.props.editRecipe} 
+                            <RecipeMenu
+                                recipeTitle={this.props.recipe.title}
+                                deleteRecipe={this.props.deleteRecipe}
+                                editRecipe={this.props.editRecipe}
                             />
                         </div>
                     </div>
@@ -237,7 +237,7 @@ class Recipe extends React.Component {
 
 class RecipeMenu extends React.Component {
     constructor(props) {
-        super(props); 
+        super(props);
         this.state = {
             menu: 'invisible',
             isDeletePromptVisible: false,
@@ -249,7 +249,7 @@ class RecipeMenu extends React.Component {
         this.closePrompt = this.closePrompt.bind(this);
     }
 
-    handleDropDown (event) {
+    handleDropDown(event) {
         event.preventDefault();
         if (this.state.menu === 'invisible') {
             this.setState((prevState, props) => {
@@ -264,7 +264,7 @@ class RecipeMenu extends React.Component {
         }
     }
 
-    deleteRecipe (event) {
+    deleteRecipe(event) {
         event.preventDefault();
         this.setState((prevState, props) => {
             prevState.menu = 'invisible';
@@ -275,7 +275,7 @@ class RecipeMenu extends React.Component {
 
     editRecipe(event) {
         event.preventDefault();
-        this.setState({menu: 'invisible'});
+        this.setState({ menu: 'invisible' });
         this.props.editRecipe(this.props.recipeTitle);
     }
 
@@ -306,13 +306,13 @@ class RecipeMenu extends React.Component {
         }
     }
 
-    render () {
+    render() {
 
         if (this.state.isDeletePromptVisible) {
             return (
                 <div className="recipe-menu-button-wrapper">
-                    <button 
-                        onClick={this.handleDropDown} 
+                    <button
+                        onClick={this.handleDropDown}
                         className="recipe-menu"
                     >
                         <i className="fas fa-ellipsis-v" aria-hidden="true"></i>
@@ -342,8 +342,8 @@ class RecipeMenu extends React.Component {
             if (this.state.menu === 'invisible') {
                 return (
                     <div className="recipe-menu-button-wrapper">
-                        <button 
-                            onClick={this.handleDropDown} 
+                        <button
+                            onClick={this.handleDropDown}
                             className="recipe-menu">
                             <i className="fas fa-ellipsis-v" aria-hidden="true"></i>
                         </button>

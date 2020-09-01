@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const fs = require('fs');
 const express = require('express');
 const pgp = require('pg-promise')();
 
@@ -11,7 +12,8 @@ const logger = require('./log.js');
 
 logger.logger.emitErrs = false;
 
-const port = process.env.PORT;
+// const port = process.env.PORT;
+const port = 8000;
 
 process.on('uncaughtException', (err) => {
   logger.error(err.stack);
@@ -73,6 +75,14 @@ async function main() {
   logger.info("Created Sessions table if it doesn't exist");
 
   app.use(express.static('reshipi-frontend'));
+  try {
+    if (!fs.existsSync('./uploads')) {
+      fs.mkdirSync('./uploads');
+      logger.info('Upload folder created.');
+    }
+  } catch (err) {
+    logger.error(err.stack);
+  }
   app.use(express.static('uploads'));
   app.listen(port);
 }

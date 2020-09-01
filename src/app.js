@@ -16,70 +16,70 @@ const multer = require('multer');
 const validator = require('validator');
 const morgan = require('morgan');
 const path = require('path');
-const SonicChannelSearch = require('sonic-channel').Search;
-const SonicChannelIngest = require('sonic-channel').Ingest;
+// const SonicChannelSearch = require('sonic-channel').Search;
+// const SonicChannelIngest = require('sonic-channel').Ingest;
 const { RateLimiterPostgres } = require('rate-limiter-flexible');
 
 const logger = require('./log.js');
 
 logger.logger.emitErrs = false;
 
-const sonicChannelSearch = new SonicChannelSearch({
-  host: '::1',
-  port: 1491,
-  auth: process.env.SONIC_PASSWORD,
-}).connect({
-  connected: () => {
-    logger.info('sonic channel connected to host for search');
-  },
+// const sonicChannelSearch = new SonicChannelSearch({
+//   host: '::1',
+//   port: 1491,
+//   auth: process.env.SONIC_PASSWORD,
+// }).connect({
+//   connected: () => {
+//     logger.info('sonic channel connected to host for search');
+//   },
 
-  disconnected: () => {
-    logger.error('sonic channel is now disconnected');
-  },
+//   disconnected: () => {
+//     logger.error('sonic channel is now disconnected');
+//   },
 
-  timeout: () => {
-    logger.error('sonic channel connection timed out');
-  },
+//   timeout: () => {
+//     logger.error('sonic channel connection timed out');
+//   },
 
-  retrying: () => {
-    logger.error('trying to reconnect to sonic channel');
-  },
+//   retrying: () => {
+//     logger.error('trying to reconnect to sonic channel');
+//   },
 
-  error: () => {
-    logger.error('sonic channel failed to connect to host');
-  },
-});
+//   error: () => {
+//     logger.error('sonic channel failed to connect to host');
+//   },
+// });
 
-const sonicChannelIngest = new SonicChannelIngest({
-  host: '::1', // Or '127.0.0.1' if you are still using IPv4
-  port: 1491, // Default port is '1491'
-  auth: 'SecretPassword', // Authentication password (if any)
-}).connect({
-  connected: () => {
-    // Connected handler
-    logger.info('Sonic Channel succeeded to connect to host (ingest).');
-  },
+// const sonicChannelIngest = new SonicChannelIngest({
+//   host: '::1', // Or '127.0.0.1' if you are still using IPv4
+//   port: 1491, // Default port is '1491'
+//   auth: 'SecretPassword', // Authentication password (if any)
+// }).connect({
+//   connected: () => {
+//     // Connected handler
+//     logger.info('Sonic Channel succeeded to connect to host (ingest).');
+//   },
 
-  disconnected: () => {
-    // Disconnected handler
-    logger.error('Sonic Channel is now disconnected (ingest).');
-  },
+//   disconnected: () => {
+//     // Disconnected handler
+//     logger.error('Sonic Channel is now disconnected (ingest).');
+//   },
 
-  timeout: () => {
-    // Timeout handler
-    logger.error('Sonic Channel connection timed out (ingest).');
-  },
+//   timeout: () => {
+//     // Timeout handler
+//     logger.error('Sonic Channel connection timed out (ingest).');
+//   },
 
-  retrying: () => {
-    // Retry handler
-    logger.error('Trying to reconnect to Sonic Channel (ingest)...');
-  },
+//   retrying: () => {
+//     // Retry handler
+//     logger.error('Trying to reconnect to Sonic Channel (ingest)...');
+//   },
 
-  error: (error) => {
-    // Failure handler
-    logger.error('Sonic Channel failed to connect to host (ingest).', error);
-  },
-});
+//   error: (error) => {
+//     // Failure handler
+//     logger.error('Sonic Channel failed to connect to host (ingest).', error);
+//   },
+// });
 
 const maxConsecutiveLoginAttempts = 5;
 const maxLoginAttempts = 10;
@@ -158,7 +158,7 @@ module.exports = (users, db) => {
     return minutes * 60 * 1000;
   }
 
-  const cookieAge = getMinutesInMilliseconds(120);
+  const cookieAge = getMinutesInMilliseconds(3600);
 
   app.use(session({
     cookie: {
@@ -216,6 +216,24 @@ module.exports = (users, db) => {
     logger.warn(req.body);
     res.sendStatus(204);
   });
+
+  function validateUserSession(req, res, next) {
+    req.sessionStore.get(req.session.id, (err, sess) => {
+      if (err) {
+        logger.error(err.stack);
+        res.status(500);
+        res.render('pages/500');
+        return;
+      }
+
+      if (!sess) {
+        res.redirect(303, '/login');
+        return;
+      }
+      req.user = sess.user;
+      next();
+    });
+  }
 
   const signupNewUser = async (req, res) => {
     const userData = req.body;
@@ -403,158 +421,106 @@ module.exports = (users, db) => {
     ],
     loginUser);
 
-  app.get('/logout', (req, res) => {
-    req.sessionStore.get(req.session.id, (err, sesh) => {
+  app.post('/logout', validateUserSession, (req, res) => {
+    req.sessionStore.destroy(req.session.id, (err) => {
       if (err) {
         logger.error(err.stack);
         res.status(500);
         res.render('pages/500');
         return;
       }
-      if (!sesh) {
-        res.redirect(303, '/');
-      }
-    });
-    req.sessionStore.destroy((err) => {
-      if (err) {
-        logger.error(err.stack);
-        res.status(500);
-        res.render('pages/500');
-      } else {
-        res.redirect(303, '/');
-      }
+      res.redirect(303, '/');
     });
   });
 
-  app.get('/recipes', (req, res) => {
-    req.sessionStore.get(req.session.id, (err, sesh) => {
-      if (err) {
-        logger.error(err.stack);
-        res.status(500);
-        res.render('pages/500');
-        return;
-      }
-
-      if (!sesh) {
-        res.redirect(303, '/login');
-        return;
-      }
-      res.status(200);
-      res.render('pages/recipes');
-    });
+  app.get('/recipes', validateUserSession, (req, res) => {
+    res.status(200);
+    res.render('pages/recipes');
   });
 
-  app.get('/new_recipe', (req, res) => {
-    req.sessionStore.get(req.session.id, (err, sesh) => {
-      if (err) {
-        logger.error(err.stack);
-        res.status(500);
-        res.render('pages/500');
-        return;
-      }
-
-      if (!sesh) {
-        res.redirect(303, '/login');
-        return;
-      }
-      res.status(200);
-      res.render('pages/new_recipe');
-    });
+  app.get('/new_recipe', validateUserSession, (req, res) => {
+    res.status(200);
+    res.render('pages/new_recipe');
   });
 
-  const addRecipe = (req, res) => {
-    req.sessionStore.get(req.session.id, async (err, sess) => {
-      if (err) {
-        logger.error(err.stack);
-        res.status(500);
-        res.render('pages/500');
+  const addRecipe = async (req, res) => {
+    const validationErrors = validationResult(req);
+    const recipe = req.body;
+    if (!validationErrors.isEmpty()) {
+      logger.error('validation error: ', validationErrors);
+      res.sendStatus(400);
+      return;
+    }
+
+    try {
+      const isDuplicateTitle = await users.isDuplicateTitle(recipe.title);
+
+      if (isDuplicateTitle) {
+        res.status(203);
+        res.send(JSON.stringify({
+          recipe,
+          error: 'recipe title cannot be a duplicate of another recipe',
+        }));
         return;
       }
 
-      if (!sess) {
-        res.redirect(303, '/login');
-        return;
-      }
+      // const makeRecipeString = (searchRecipe) => {
+      //   let ingredients = '';
+      //   if (Array.isArray(searchRecipe.ingredients)) {
+      //     ingredients = searchRecipe.ingredients.join(' ');
+      //   } else {
+      //     ingredients = searchRecipe.ingredients;
+      //   }
+      //   let directions = '';
+      //   if (Array.isArray(searchRecipe.directions)) {
+      //     directions = searchRecipe.directions.join(' ');
+      //   } else {
+      //     directions = searchRecipe.directions;
+      //   }
 
-      const validationErrors = validationResult(req);
-      const recipe = req.body;
-      if (!validationErrors.isEmpty()) {
-        logger.error('validation error: ', validationErrors);
-        res.sendStatus(400);
-        return;
+      //   return [
+      //     searchRecipe.title,
+      //     searchRecipe.description,
+      //     ingredients,
+      //     directions,
+      //   ].join(' ').split('-').join(' ');
+      // };
+
+      // const replacedTitle = recipe.title.split(' ').join('+');
+      // const objectId = [user, replacedTitle].join(':');
+
+      // await sonicChannelIngest.push(
+      //   'recipes',
+      //   user,
+      //   objectId,
+      //   makeRecipeString(recipe),
+      //   'eng',
+      // ).catch((error) => logger.error(error.stack));
+
+      if (Array.isArray(recipe.ingredients)) {
+        recipe.ingredients = recipe.ingredients.join('\n');
+      }
+      if (Array.isArray(recipe.directions)) {
+        recipe.directions = recipe.directions.join('\n');
+      }
+      if (Array.isArray(recipe.ingredient_amount)) {
+        recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
       }
 
       try {
-        const isDuplicateTitle = await users.isDuplicateTitle(recipe.title);
-
-        if (isDuplicateTitle) {
-          res.status(203);
-          res.send(JSON.stringify({
-            recipe,
-            error: 'recipe title cannot be a duplicate of another recipe',
-          }));
-          return;
-        }
-        const { user } = sess;
-
-        const makeRecipeString = (searchRecipe) => {
-          let ingredients = '';
-          if (Array.isArray(searchRecipe.ingredients)) {
-            ingredients = searchRecipe.ingredients.join(' ');
-          } else {
-            ingredients = searchRecipe.ingredients;
-          }
-          let directions = '';
-          if (Array.isArray(searchRecipe.directions)) {
-            directions = searchRecipe.directions.join(' ');
-          } else {
-            directions = searchRecipe.directions;
-          }
-
-          return [
-            searchRecipe.title,
-            searchRecipe.description,
-            ingredients,
-            directions,
-          ].join(' ').split('-').join(' ');
-        };
-
-        const replacedTitle = recipe.title.split(' ').join('+');
-        const objectId = [user, replacedTitle].join(':');
-
-        await sonicChannelIngest.push(
-          'recipes',
-          user,
-          objectId,
-          makeRecipeString(recipe),
-          'eng',
-        ).catch((error) => logger.error(error.stack));
-
-        if (Array.isArray(recipe.ingredients)) {
-          recipe.ingredients = recipe.ingredients.join('\n');
-        }
-        if (Array.isArray(recipe.directions)) {
-          recipe.directions = recipe.directions.join('\n');
-        }
-        if (Array.isArray(recipe.ingredient_amount)) {
-          recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
-        }
-
-        try {
-          await users.addRecipe(recipe, user, req.files);
-          res.status(200);
-          res.render('pages/recipes');
-        } catch (error) {
-          logger.error(error.stack);
-          res.status(500);
-          res.render('pages/500');
-        }
+        await users.addRecipe(recipe, req.user, req.files);
+        res.status(200);
+        res.render('pages/recipes');
       } catch (error) {
         logger.error(error.stack);
         res.status(500);
         res.render('pages/500');
       }
-    });
+    } catch (error) {
+      logger.error(error.stack);
+      res.status(500);
+      res.render('pages/500');
+    }
   };
 
   const checkIngredients = (ingredients, { req }) => {
@@ -588,7 +554,7 @@ module.exports = (users, db) => {
       return true;
     }
 
-    let quantity = validator.trim(quantities);
+    const quantity = validator.trim(quantities);
     if (validator.isEmpty(quantity)) {
       return false;
     }
@@ -607,7 +573,7 @@ module.exports = (users, db) => {
       return true;
     }
 
-    let direction = validator.trim(directions);
+    const direction = validator.trim(directions);
     if (validator.isEmpty(direction)) {
       return false;
     }
@@ -617,6 +583,7 @@ module.exports = (users, db) => {
 
   app.post(
     '/add_recipe',
+    validateUserSession,
     upload.any('recipe_image'),
     [
       body('title').trim().not().isEmpty()
@@ -641,174 +608,113 @@ module.exports = (users, db) => {
     addRecipe,
   );
 
-  app.get('/all_recipes', async (req, res) => {
-    req.sessionStore.get(req.session.id, async (err, sess) => {
-      if (err) {
-        logger.error(err.stack);
-        res.status(500);
-        res.render('pages/500');
+  app.get('/all_recipes', validateUserSession, async (req, res) => {
+    try {
+      const recipes = await users.getRecipes(req.session.user);
+      res.status(200);
+      // TODO add error handling for file read
+      const images = fs.readdirSync('./reshipi-frontend/images/food_image_substitutes');
+      for (let i = 0; i < images.length; i += 1) {
+        images[i] = `images/food_image_substitutes/${images[i]}`;
+      }
+      res.json({ recipes, images });
+    } catch (error) {
+      logger.error(error.stack);
+      res.status(500);
+      res.render('pages/500');
+    }
+  });
+
+  app.delete('/delete_recipe',
+    validateUserSession,
+    upload.none(),
+    [
+      body('title').trim().not().isEmpty()
+        .isLength({ min: 3, max: 100 }),
+    ],
+    async (req, res) => {
+      const validationErrors = validationResult(req);
+      const recipe = req.body;
+      if (!validationErrors.isEmpty()) {
+        logger.error('validation error: ', validationErrors);
+        res.sendStatus(401);
         return;
       }
-      if (!sess) {
-        res.redirect(303, '/login');
-        return;
-      }
+
+      // await sonicChannelIngest.flusho('recipes', sess.user, [sess.user, recipe.title.split(' ').join('+')].join(':'))
+      //   .catch((error) => logger.error(error.stack));
+
       try {
-        const recipes = await users.getRecipes(req.session.user);
-        res.status(200);
-        // TODO add error handling for file read
-        const images = fs.readdirSync('./reshipi-frontend/images/food_image_substitutes');
-        for (let i = 0; i < images.length; i += 1) {
-          images[i] = `images/food_image_substitutes/${images[i]}`;
+        const isDeleted = await users.deleteRecipe(recipe.title, req.user);
+
+        if (isDeleted) {
+          res.sendStatus(204);
+        } else {
+          res.sendStatus(404);
         }
-        res.json({ recipes, images });
       } catch (error) {
         logger.error(error.stack);
         res.status(500);
         res.render('pages/500');
       }
     });
-  });
-
-  app.delete('/delete_recipe',
-    upload.none(),
-    [
-      body('title').trim().not().isEmpty()
-        .isLength({ min: 3, max: 50 }),
-    ],
-    async (req, res) => {
-      req.sessionStore.get(req.session.id, async (err, sess) => {
-        if (err) {
-          logger.error(err.stack);
-          res.status(500);
-          res.render('pages/500');
-          return;
-        }
-
-        if (!sess) {
-          res.redirect(303, '/login');
-          return;
-        }
-        const validationErrors = validationResult(req);
-        const recipe = req.body;
-        if (!validationErrors.isEmpty()) {
-          logger.error('validation error: ', validationErrors);
-          res.sendStatus(401);
-          return;
-        }
-
-        await sonicChannelIngest.flusho('recipes', sess.user, [sess.user, recipe.title.split(' ').join('+')].join(':'))
-          .catch((error) => logger.error(error.stack));
-
-        try {
-          const isDeleted = await users.deleteRecipe(req.body.title, sess.user);
-
-          if (isDeleted) {
-            res.sendStatus(204);
-          } else {
-            res.sendStatus(404);
-          }
-        } catch (error) {
-          logger.error(error.stack);
-          res.status(500);
-          res.render('pages/500');
-        }
-      });
-    });
 
   app.get(
     '/edit_recipe',
+    validateUserSession,
     [
       query('title').trim().not().isEmpty(),
     ],
     (req, res) => {
-      req.sessionStore.get(req.session.id, (err, sess) => {
-        if (err) {
-          logger.error(err.stack);
-          res.status(500);
-          res.render('pages/500');
-          return;
-        }
+      const validationErrors = validationResult(req);
+      if (!validationErrors.isEmpty()) {
+        logger.error(validationErrors);
+        res.sendStatus(401);
+        return;
+      }
 
-        if (!sess) {
-          res.redirect(303, '/login');
-          return;
-        }
-        const validationErrors = validationResult(req);
-        if (!validationErrors.isEmpty()) {
-          logger.error(validationErrors);
-          res.sendStatus(401);
-          return;
-        }
-
-        res.status(200);
-        res.render('pages/edit_recipe');
-      });
+      res.status(200);
+      res.render('pages/edit_recipe');
     },
   );
 
-  app.get('/get_recipe', [query('title').trim().not().isEmpty()], (req, res) => {
-    req.sessionStore.get(req.session.id, async (err, sess) => {
-      if (err) {
-        logger.error(err.stack);
-        res.status(500);
-        res.render('pages/500');
-        return;
-      }
+  app.get('/get_recipe', validateUserSession, [query('title').trim().not().isEmpty()], async (req, res) => {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      logger.error(validationErrors);
+      res.sendStatus(401);
+      return;
+    }
 
-      if (!sess) {
-        res.redirect(303, '/login');
-        return;
-      }
-
-      const validationErrors = validationResult(req);
-      if (!validationErrors.isEmpty()) {
-        logger.error(validationErrors);
-        res.sendStatus(401);
-        return;
-      }
-
-      try {
-        const recipe = await users.getRecipe(req.query.title, sess.user);
-
-        res.status(200);
-        res.send(JSON.stringify(recipe));
-      } catch (error) {
-        logger.log(error.stack);
-        res.status(500);
-        res.render('pages/500');
-      }
-    });
-  });
-
-  app.post('/check_duplicate_recipe', upload.none('title'), [body('title').trim()], async (req, res) => {
-    req.sessionStore.get(req.session.id, async (err, sess) => {
-      if (err) {
-        logger.error(err.stack);
-        res.status(500);
-        res.render('pages/500');
-        return;
-      }
-      if (!sess) {
-        res.redirect(303, '/login');
-        return;
-      }
-      const validationErrors = validationResult(req);
-      if (!validationErrors.isEmpty()) {
-        logger.error(validationErrors);
-        res.sendStatus(401);
-        return;
-      }
-
-      const isDuplicate = await users.isDuplicateTitle(req.body.title);
+    try {
+      const recipe = await users.getRecipe(req.query.title, req.user);
 
       res.status(200);
-      res.send(JSON.stringify({ isDuplicate }));
-    });
+      res.send(JSON.stringify(recipe));
+    } catch (error) {
+      logger.log(error.stack);
+      res.status(500);
+      res.render('pages/500');
+    }
+  });
+
+  app.post('/check_duplicate_recipe', validateUserSession, upload.none('title'), [body('title').trim()], async (req, res) => {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      logger.error(validationErrors);
+      res.sendStatus(401);
+      return;
+    }
+
+    const isDuplicate = await users.isDuplicateTitle(req.body.title);
+
+    res.status(200);
+    res.send(JSON.stringify({ isDuplicate }));
   });
 
   app.put(
     '/update_recipe',
+    validateUserSession,
     upload.any('recipe_image'),
     [
       body('title').trim().not().isEmpty()
@@ -832,149 +738,99 @@ module.exports = (users, db) => {
       body('original_title').trim().not().isEmpty()
         .isLength({ min: 3, max: 100 }),
     ],
-    (req, res) => {
-      req.sessionStore.get(req.session.id, async (err, sess) => {
-        if (err) {
-          logger.error(err.stack);
-          res.status(500);
-          res.render('pages/500');
+    async (req, res) => {
+      const validationErrors = validationResult(req);
+      const recipe = req.body;
+      if (!validationErrors.isEmpty()) {
+        logger.error(validationErrors);
+        res.sendStatus(401);
+        return;
+      }
+
+      try {
+        // makes sure updated recipe title is not a duplicate
+        const isDuplicateTitle = await users.isDuplicateTitle(recipe.title);
+
+        if (isDuplicateTitle) {
+          res.status(203);
+          res.send(JSON.stringify({
+            recipe,
+            error: 'recipe title cannot be a duplicate of another recipe',
+          }));
           return;
         }
-        if (!sess) {
-          res.redirect(303, '/login');
-          return;
+
+        // const makeRecipeString = (searchRecipe) => {
+        //   let ingredients = '';
+        //   if (Array.isArray(searchRecipe.ingredients)) {
+        //     ingredients = searchRecipe.ingredients.join(' ');
+        //   } else {
+        //     ingredients = searchRecipe.ingredients;
+        //   }
+        //   let directions = '';
+        //   if (Array.isArray(searchRecipe.directions)) {
+        //     directions = searchRecipe.directions.join(' ');
+        //   } else {
+        //     directions = searchRecipe.directions;
+        //   }
+
+        //   return [
+        //     searchRecipe.title,
+        //     searchRecipe.description,
+        //     ingredients,
+        //     directions,
+        //   ].join(' ').split('-').join(' ');
+        // };
+
+        // const replacedTitle = recipe.title.split(' ').join('+');
+        // const objectId = [user, replacedTitle].join(':');
+
+        // await sonicChannelIngest.push(
+        //   'recipes',
+        //   user,
+        //   objectId,
+        //   makeRecipeString(recipe),
+        //   'eng',
+        // )
+        //   .catch((error) => logger.error(error.stack));
+
+        // await sonicChannelIngest.flusho(
+        //   'recipes',
+        //   user,
+        //   [user, recipe.original_title.split(' ').join('+')].join(':'),
+        // )
+        //   .catch((error) => logger.error(error.stack));
+
+        if (Array.isArray(recipe.ingredients)) {
+          recipe.ingredients = recipe.ingredients.join('\n');
         }
-        const validationErrors = validationResult(req);
-        const recipe = req.body;
-        if (!validationErrors.isEmpty()) {
-          logger.error(validationErrors);
-          res.sendStatus(401);
-          return;
+        if (Array.isArray(recipe.directions)) {
+          recipe.directions = recipe.directions.join('\n');
+        }
+        if (Array.isArray(recipe.ingredient_amount)) {
+          recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
         }
 
         try {
-          // makes sure updated recipe title is not a duplicate
-          const isDuplicateTitle = await users.isDuplicateTitle(recipe.title);
-
-          if (isDuplicateTitle) {
-            res.status(203);
-            res.send(JSON.stringify({
-              recipe,
-              error: 'recipe title cannot be a duplicate of another recipe',
-            }));
-            return;
-          }
-
-          const { user } = sess;
-
-          const makeRecipeString = (searchRecipe) => {
-            let ingredients = '';
-            if (Array.isArray(searchRecipe.ingredients)) {
-              ingredients = searchRecipe.ingredients.join(' ');
-            } else {
-              ingredients = searchRecipe.ingredients;
-            }
-            let directions = '';
-            if (Array.isArray(searchRecipe.directions)) {
-              directions = searchRecipe.directions.join(' ');
-            } else {
-              directions = searchRecipe.directions;
-            }
-
-            return [
-              searchRecipe.title,
-              searchRecipe.description,
-              ingredients,
-              directions,
-            ].join(' ').split('-').join(' ');
-          };
-
-          const replacedTitle = recipe.title.split(' ').join('+');
-          const objectId = [user, replacedTitle].join(':');
-
-          await sonicChannelIngest.push(
-            'recipes',
-            user,
-            objectId,
-            makeRecipeString(recipe),
-            'eng',
-          )
-            .catch((error) => logger.error(error.stack));
-
-          await sonicChannelIngest.flusho(
-            'recipes',
-            user,
-            [user, recipe.original_title.split(' ').join('+')].join(':'),
-          )
-            .catch((error) => logger.error(error.stack));
-
-          if (Array.isArray(recipe.ingredients)) {
-            recipe.ingredients = recipe.ingredients.join('\n');
-          }
-          if (Array.isArray(recipe.directions)) {
-            recipe.directions = recipe.directions.join('\n');
-          }
-          if (Array.isArray(recipe.ingredient_amount)) {
-            recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
-          }
-
-          try {
-            await users.updateRecipe(recipe, req.session.user, req.files);
-            res.sendStatus(200);
-          } catch (error) {
-            logger.error(error.stack);
-            res.status(500);
-            res.render('pages/500');
-          }
+          await users.updateRecipe(recipe, req.user, req.files);
+          res.sendStatus(200);
         } catch (error) {
           logger.error(error.stack);
           res.status(500);
           res.render('pages/500');
         }
-      });
+      } catch (error) {
+        logger.error(error.stack);
+        res.status(500);
+        res.render('pages/500');
+      }
     },
   );
   app.get(
     '/recipe',
+    validateUserSession,
     [query('title').trim().not().isEmpty()],
     async (req, res) => {
-      req.sessionStore.get(req.session.id, async (err, sess) => {
-        if (err) {
-          logger.error(err.stack);
-          res.status(500);
-          res.render('pages/500');
-          return;
-        }
-        if (!sess) {
-          res.redirect(303, '/login');
-          return;
-        }
-        const validationErrors = validationResult(req);
-        if (!validationErrors.isEmpty()) {
-          logger.error(validationErrors);
-          res.sendStatus(401);
-          return;
-        }
-
-        res.status(200);
-        res.render('pages/recipe');
-      });
-    },
-  );
-
-  app.get('/search_recipes', query('search').trim(), (req, res) => {
-    req.sessionStore.get(req.session.id, async (err, sess) => {
-      if (err) {
-        logger.error(err.stack);
-        res.status(500);
-        res.render('pages/500');
-        return;
-      }
-      if (!sess) {
-        res.redirect(303, '/login');
-        return;
-      }
-
       const validationErrors = validationResult(req);
       if (!validationErrors.isEmpty()) {
         logger.error(validationErrors);
@@ -982,58 +838,69 @@ module.exports = (users, db) => {
         return;
       }
 
-      const { user } = sess;
-      const searchTerms = req.query.search;
+      res.status(200);
+      res.render('pages/recipe');
+    },
+  );
 
-      if (searchTerms !== '') {
-        const objectId = await sonicChannelSearch.query('recipes', user, searchTerms)
-          .catch((error) => logger.error(error.stack));
+  // app.get('/search_recipes', validateUserSession, query('search').trim(), async (req, res) => {
+  //   const validationErrors = validationResult(req);
+  //   if (!validationErrors.isEmpty()) {
+  //     logger.error(validationErrors);
+  //     res.sendStatus(401);
+  //     return;
+  //   }
 
-        if (objectId.length > 0) {
-          const possibleRecipes = [];
-          for (const item of objectId) {
-            const recipePromise = users.getRecipe(
-              item.split(':')[1].split('+').join(' '),
-              user,
-            );
-            possibleRecipes.push(recipePromise);
-          }
+  //   const searchTerms = req.query.search;
 
-          const recipes = [];
-          try {
-            const fullRecipes = await Promise.all(possibleRecipes);
+  //   if (searchTerms !== '') {
+  //     const objectId = await sonicChannelSearch.query('recipes', req.user, searchTerms)
+  //       .catch((error) => logger.error(error.stack));
 
-            for (const fullRecipe of fullRecipes) {
-              const recipe = {
-                title: fullRecipe.title,
-                description: fullRecipe.description,
-              };
-              recipe.image = fullRecipe.image.replace('\\', '/');
-              recipe.image = recipe.image.replace('uploads/', '');
-              recipes.push(recipe);
-            }
-            res.status(200);
-            res.json(recipes);
-          } catch (error) {
-            logger.error(error.stack);
-            res.status(500);
-            // maybe think about about sending an empty recipe
-          }
-        } else {
-          res.sendStatus(404);
-        }
-      } else {
-        try {
-          const recipes = await users.getRecipes(req.session.user);
-          res.status(200);
-          res.send(recipes);
-        } catch (error) {
-          logger.error(error.stack);
-          res.status(500);
-        }
-      }
-    });
-  });
+  //     if (objectId.length > 0) {
+  //       const possibleRecipes = [];
+  //       for (const item of objectId) {
+  //         const recipePromise = users.getRecipe(
+  //           item.split(':')[1].split('+').join(' '),
+  //           req.user,
+  //         );
+  //         possibleRecipes.push(recipePromise);
+  //       }
+
+  //       const recipes = [];
+  //       try {
+  //         const fullRecipes = await Promise.all(possibleRecipes);
+
+  //         for (const fullRecipe of fullRecipes) {
+  //           const recipe = {
+  //             title: fullRecipe.title,
+  //             description: fullRecipe.description,
+  //           };
+  //           recipe.image = fullRecipe.image.replace('\\', '/');
+  //           recipe.image = recipe.image.replace('uploads/', '');
+  //           recipes.push(recipe);
+  //         }
+  //         res.status(200);
+  //         res.json(recipes);
+  //       } catch (error) {
+  //         logger.error(error.stack);
+  //         res.status(500);
+  //         // maybe think about about sending an empty recipe
+  //       }
+  //     } else {
+  //       res.sendStatus(404);
+  //     }
+  //   } else {
+  //     try {
+  //       const recipes = await users.getRecipes(req.user);
+  //       res.status(200);
+  //       res.send(recipes);
+  //     } catch (error) {
+  //       logger.error(error.stack);
+  //       res.status(500);
+  //     }
+  //   }
+  // });
 
   return { app };
 };
