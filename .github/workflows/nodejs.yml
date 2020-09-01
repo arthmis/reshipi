@@ -37,8 +37,6 @@ jobs:
           psql -c 'ALTER DATABASE testdb OWNER to testdb;' -U postgres -h localhost -p 5432 -w
         env:
           PGPASSWORD: postgres
-      - name: Run build
-        run: npm run build --if-present
       - name: Test code
         run: npm test
         env:

@@ -2,11 +2,11 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-console */
 /* eslint-disable prefer-arrow-callback */
-const { describe, it, before, after } = require('mocha');
+const { describe, it, before, after, afterEach } = require('mocha');
 const assert = require('assert');
 require('dotenv').config();
 const pgp = require('pg-promise')();
-// const request = require('supertest');
+const request = require('supertest');
 const bcrypt = require('bcrypt');
 
 require('dotenv').config();
@@ -48,18 +48,25 @@ describe('reshipi', function () {
         tags TEXT
       )`;
 
-    await users.db.none(createUserTable).catch((err) => err);
-    await users.db.none(createRecipesTable).catch((err) => err);
+    // need to put unique for sid or will get error
+    const createSessionsTable = `CREATE TABLE IF NOT EXISTS
+    Sessions(
+      sid VARCHAR UNIQUE,
+      sess JSON NOT NULL,
+      expire TIMESTAMP(6) NOT NULL
+    )`;
+
+    await db.none(createUserTable).catch((err) => err);
+    await db.none(createRecipesTable).catch((err) => err);
+    await db.none(createSessionsTable).catch((err) => err);
 
     console.log('Created tables for testing');
   });
 
-  after(async function () {
-    // delete all data in testdb
-    await db.none('DELETE FROM users').catch((err) => console.log(err));
-    await db.none('DELETE FROM recipes').catch((err) => console.log(err));
-    console.log('Deleted everything from tables in testdb');
-  });
+  // afterEach(async function () {
+  //   await db.none('DELETE FROM users').catch((err) => console.log(err));
+  //   await db.none('DELETE FROM recipes').catch((err) => console.log(err));
+  // });
 
   describe('database testing', function () {
     it('should add one user', async function () {
@@ -104,34 +111,33 @@ describe('reshipi', function () {
     //   }
     // });
   });
-  // describe('user authentication', function () {
-  //   it.skip('should sign up a user', async function () {
-  //     const res = await request(app)
-  //       .post('/signup')
-  //       .send({
-  //         username: 'samus',
-  //         email: 'samus@gmail.com',
-  //         password: 'secret_passy',
-  //       })
-  //       .expect(201);
-  //     assert(res.status === 201);
-  //   });
+  describe('signup', function () {
+    it('should sign up a user', async function () {
+      const res = await request(app)
+        .post('/signup')
+        .send({
+          email: 'samus@gmail.com',
+          password: 'secret_passy',
+          confirm_password: 'secret_passy',
+        })
+        .expect(201);
+      assert(res.status === 201);
+    });
 
-  //   it.skip('should prevent a duplicate user from signing up', async function () {
-  //     const res = await request(app)
-  //       .post('/signup')
-  //       .send({
-  //         username: 'samm',
-  //         email: 'samus@gmail.com',
-  //         password: 'secret_passy',
-  //       })
-  //       .expect(200);
-  //     // .then((res) => {
-  //     //   t.assert(res.status === 200);
-  //     // });
-  //     assert(res.status === 200);
-  //   });
+    it('should prevent a duplicate user from signing up', async function () {
+      const res = await request(app)
+        .post('/signup')
+        .send({
+          email: 'samus@gmail.com',
+          password: 'secret_passy',
+          confirm_password: 'secret_passy',
+        })
+        .expect(200);
+      assert(res.status === 200);
+    });
+  });
 
+  // describe('login', function () {
   //   it.skip('should login a user', async function () {
   //     await request(app)
   //       .post('/signup')
@@ -154,7 +160,7 @@ describe('reshipi', function () {
   //     assert(res.text === 'login successful');
   //     // assert(res.path === '/recipes');
   //     // console.log(res);
-  //   });
+  // });
 
   // it('should not login a user', async function () {
   //   await request(app)
@@ -177,5 +183,14 @@ describe('reshipi', function () {
   //   assert(res.type === 'text/html');
   //   assert(res.text === 'login successful');
   // });
+
   // });
+
+  after(async function () {
+    // delete all data in testdb
+    await db.none('DELETE FROM users').catch((err) => console.log(err));
+    await db.none('DELETE FROM recipes').catch((err) => console.log(err));
+    await db.none('DELETE FROM sessions').catch((err) => console.log(err));
+    console.log('Deleted everything from tables in testdb');
+  });
 });
