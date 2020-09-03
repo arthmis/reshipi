@@ -443,10 +443,10 @@ module.exports = (users, db) => {
 
       if (isDuplicateTitle) {
         res.status(203);
-        res.send(JSON.stringify({
+        res.json({
           recipe,
           error: 'recipe title cannot be a duplicate of another recipe',
-        }));
+        });
         return;
       }
 
@@ -653,7 +653,7 @@ module.exports = (users, db) => {
     const isDuplicate = await users.isDuplicateTitle(req.body.title);
 
     res.status(200);
-    res.send(JSON.stringify({ isDuplicate }));
+    res.json(isDuplicate);
   });
 
   app.put(
@@ -699,10 +699,10 @@ module.exports = (users, db) => {
 
           if (isDuplicateTitle) {
             res.status(203);
-            res.send(JSON.stringify({
+            res.json({
               recipe,
               error: 'recipe title cannot be a duplicate of another recipe',
-            }));
+            });
             return;
           }
         }

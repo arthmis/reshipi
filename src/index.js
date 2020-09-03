@@ -41,14 +41,7 @@ async function main() {
     Recipes(
       id SERIAL PRIMARY KEY,
       username TEXT NOT NULL,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL,
-      ingredients TEXT NOT NULL,
-      ingredients_amount TEXT NOT NULL,
-      directions TEXT NOT NULL,
-      food_category TEXT,
-      image TEXT NOT NULL,
-      url TEXT NOT NULL
+      recipe JSONB NOT NULL
     )`;
 
   // need to put unique for sid or will get error

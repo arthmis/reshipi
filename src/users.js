@@ -102,74 +102,57 @@ module.exports = (db) => {
       } else {
         recipe.image = image[0].path;
       }
-      const insertNewRecipe = new pg.ParameterizedQuery(
-        {
-          text: `INSERT INTO recipes (
+
+      recipe = JSON.stringify(recipe);
+      const insertNewRecipe = new pg.ParameterizedQuery({
+        text: `INSERT INTO recipes (
               username, 
-              title, 
-              description, 
-              ingredients, 
-              ingredients_amount, 
-              directions, 
-              food_category,
-              image,
-              url
+              recipe
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-          values: [
-            user,
-            recipe.title,
-            recipe.description,
-            recipe.ingredients,
-            recipe.ingredient_amount,
-            recipe.directions,
-            recipe.food_category,
-            recipe.image,
-            recipe.original_url,
-          ],
-        },
-      );
+            VALUES ($1, $2)`,
+        values: [user, recipe],
+      });
 
       await db.none(insertNewRecipe).catch((err) => { throw err; });
     },
     getRecipes: async (user) => {
       const findRecipes = new pg.ParameterizedQuery(
         {
-          text: 'SELECT title, image FROM recipes WHERE username=$1',
+          text: `
+            SELECT recipe->>'title' as title, recipe->>'image' as image
+            FROM Recipes 
+            WHERE username = $1
+          `,
           values: [user],
         },
       );
-      const recipesData = await db.any(findRecipes).catch((err) => { throw err; });
-      const recipes = [];
-      for (const recipeData of recipesData) {
-        const recipe = {};
-        recipe.title = recipeData.title;
-        recipe.image = recipeData.image.replace('\\', '/');
-        recipe.image = recipe.image.replace('uploads/', '');
+      const recipes = await db.any(findRecipes).catch((err) => { throw err; });
 
-        recipes.push(recipe);
+      for (const recipeData of recipes) {
+        recipeData.image = recipeData.image.replace('\\', '/');
+        recipeData.image = recipeData.image.replace('uploads/', '');
       }
+
       return recipes;
     },
 
-    // needs user argument to know which user recipes to search under
     getRecipe: async (recipeTitle, user) => {
-      const recipe = await db.one(
-        'SELECT title, description, ingredients, ingredients_amount, directions, food_category, image, url FROM Recipes WHERE title = $1 AND username = $2',
+      const row = await db.one(
+        "SELECT recipe FROM Recipes WHERE recipe->>'title' = $1 AND username = $2",
         [recipeTitle, user],
       ).catch((err) => {
         throw err;
       });
 
-      recipe.image = recipe.image.replace('\\', '/');
-      recipe.image = recipe.image.replace('uploads/', '');
-      return recipe;
+      row.recipe.image = row.recipe.image.replace('\\', '/');
+      row.recipe.image = row.recipe.image.replace('uploads/', '');
+      return row.recipe;
     },
 
-    // needs user argument to know which user recipes to search under
+    // TODO: needs user argument to know which user recipes to search under
     isDuplicateTitle: async (recipeTitle) => {
       const title = await db.oneOrNone(
-        'SELECT title FROM Recipes WHERE LOWER(title) = LOWER($1)',
+        `SELECT recipe->>'title' as title FROM Recipes WHERE LOWER(recipe->>'title') = LOWER($1)`,
         [recipeTitle],
       ).catch((err) => {
         throw err;
@@ -185,7 +168,8 @@ module.exports = (db) => {
 
     deleteRecipe: async (recipeTitle, user) => {
       const queryResult = await db.result(
-        'DELETE FROM Recipes WHERE title = $1 AND username = $2', [recipeTitle, user],
+        `DELETE FROM Recipes WHERE recipe->>'title' = $1 AND username = $2`,
+        [recipeTitle, user],
       ).catch((err) => {
         throw err;
       });
@@ -199,9 +183,13 @@ module.exports = (db) => {
       return false;
     },
 
-    updateRecipe: async (recipe, user, image) => {
-      if (image.length !== 0) {
-        recipe.image = image[0].path;
+    updateRecipe: async (recipe, user, image_path) => {
+      if (image_path === undefined) {
+        image_path = '';
+      }
+
+      if (image_path.length !== 0) {
+        recipe.image = image_path[0].path;
       } else if (recipe.original_image.length > 0) {
         if (recipe.image_is_deleted === 'true') {
           recipe.image = '';
@@ -212,33 +200,26 @@ module.exports = (db) => {
         recipe.image = '';
       }
 
+      const newRecipe = JSON.stringify({
+        title: recipe.title,
+        description: recipe.description,
+        ingredients: recipe.ingredients,
+        directions: recipe.directions,
+        ingredient_amount: recipe.ingredient_amount,
+        food_category: recipe.food_category,
+        image: recipe.image,
+        original_url: recipe.original_url,
+      });
+
       const updateRecipe = new pg.ParameterizedQuery(
         {
           text: `
             UPDATE recipes
             SET 
-              title = $1, 
-              description = $2, 
-              ingredients = $3, 
-              ingredients_amount = $4, 
-              directions = $5, 
-              food_category = $6,
-              image = $7,
-              url = $8
-            WHERE username=$9 and title=$10
+              recipe = $1
+            WHERE username = $2 and recipe->>'title' = $3
           `,
-          values: [
-            recipe.title,
-            recipe.description,
-            recipe.ingredients,
-            recipe.ingredient_amount,
-            recipe.directions,
-            recipe.food_category,
-            recipe.image,
-            recipe.original_url,
-            user,
-            recipe.original_title,
-          ],
+          values: [newRecipe, user, recipe.original_title],
         },
       );
 
@@ -247,7 +228,7 @@ module.exports = (db) => {
 
     isImageNameDuplicate: async (imageName) => {
       const findImageName = await db.oneOrNone(
-        'SELECT image FROM Recipes WHERE image = $1',
+        `SELECT recipe->>'image' as image FROM Recipes WHERE recipe->>'image' = $1`,
         [imageName],
       ).catch((err) => {
         throw err;
