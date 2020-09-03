@@ -137,54 +137,38 @@ describe('reshipi', function () {
     });
   });
 
-  // describe('login', function () {
-  //   it.skip('should login a user', async function () {
-  //     await request(app)
-  //       .post('/signup')
-  //       .send({
-  //         username: 'kupa',
-  //         email: 'kupa@gmail.com',
-  //         password: 'secret_passy',
-  //       })
-  //       .expect(201);
+  describe('login', function () {
+    it('should login a user', async function () {
+      await request(app)
+        .post('/signup')
+        .send({
+          email: 'kupam@gmail.com',
+          password: 'secret_passy',
+          confirm_password: 'secret_passy',
+        })
+        .expect(201);
 
-  //     const res = await request(app)
-  //       .post('/login')
-  //       .send({
-  //         email: 'kupa@gmail.com',
-  //         password: 'secret_passy',
-  //       })
-  //       .expect(200);
-  //     assert(res.status === 200);
-  //     assert(res.type === 'text/html');
-  //     assert(res.text === 'login successful');
-  //     // assert(res.path === '/recipes');
-  //     // console.log(res);
-  // });
+      const res = await request(app)
+        .post('/login')
+        .send({
+          email: 'kupam@gmail.com',
+          password: 'secret_passy',
+        });
+      assert(res.status === 303);
+      assert(res.redirect === true);
+      assert(res.header.location === '/recipes');
+    });
 
-  // it('should not login a user', async function () {
-  //   await request(app)
-  //     .post('/signup')
-  //     .send({
-  //       username: 'kupa',
-  //       email: 'kupam@gmail.com',
-  //       password: 'secret_passy',
-  //     })
-  //     .expect(201);
-
-  //   const res = await request(app)
-  //     .post('/login')
-  //     .send({
-  //       email: 'kupam@gmail.com',
-  //       password: 'wrong_secret_passy',
-  //     })
-  //     .expect(200);
-  //   assert(res.status === 200);
-  //   assert(res.type === 'text/html');
-  //   assert(res.text === 'login successful');
-  // });
-
-  // });
+    it('should not login a user', async function () {
+      const res = await request(app)
+        .post('/login')
+        .send({
+          email: 'kupam@gmail.com',
+          password: 'wrong_secret_passy',
+        });
+      assert(res.status === 401);
+    });
+  });
 
   after(async function () {
     // delete all data in testdb
