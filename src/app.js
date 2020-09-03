@@ -399,7 +399,7 @@ module.exports = (users, db) => {
     }
   };
 
-  app.post('/recipes_login',
+  app.post('/login',
     maxLoginLimiter,
     [
       check('email').isEmail().normalizeEmail(),
