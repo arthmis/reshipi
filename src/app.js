@@ -168,7 +168,6 @@ module.exports = (users, db) => {
       path: '/',
       maxAge: cookieAge,
       sameSite: true,
-
     },
     secret: process.env.SECRET,
     name: 'id',
@@ -289,23 +288,8 @@ module.exports = (users, db) => {
     ],
     signupNewUser);
 
-  const loginUser = async (req, res) => {
+  async function maxLoginLimiter(req, res, next) {
     const credentials = req.body;
-
-    const validationErrors = validationResult(req);
-    if (!validationErrors.isEmpty()) {
-      const user = {
-        email: credentials.email,
-        errorMessage: 'email or password is incorrect',
-      };
-      res.status(200);
-      res.render('pages/login', {
-        user,
-      });
-
-      return;
-    }
-
     const resMaxLoginLimiter = await maxLoginRateLimiter.get(req.ip)
       .catch((err) => logger.log(err.stack));
 
@@ -323,21 +307,22 @@ module.exports = (users, db) => {
       });
       return;
     }
+    next();
+  }
+  const loginUser = async (req, res) => {
+    const credentials = req.body;
 
-    const resLoginLimiter = await loginRateLimiter.get(req.ip)
-      .catch((err) => logger.log(err.stack));
-
-    if (resLoginLimiter && resLoginLimiter.consumedPoints > maxConsecutiveLoginAttempts) {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
       const user = {
         email: credentials.email,
         errorMessage: 'email or password is incorrect',
       };
-      const timeBeforeTry = Math.round(resLoginLimiter.msBeforeNext / 1000);
-      user.timeBeforeTry = `Try logging in after ${timeBeforeTry} seconds`;
-      res.status(429);
+      res.status(200);
       res.render('pages/login', {
         user,
       });
+
       return;
     }
 
@@ -415,6 +400,7 @@ module.exports = (users, db) => {
   };
 
   app.post('/recipes_login',
+    maxLoginLimiter,
     [
       check('email').isEmail().normalizeEmail(),
       check('password').isLength({ min: 8, max: 50 }),
@@ -443,7 +429,7 @@ module.exports = (users, db) => {
     res.render('pages/new_recipe');
   });
 
-  const addRecipe = async (req, res) => {
+  async function addRecipe(req, res) {
     const validationErrors = validationResult(req);
     const recipe = req.body;
     if (!validationErrors.isEmpty()) {
@@ -464,55 +450,16 @@ module.exports = (users, db) => {
         return;
       }
 
-      // const makeRecipeString = (searchRecipe) => {
-      //   let ingredients = '';
-      //   if (Array.isArray(searchRecipe.ingredients)) {
-      //     ingredients = searchRecipe.ingredients.join(' ');
-      //   } else {
-      //     ingredients = searchRecipe.ingredients;
-      //   }
-      //   let directions = '';
-      //   if (Array.isArray(searchRecipe.directions)) {
-      //     directions = searchRecipe.directions.join(' ');
-      //   } else {
-      //     directions = searchRecipe.directions;
-      //   }
-
-      //   return [
-      //     searchRecipe.title,
-      //     searchRecipe.description,
-      //     ingredients,
-      //     directions,
-      //   ].join(' ').split('-').join(' ');
-      // };
-
-      // const replacedTitle = recipe.title.split(' ').join('+');
-      // const objectId = [user, replacedTitle].join(':');
-
-      // await sonicChannelIngest.push(
-      //   'recipes',
-      //   user,
-      //   objectId,
-      //   makeRecipeString(recipe),
-      //   'eng',
-      // ).catch((error) => logger.error(error.stack));
-
-      if (Array.isArray(recipe.ingredients)) {
-        recipe.ingredients = recipe.ingredients.join('\n');
-      }
-      if (Array.isArray(recipe.directions)) {
-        recipe.directions = recipe.directions.join('\n');
-      }
-      if (Array.isArray(recipe.ingredient_amount)) {
-        recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
-      }
 
       try {
+        if (req.files === undefined) {
+          req.files = '';
+        }
         await users.addRecipe(recipe, req.user, req.files);
         res.status(200);
         res.render('pages/recipes');
       } catch (error) {
-        logger.error(error.stack);
+        logger.error(`error adding recipe: ${error.stack}`);
         res.status(500);
         res.render('pages/500');
       }
@@ -584,7 +531,7 @@ module.exports = (users, db) => {
   app.post(
     '/add_recipe',
     validateUserSession,
-    upload.any('recipe_image'),
+    upload.any('image'),
     [
       body('title').trim().not().isEmpty()
         .isLength({ min: 3, max: 100 }),
@@ -641,9 +588,6 @@ module.exports = (users, db) => {
         return;
       }
 
-      // await sonicChannelIngest.flusho('recipes', sess.user, [sess.user, recipe.title.split(' ').join('+')].join(':'))
-      //   .catch((error) => logger.error(error.stack));
-
       try {
         const isDeleted = await users.deleteRecipe(recipe.title, req.user);
 
@@ -690,9 +634,9 @@ module.exports = (users, db) => {
       const recipe = await users.getRecipe(req.query.title, req.user);
 
       res.status(200);
-      res.send(JSON.stringify(recipe));
+      res.json(recipe);
     } catch (error) {
-      logger.log(error.stack);
+      logger.error(error.stack);
       res.status(500);
       res.render('pages/500');
     }
@@ -715,7 +659,7 @@ module.exports = (users, db) => {
   app.put(
     '/update_recipe',
     validateUserSession,
-    upload.any('recipe_image'),
+    upload.any('image'),
     [
       body('title').trim().not().isEmpty()
         .isLength({ min: 3, max: 100 }),
@@ -737,6 +681,7 @@ module.exports = (users, db) => {
         .isEmpty(),
       body('original_title').trim().not().isEmpty()
         .isLength({ min: 3, max: 100 }),
+      body('original_image').trim().isLength({ min: 0, max: 100 }),
     ],
     async (req, res) => {
       const validationErrors = validationResult(req);
@@ -749,66 +694,17 @@ module.exports = (users, db) => {
 
       try {
         // makes sure updated recipe title is not a duplicate
-        const isDuplicateTitle = await users.isDuplicateTitle(recipe.title);
+        if (recipe.title.toLowerCase() !== recipe.original_title.toLowerCase()) {
+          const isDuplicateTitle = await users.isDuplicateTitle(recipe.title);
 
-        if (isDuplicateTitle) {
-          res.status(203);
-          res.send(JSON.stringify({
-            recipe,
-            error: 'recipe title cannot be a duplicate of another recipe',
-          }));
-          return;
-        }
-
-        // const makeRecipeString = (searchRecipe) => {
-        //   let ingredients = '';
-        //   if (Array.isArray(searchRecipe.ingredients)) {
-        //     ingredients = searchRecipe.ingredients.join(' ');
-        //   } else {
-        //     ingredients = searchRecipe.ingredients;
-        //   }
-        //   let directions = '';
-        //   if (Array.isArray(searchRecipe.directions)) {
-        //     directions = searchRecipe.directions.join(' ');
-        //   } else {
-        //     directions = searchRecipe.directions;
-        //   }
-
-        //   return [
-        //     searchRecipe.title,
-        //     searchRecipe.description,
-        //     ingredients,
-        //     directions,
-        //   ].join(' ').split('-').join(' ');
-        // };
-
-        // const replacedTitle = recipe.title.split(' ').join('+');
-        // const objectId = [user, replacedTitle].join(':');
-
-        // await sonicChannelIngest.push(
-        //   'recipes',
-        //   user,
-        //   objectId,
-        //   makeRecipeString(recipe),
-        //   'eng',
-        // )
-        //   .catch((error) => logger.error(error.stack));
-
-        // await sonicChannelIngest.flusho(
-        //   'recipes',
-        //   user,
-        //   [user, recipe.original_title.split(' ').join('+')].join(':'),
-        // )
-        //   .catch((error) => logger.error(error.stack));
-
-        if (Array.isArray(recipe.ingredients)) {
-          recipe.ingredients = recipe.ingredients.join('\n');
-        }
-        if (Array.isArray(recipe.directions)) {
-          recipe.directions = recipe.directions.join('\n');
-        }
-        if (Array.isArray(recipe.ingredient_amount)) {
-          recipe.ingredient_amount = recipe.ingredient_amount.join('\n');
+          if (isDuplicateTitle) {
+            res.status(203);
+            res.send(JSON.stringify({
+              recipe,
+              error: 'recipe title cannot be a duplicate of another recipe',
+            }));
+            return;
+          }
         }
 
         try {
