@@ -116,29 +116,29 @@ class Recipes extends React.Component {
     async searchRecipes(event) {
         event.preventDefault();
 
-        const searchParameters = event.target.value;
+        // const searchParameters = event.target.value;
 
-        const newUrl = `/search_recipes?search=${searchParameters}`;
+        // const newUrl = `/search_recipes?search=${searchParameters}`;
 
-        const res = await fetch(newUrl, {
-            method: 'GET',
-            mode: 'same-origin',
-            credentials: 'same-origin',
-        });
+        // const res = await fetch(newUrl, {
+        //     method: 'GET',
+        //     mode: 'same-origin',
+        //     credentials: 'same-origin',
+        // });
 
-        if (res.ok) {
-            const recipes = await res.json();
+        // if (res.ok) {
+        //     const recipes = await res.json();
 
-            this.setState((prevState, props) => {
-                prevState.recipes = recipes;
-                return (prevState);
-            });
-        } else {
-            this.setState((prevState, props) => {
-                prevState.recipes = [];
-                return (prevState);
-            });
-        }
+        //     this.setState((prevState, props) => {
+        //         prevState.recipes = recipes;
+        //         return (prevState);
+        //     });
+        // } else {
+        //     this.setState((prevState, props) => {
+        //         prevState.recipes = [];
+        //         return (prevState);
+        //     });
+        // }
     }
 
     render() {
