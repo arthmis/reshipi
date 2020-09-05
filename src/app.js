@@ -189,6 +189,8 @@ module.exports = (users, db) => {
           "'self'",
           'https://unpkg.com/react@16/umd/react.development.js',
           'https://unpkg.com/react-dom@16/umd/react-dom.development.js',
+          'https://unpkg.com/react@16/umd/react.production.min.js',
+          'https://unpkg.com/react-dom@16/umd/react-dom.production.min.js',
         ],
         imgSrc: ["'self'", 'blob:'],
         styleSrc: [
