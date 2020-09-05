@@ -1,6 +1,6 @@
 import Directions from './update_recipe_components/directions.js';
-import {Ingredient, IngredientList} from './update_recipe_components/ingredients.js';
-import {moveElementDownList, moveElementUpList} from './utility.js';
+import { Ingredient, IngredientList } from './update_recipe_components/ingredients.js';
+import { moveElementDownList, moveElementUpList } from './utility.js';
 
 'use strict';
 
@@ -12,7 +12,7 @@ class App extends React.Component {
 
 
     render() {
-        return(
+        return (
             <div>
                 <header>
                     <Nav />
@@ -30,11 +30,11 @@ class Nav extends React.Component {
         super(props);
     }
     render() {
-        return(
+        return (
             <nav id="nav">
                 <a id="home-link" href="/recipes">RE&middot;SHI&middot;PI</a>
                 <form id="logout-form" action="/logout" method="get">
-                    <input id="logout" type="submit" name="logout" value="Logout"/>
+                    <input id="logout" type="submit" name="logout" value="Logout" />
                 </form>
             </nav>
         );
@@ -102,17 +102,14 @@ class NewRecipeForm extends React.Component {
             credentials: 'same-origin',
         });
         let recipe = await response.json();
-        recipe.ingredients = recipe.ingredients.split('\n');
-        recipe.ingredients_amount = recipe.ingredients_amount.split('\n');
-        recipe.directions = recipe.directions.split('\n');
 
         const ingredientAndQuantity = [];
         for (let i = 0; i < recipe.ingredients.length; i += 1) {
-            ingredientAndQuantity.push(new Ingredient(recipe.ingredients[i], recipe.ingredients_amount[i]))
+            ingredientAndQuantity.push(new Ingredient(recipe.ingredients[i], recipe.ingredient_amount[i]))
         }
 
         recipe.ingredients = ingredientAndQuantity;
-        delete recipe.ingredients_amount;
+        delete recipe.ingredient_amount;
 
         this.setState((prevState, props) => {
             prevState.recipe = recipe;
@@ -129,11 +126,11 @@ class NewRecipeForm extends React.Component {
                 prevState.imageName = `${recipe.title}.${imageExtenstion}`;
             }
 
-            return(prevState);
+            return (prevState);
         });
     }
 
-    handleSubmit (event) {
+    handleSubmit(event) {
         event.preventDefault();
 
         const form = ReactDOM.findDOMNode(this);
@@ -162,32 +159,32 @@ class NewRecipeForm extends React.Component {
                 mode: 'same-origin',
                 credentials: 'same-origin',
             })
-            .then((response) => response.json())
-            .then((result) => {
-                if (result.isDuplicate) {
-                    title.setCustomValidity('That recipe name is already in use.');
-                } else {
-                    title.setCustomValidity('');
-                }
+                .then((response) => response.json())
+                .then((result) => {
+                    if (result.isDuplicate) {
+                        title.setCustomValidity('That recipe name is already in use.');
+                    } else {
+                        title.setCustomValidity('');
+                    }
 
-                if (form.reportValidity()) {
-                    let formData = new FormData(form);
-                    formData.append('image', this.state.image);
-                    formData.append('original_title', this.state.originalTitle);
-                    formData.append('original_image', this.state.originalImage);
-                    formData.append('image_is_deleted', this.state.imageIsDeleted);
+                    if (form.reportValidity()) {
+                        let formData = new FormData(form);
+                        formData.append('image', this.state.image);
+                        formData.append('original_title', this.state.originalTitle);
+                        formData.append('original_image', this.state.originalImage);
+                        formData.append('image_is_deleted', this.state.imageIsDeleted);
 
-                    fetch('/update_recipe', {
-                        method: 'PUT',
-                        body: formData,
-                        mode: 'same-origin',
-                        credentials: 'same-origin',
-                    }).then(response => {
-                        console.log(response.body);
-                        document.location.href = '/recipes';
-                    });
-                }
-            });
+                        fetch('/update_recipe', {
+                            method: 'PUT',
+                            body: formData,
+                            mode: 'same-origin',
+                            credentials: 'same-origin',
+                        }).then(response => {
+                            console.log(response.body);
+                            document.location.href = '/recipes';
+                        });
+                    }
+                });
         } else {
             if (form.reportValidity()) {
                 let formData = new FormData(form);
@@ -209,11 +206,11 @@ class NewRecipeForm extends React.Component {
         }
     }
 
-    handleImageChange (event) {
+    handleImageChange(event) {
         event.preventDefault();
         const file = event.target.files[0];
         let imageName = file.name;
-        const imageUrl = URL.createObjectURL(file); 
+        const imageUrl = URL.createObjectURL(file);
         this.setState((prevState, props) => {
             prevState.imageUrl = imageUrl;
             prevState.imageName = imageName;
@@ -223,7 +220,7 @@ class NewRecipeForm extends React.Component {
         });
     }
 
-    removeImage (event) {
+    removeImage(event) {
         event.preventDefault();
         this.setState((prevState, props) => {
             prevState.imageUrl = '';
@@ -240,7 +237,7 @@ class NewRecipeForm extends React.Component {
         });
     }
 
-    clearImage (event) {
+    clearImage(event) {
         event.preventDefault();
         this.setState((prevState, props) => {
             prevState.imageUrl = '';
@@ -250,20 +247,20 @@ class NewRecipeForm extends React.Component {
         });
     }
 
-    handleFileInput (event) {
+    handleFileInput(event) {
         event.preventDefault();
         document.getElementById('recipe-image').click();
     }
 
     handleTitle(event) {
-        const title = event.target; 
+        const title = event.target;
         if (title.value.length === 0) {
             title.setCustomValidity('Please provide a title.');
         }
         else if (title.value.trim().length === 0) {
-            title.setCustomValidity('Title cannot only contain empty spaces.'); 
+            title.setCustomValidity('Title cannot only contain empty spaces.');
         } else {
-            title.setCustomValidity(''); 
+            title.setCustomValidity('');
         }
 
         const value = event.target.value;
@@ -274,7 +271,7 @@ class NewRecipeForm extends React.Component {
     }
 
     handleDescription(event) {
-        const description = event.target; 
+        const description = event.target;
         if (description.value.length === 0) {
             description.setCustomValidity('')
         }
@@ -292,7 +289,7 @@ class NewRecipeForm extends React.Component {
         });
     }
 
-    handleUrlChange (event) {
+    handleUrlChange(event) {
         const value = event.target.value;
         this.setState((prevState, props) => {
             prevState.recipe.url = value;
@@ -329,7 +326,7 @@ class NewRecipeForm extends React.Component {
         if (this.state.recipe.directions.length > 1) {
             this.setState((prevState, props) => {
                 prevState.recipe.directions.splice(index, 1);
-                return(prevState);
+                return (prevState);
             });
         }
     }
@@ -361,11 +358,11 @@ class NewRecipeForm extends React.Component {
         }
     }
 
-    handleDragOver (event) {
+    handleDragOver(event) {
         event.preventDefault();
     }
 
-    onDragStart (event, index) {
+    onDragStart(event, index) {
         event.dataTransfer.setData("text/plain", index);
     }
 
@@ -428,7 +425,7 @@ class NewRecipeForm extends React.Component {
     }
 
     render() {
-        return(
+        return (
             <form id="new-recipe" action="/add_recipe" onSubmit={this.handleSubmit} method="post" encType="multipart/form-data">
                 <div id="form-inputs">
                     <div className="input-group">
@@ -436,26 +433,26 @@ class NewRecipeForm extends React.Component {
                         <input className="input user-input" onChange={this.handleTitle} value={this.state.recipe.title} form="new-recipe" id="title" name="title" type="text" placeholder="Your recipe title" required /><br />
                     </div>
                     <div className="input-group">
-                        <label 
-                            className="label" 
-                            form="new-recipe" 
-                            htmlFor="description">Description</label><br 
+                        <label
+                            className="label"
+                            form="new-recipe"
+                            htmlFor="description">Description</label><br
                         />
-                        <textarea 
-                            className="input user-input" 
-                            form="new-recipe" 
-                            onChange={this.handleDescription} 
-                            value={this.state.recipe.description} 
-                            rows="3" 
-                            form="new-recipe" 
-                            id="description" 
-                            name="description" 
-                            type="text" 
-                            placeholder="Short description of the recipe" /><br 
+                        <textarea
+                            className="input user-input"
+                            form="new-recipe"
+                            onChange={this.handleDescription}
+                            value={this.state.recipe.description}
+                            rows="3"
+                            form="new-recipe"
+                            id="description"
+                            name="description"
+                            type="text"
+                            placeholder="Short description of the recipe" /><br
                         />
                     </div>
-                    <IngredientList 
-                        ingredients={this.state.recipe.ingredients} 
+                    <IngredientList
+                        ingredients={this.state.recipe.ingredients}
                         ingredientsAmount={this.state.recipe.ingredients_amount}
                         addNewIngredientInput={this.addNewIngredientInput}
                         removeIngredientInput={this.removeIngredientInput}
@@ -465,8 +462,8 @@ class NewRecipeForm extends React.Component {
                         onDragStart={this.onDragStart}
                         handleDragOver={this.handleDragOver}
                     />
-                    <Directions 
-                        directions={this.state.recipe.directions} 
+                    <Directions
+                        directions={this.state.recipe.directions}
                         addDirection={this.addDirection}
                         removeDirection={this.removeDirection}
                         updateDirections={this.updateDirections}
@@ -475,9 +472,9 @@ class NewRecipeForm extends React.Component {
                         handleDragOver={this.handleDragOver}
                     />
                     <FoodCategory foodCategory={this.state.recipe.food_category} handleFoodCategory={this.handleFoodCategory} />
-                    <ImageInput 
-                        handleImageChange={this.handleImageChange} 
-                        removeImage={this.removeImage} 
+                    <ImageInput
+                        handleImageChange={this.handleImageChange}
+                        removeImage={this.removeImage}
                         handleFileInput={this.handleFileInput}
                         imageUrl={this.state.imageUrl}
                         imageName={this.state.imageName}
@@ -495,7 +492,7 @@ class NewRecipeForm extends React.Component {
 class FoodCategory extends React.Component {
     constructor(props) {
         super(props);
-        this.state = ({value: ''});
+        this.state = ({ value: '' });
         this.handleInput = this.handleInput.bind(this);
     }
 
@@ -508,21 +505,21 @@ class FoodCategory extends React.Component {
             foodType.setCustomValidity('');
         }
         const value = event.target.value;
-        this.setState(({value}));
+        this.setState(({ value }));
     }
 
-    render () {
+    render() {
         return (
             <div className="input-group">
                 <label className="label" form="new-recipe" htmlFor="food-category">Food Type</label><br />
                 <div>
-                    <input 
-                        className="user-input" 
-                        form="new-recipe" 
-                        id="food-category" 
-                        name="food_category" 
-                        type="text" 
-                        onChange={this.props.handleFoodCategory} 
+                    <input
+                        className="user-input"
+                        form="new-recipe"
+                        id="food-category"
+                        name="food_category"
+                        type="text"
+                        onChange={this.props.handleFoodCategory}
                         value={this.props.foodCategory}
                         placeholder='"Italian", "French", "Japanese".'
                     />
@@ -540,7 +537,7 @@ class ImageInput extends React.Component {
         super(props);
     }
 
-    render () {
+    render() {
         let imageName = this.props.imageName;
         let extension = '';
         const imageNameSplit = imageName.split('.');
@@ -555,13 +552,13 @@ class ImageInput extends React.Component {
                     <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
                     <button className="image-input-button" onClick={this.props.handleFileInput}>Upload Image</button>
                     <div>
-                        <input 
-                            style={{visibility: 'hidden'}} 
-                            onChange={this.props.handleImageChange} 
-                            type="file" 
-                            id="recipe-image" 
-                            name="recipe_image" 
-                            accept=".png, .jpg, .jpeg" 
+                        <input
+                            style={{ visibility: 'hidden' }}
+                            onChange={this.props.handleImageChange}
+                            type="file"
+                            id="recipe-image"
+                            name="recipe_image"
+                            accept=".png, .jpg, .jpeg"
                             form="new-recipe"
                             htmlFor="new-recipe"
                         />
@@ -574,20 +571,20 @@ class ImageInput extends React.Component {
                     <div className="input-group">
                         <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
                         <button className="image-input-button" onClick={this.props.handleFileInput}>Upload Image</button>
-                        <input 
-                            style={{visibility: 'hidden'}} 
-                            onChange={this.props.handleImageChange} 
-                            type="file" 
-                            id="recipe-image" 
-                            name="recipe_image" 
-                            accept=".png, .jpg, .jpeg" 
+                        <input
+                            style={{ visibility: 'hidden' }}
+                            onChange={this.props.handleImageChange}
+                            type="file"
+                            id="recipe-image"
+                            name="recipe_image"
+                            accept=".png, .jpg, .jpeg"
                             form="new-recipe"
                             htmlFor="new-recipe"
                         />
                         <div id="image-input">
                             <img id="user-image" src={this.props.imageUrl} alt="recipe image" />
                             <p id="image-name">{this.props.imageName}</p>
-                            <button id="remove-image" className="image-input-button" onClick={this.props.removeImage}>Remove Image</button> 
+                            <button id="remove-image" className="image-input-button" onClick={this.props.removeImage}>Remove Image</button>
                         </div>
                     </div>
                 );
@@ -601,13 +598,13 @@ class ImageInput extends React.Component {
                         </p>
                         <button id="remove-invalid-image" onClick={this.props.clearImage}>Remove Invalid Image</button>
                         <div>
-                            <input 
-                                style={{visibility: 'hidden'}} 
-                                onChange={this.props.handleImageChange} 
-                                type="file" 
-                                id="recipe-image" 
-                                name="recipe_image" 
-                                accept=".png, .jpg, .jpeg" 
+                            <input
+                                style={{ visibility: 'hidden' }}
+                                onChange={this.props.handleImageChange}
+                                type="file"
+                                id="recipe-image"
+                                name="recipe_image"
+                                accept=".png, .jpg, .jpeg"
                                 form="new-recipe"
                                 htmlFor="new-recipe"
                             />
@@ -622,15 +619,15 @@ class ImageInput extends React.Component {
 class OriginalUrl extends React.Component {
     constructor(props) {
         super(props);
-        this.state = ({value: ''});
+        this.state = ({ value: '' });
         this.handleChange = this.handleChange.bind(this);
     }
 
-    handleChange (event) {
-        this.setState({value: event.target.value});
+    handleChange(event) {
+        this.setState({ value: event.target.value });
     }
 
-    render () {
+    render() {
         return (
             <div className="input-group">
                 <label className="label" form="new-recipe" htmlFor="original-url">Original link</label><br />

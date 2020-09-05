@@ -13,7 +13,7 @@ class App extends React.Component {
     }
 
     render() {
-        return(
+        return (
             <div>
                 <header>
                     <Nav />
@@ -32,11 +32,11 @@ class Nav extends React.Component {
     }
 
     render() {
-        return(
+        return (
             <nav id="nav">
                 <a id="reshipi" href="/recipes">RE&middot;SHI&middot;PI</a>
                 <form id="logout-form" action="/logout" method="get">
-                    <input id="logout" type="submit" name="logout" value="Logout"/>
+                    <input id="logout" type="submit" name="logout" value="Logout" />
                 </form>
             </nav>
         );
@@ -72,13 +72,11 @@ class Recipe extends React.Component {
             credentials: 'same-origin',
         });
         let recipe = await response.json();
-        recipe.ingredients = recipe.ingredients.split('\n');
-        recipe.ingredients_amount = recipe.ingredients_amount.split('\n');
-        recipe.directions = recipe.directions.split('\n');
+        console.log(recipe);
 
         const ingredientAndQuantity = [];
         for (let i = 0; i < recipe.ingredients.length; i += 1) {
-            ingredientAndQuantity.push(new Ingredient(recipe.ingredients[i], recipe.ingredients_amount[i]))
+            ingredientAndQuantity.push(new Ingredient(recipe.ingredients[i], recipe.ingredient_amount[i]))
         }
 
         recipe.ingredients = ingredientAndQuantity;
@@ -88,7 +86,7 @@ class Recipe extends React.Component {
             prevState.recipe = recipe;
             prevState.originalTitle = recipe.title;
 
-            return(prevState);
+            return (prevState);
         });
     }
     render() {
@@ -115,7 +113,7 @@ class Ingredients extends React.Component {
                 <h4>Ingredients</h4>
                 <ul>
                     {this.props.ingredients.map((ingredient, index) => {
-                        return(
+                        return (
                             <li key={index.toString()} className="ingredient-item">
                                 <span className="ingredient-amount">
                                     {ingredient.amount}&ensp;
@@ -143,9 +141,9 @@ class Directions extends React.Component {
                 <h4>Directions</h4>
                 <ol>
                     {this.props.directions.map((direction, index) => {
-                        return(
+                        return (
                             <li key={index.toString()} className="direction">
-                                    {direction}
+                                {direction}
                             </li>
                         );
                     })}
