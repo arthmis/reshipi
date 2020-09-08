@@ -451,7 +451,7 @@ module.exports = (users, db) => {
     }
 
     try {
-      const isDuplicateTitle = await users.isDuplicateTitle(recipe.title);
+      const isDuplicateTitle = await users.isDuplicateTitle(recipe.title, req.user);
 
       if (isDuplicateTitle) {
         res.status(203);
@@ -664,7 +664,7 @@ module.exports = (users, db) => {
       return;
     }
 
-    const isDuplicate = await users.isDuplicateTitle(req.body.title);
+    const isDuplicate = await users.isDuplicateTitle(req.body.title, req.user);
 
     res.status(200);
     res.json(isDuplicate);
@@ -709,7 +709,7 @@ module.exports = (users, db) => {
       try {
         // makes sure updated recipe title is not a duplicate
         if (recipe.title.toLowerCase() !== recipe.original_title.toLowerCase()) {
-          const isDuplicateTitle = await users.isDuplicateTitle(recipe.title);
+          const isDuplicateTitle = await users.isDuplicateTitle(recipe.title, req.user);
 
           if (isDuplicateTitle) {
             res.status(203);

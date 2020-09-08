@@ -149,11 +149,12 @@ module.exports = (db) => {
       return row.recipe;
     },
 
-    // TODO: needs user argument to know which user recipes to search under
-    isDuplicateTitle: async (recipeTitle) => {
+    isDuplicateTitle: async (recipeTitle, user) => {
       const title = await db.oneOrNone(
-        `SELECT recipe->>'title' as title FROM Recipes WHERE LOWER(recipe->>'title') = LOWER($1)`,
-        [recipeTitle],
+        `SELECT recipe->>'title' as title 
+        FROM Recipes 
+        WHERE LOWER(recipe->>'title') = LOWER($1) AND username = $2`,
+        [recipeTitle, user],
       ).catch((err) => {
         throw err;
       });
