@@ -115,11 +115,11 @@ class Ingredients extends React.Component {
                     {this.props.ingredients.map((ingredient, index) => {
                         return (
                             <li key={index.toString()} className="ingredient-item">
-                                <span className="ingredient-amount">
-                                    {ingredient.amount}&ensp;
-                                </span>
                                 <span className="ingredient">
-                                    {ingredient.ingredient}
+                                    {ingredient.ingredient}&ensp;
+                                </span>
+                                <span className="ingredient-amount">
+                                    {ingredient.amount}
                                 </span>
                             </li>
                         );

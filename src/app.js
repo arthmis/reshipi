@@ -8,6 +8,7 @@ const {
   body,
   query,
 } = require('express-validator');
+const sanitizeHtml = require('sanitize-html');
 const bodyParser = require('body-parser');
 const csp = require('helmet-csp');
 const session = require('express-session');
@@ -439,6 +440,15 @@ module.exports = (users, db) => {
       res.sendStatus(400);
       return;
     }
+    if (!(Array.isArray(recipe.ingredients))) {
+      recipe.ingredients = [recipe.ingredients];
+    }
+    if (!(Array.isArray(recipe.ingredient_amount))) {
+      recipe.ingredient_amount = [recipe.ingredient_amount];
+    }
+    if (!(Array.isArray(recipe.directions))) {
+      recipe.directions = [recipe.directions];
+    }
 
     try {
       const isDuplicateTitle = await users.isDuplicateTitle(recipe.title);
@@ -451,7 +461,6 @@ module.exports = (users, db) => {
         });
         return;
       }
-
 
       try {
         if (req.files === undefined) {
@@ -470,63 +479,45 @@ module.exports = (users, db) => {
       res.status(500);
       res.render('pages/500');
     }
-  };
+  }
 
-  const checkIngredients = (ingredients, { req }) => {
-    if (Array.isArray(ingredients)) {
-      for (let i = 0; i < ingredients.length; i += 1) {
-        ingredients[i] = validator.trim(ingredients[i]);
+  const checkIngredients = (ingredients) => {
+    if (!(Array.isArray(ingredients))) {
+      ingredients = [ingredients];
+    }
+    for (let i = 0; i < ingredients.length; i += 1) {
+      ingredients[i] = validator.trim(ingredients[i]);
 
-        if (validator.isEmpty(ingredients[i])) {
-          return false;
-        }
+      if (validator.isEmpty(ingredients[i])) {
+        return false;
       }
-      return true;
     }
-
-    ingredients = validator.trim(ingredients);
-    if (validator.isEmpty(ingredients)) {
-      return false;
-    }
-    req.body.ingredients = ingredients;
     return true;
   };
-  const checkIngredientQuantity = (quantities, { req }) => {
-    if (Array.isArray(quantities)) {
-      for (let i = 0; i < quantities.length; i += 1) {
-        quantities[i] = validator.trim(quantities[i]);
+  const checkIngredientQuantity = (quantities) => {
+    if (!Array.isArray(quantities)) {
+      quantities = [quantities];
+    }
+    for (let i = 0; i < quantities.length; i += 1) {
+      quantities[i] = validator.trim(quantities[i]);
 
-        if (validator.isEmpty(quantities[i])) {
-          return false;
-        }
+      if (validator.isEmpty(quantities[i])) {
+        return false;
       }
-      return true;
     }
-
-    const quantity = validator.trim(quantities);
-    if (validator.isEmpty(quantity)) {
-      return false;
-    }
-    req.body.ingredient_amount = quantity;
     return true;
   };
-  const checkDirections = (directions, { req }) => {
-    if (Array.isArray(directions)) {
-      for (let i = 0; i < directions.length; i += 1) {
-        directions[i] = validator.trim(directions[i]);
+  const checkDirections = (directions) => {
+    if (!Array.isArray(directions)) {
+      directions = [directions];
+    }
+    for (let i = 0; i < directions.length; i += 1) {
+      directions[i] = validator.trim(directions[i]);
 
-        if (validator.isEmpty(directions[i])) {
-          return false;
-        }
+      if (validator.isEmpty(directions[i])) {
+        return false;
       }
-      return true;
     }
-
-    const direction = validator.trim(directions);
-    if (validator.isEmpty(direction)) {
-      return false;
-    }
-    req.body.directions = direction;
     return true;
   };
 
@@ -565,6 +556,12 @@ module.exports = (users, db) => {
       const images = fs.readdirSync('./reshipi-frontend/images/food_image_substitutes');
       for (let i = 0; i < images.length; i += 1) {
         images[i] = `images/food_image_substitutes/${images[i]}`;
+      }
+      // sanitize recipes for html on client side
+      for (let i = 0; i < recipes.length; i += 1) {
+        for (const key of Object.keys(recipes[i])) {
+          recipes[i][key] = sanitizeHtml(recipes[i][key]);
+        }
       }
       res.json({ recipes, images });
     } catch (error) {
@@ -634,6 +631,21 @@ module.exports = (users, db) => {
 
     try {
       const recipe = await users.getRecipe(req.query.title, req.user);
+      // sanitize recipe for html
+      recipe.title = sanitizeHtml(recipe.title);
+      recipe.image = sanitizeHtml(recipe.image);
+      recipe.description = sanitizeHtml(recipe.description);
+      recipe.original_url = sanitizeHtml(recipe.original_url);
+      recipe.food_category = sanitizeHtml(recipe.food_category);
+      for (let i = 0; i < recipe.ingredients.length; i += 1) {
+        recipe.ingredients[i] = sanitizeHtml(recipe.ingredients[i]);
+      }
+      for (let i = 0; i < recipe.ingredient_amount.length; i += 1) {
+        recipe.ingredient_amount[i] = sanitizeHtml(recipe.ingredient_amount[i]);
+      }
+      for (let i = 0; i < recipe.directions.length; i += 1) {
+        recipe.directions[i] = sanitizeHtml(recipe.directions[i]);
+      }
 
       res.status(200);
       res.json(recipe);
