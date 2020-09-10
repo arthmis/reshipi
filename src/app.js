@@ -11,6 +11,7 @@ const {
 const sanitizeHtml = require('sanitize-html');
 const bodyParser = require('body-parser');
 const csp = require('helmet-csp');
+const helmet = require('helmet');
 const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
 const multer = require('multer');
@@ -104,6 +105,8 @@ module.exports = (users, db) => {
   const upload = multer({ storage });
 
   const app = express();
+
+  app.use(helmet());
 
   app.use(morgan('combined', {
     stream: fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' }),
