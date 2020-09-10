@@ -89,13 +89,13 @@ const maxLoginAttempts = 10;
 module.exports = (users, db) => {
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, 'uploads/');
+      cb(null, '../uploads/');
     },
     filename: async (req, file, cb) => {
       const originalNameSplit = file.originalname.split('.');
       const extension = originalNameSplit[originalNameSplit.length - 1];
       let newFileName = `image-${Date.now()}-${Math.round(Math.random() * 1E9)}.${extension}`;
-      while (await users.isImageNameDuplicate(`uploads/${newFileName}`)) {
+      while (await users.isImageNameDuplicate(`../uploads/${newFileName}`)) {
         newFileName = `image-${Date.now()}-${Math.round(Math.random() * 1E9)}.${extension}`;
       }
       cb(null, newFileName);

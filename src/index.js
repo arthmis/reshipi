@@ -69,14 +69,14 @@ async function main() {
 
   app.use(express.static('reshipi-frontend'));
   try {
-    if (!fs.existsSync('./uploads')) {
-      fs.mkdirSync('./uploads');
+    if (!fs.existsSync('../uploads')) {
+      fs.mkdirSync('../uploads');
       logger.info('Upload folder created.');
     }
   } catch (err) {
     logger.error(err.stack);
   }
-  app.use(express.static('uploads'));
+  app.use(express.static('../uploads'));
   app.listen(port);
 }
 
