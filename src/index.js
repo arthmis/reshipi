@@ -55,17 +55,17 @@ async function main() {
   await db.none(createUserTable).catch((err) => {
     throw err;
   });
-  logger.info("Created Users table if it doesn't exist");
+  // logger.info("Created Users table if it doesn't exist");
 
   await db.none(createRecipesTable).catch((err) => {
     throw err;
   });
-  logger.info("Created Recipes table if it doesn't exist");
+  // logger.info("Created Recipes table if it doesn't exist");
 
   await db.none(createSessionsTable).catch((err) => {
     throw err;
   });
-  logger.info("Created Sessions table if it doesn't exist");
+  // logger.info("Created Sessions table if it doesn't exist");
 
   app.use(express.static('reshipi-frontend'));
   try {
