@@ -77,7 +77,7 @@ async function main() {
     logger.error(err.stack);
   }
   app.use(express.static('../uploads'));
-  app.listen(port);
+  app.listen(port, 'localhost');
 }
 
 main()
