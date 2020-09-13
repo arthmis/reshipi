@@ -108,11 +108,10 @@ module.exports = (users, db) => {
 
   const cookieAge = getMinutesInMilliseconds(3600);
 
-  app.set('trust proxy', true);
 
-  app.use(session({
+  let sessionConfig = {
     cookie: {
-      secure: true,
+      secure: false,
       httpOnly: true,
       path: '/',
       maxAge: cookieAge,
@@ -127,7 +126,12 @@ module.exports = (users, db) => {
       pgPromise: db,
       tableName: 'sessions',
     }),
-  }));
+  };
+  if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', true);
+    sessionConfig.cookies.secure = true;
+  }
+  app.use(session(sessionConfig));
 
   app.set('view engine', 'ejs');
 
