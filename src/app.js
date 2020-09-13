@@ -12,76 +12,18 @@ const sanitizeHtml = require('sanitize-html');
 const bodyParser = require('body-parser');
 const csp = require('helmet-csp');
 const helmet = require('helmet');
+const cors = require('cors');
 const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
 const multer = require('multer');
 const validator = require('validator');
 const morgan = require('morgan');
 const path = require('path');
-// const SonicChannelSearch = require('sonic-channel').Search;
-// const SonicChannelIngest = require('sonic-channel').Ingest;
 const { RateLimiterPostgres } = require('rate-limiter-flexible');
 
 const logger = require('./log.js');
 
 logger.logger.emitErrs = false;
-
-// const sonicChannelSearch = new SonicChannelSearch({
-//   host: '::1',
-//   port: 1491,
-//   auth: process.env.SONIC_PASSWORD,
-// }).connect({
-//   connected: () => {
-//     logger.info('sonic channel connected to host for search');
-//   },
-
-//   disconnected: () => {
-//     logger.error('sonic channel is now disconnected');
-//   },
-
-//   timeout: () => {
-//     logger.error('sonic channel connection timed out');
-//   },
-
-//   retrying: () => {
-//     logger.error('trying to reconnect to sonic channel');
-//   },
-
-//   error: () => {
-//     logger.error('sonic channel failed to connect to host');
-//   },
-// });
-
-// const sonicChannelIngest = new SonicChannelIngest({
-//   host: '::1', // Or '127.0.0.1' if you are still using IPv4
-//   port: 1491, // Default port is '1491'
-//   auth: 'SecretPassword', // Authentication password (if any)
-// }).connect({
-//   connected: () => {
-//     // Connected handler
-//     logger.info('Sonic Channel succeeded to connect to host (ingest).');
-//   },
-
-//   disconnected: () => {
-//     // Disconnected handler
-//     logger.error('Sonic Channel is now disconnected (ingest).');
-//   },
-
-//   timeout: () => {
-//     // Timeout handler
-//     logger.error('Sonic Channel connection timed out (ingest).');
-//   },
-
-//   retrying: () => {
-//     // Retry handler
-//     logger.error('Trying to reconnect to Sonic Channel (ingest)...');
-//   },
-
-//   error: (error) => {
-//     // Failure handler
-//     logger.error('Sonic Channel failed to connect to host (ingest).', error);
-//   },
-// });
 
 const maxConsecutiveLoginAttempts = 5;
 const maxLoginAttempts = 10;
@@ -166,6 +108,8 @@ module.exports = (users, db) => {
 
   const cookieAge = getMinutesInMilliseconds(3600);
 
+  app.set('trust proxy', true);
+
   app.use(session({
     cookie: {
       secure: true,
@@ -178,6 +122,7 @@ module.exports = (users, db) => {
     name: 'id',
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     store: new PgSession({
       pgPromise: db,
       tableName: 'sessions',
@@ -186,6 +131,14 @@ module.exports = (users, db) => {
 
   app.set('view engine', 'ejs');
 
+  app.use(cors({
+    origin: [
+      'https://reshipii.com', 
+      'https://www.reshipii.com', 
+      'https://unpkg.com/react@16/umd/react.production.min.js',
+      'https://unpkg.com/react-dom@16/umd/react-dom.production.min.js',
+    ]
+  }))
   app.use(
     csp({
       directives: {
@@ -298,7 +251,7 @@ module.exports = (users, db) => {
   async function maxLoginLimiter(req, res, next) {
     const credentials = req.body;
     const resMaxLoginLimiter = await maxLoginRateLimiter.get(req.ip)
-      .catch((err) => logger.log(err.stack));
+      .catch((err) => logger.error(err.stack));
 
     if (resMaxLoginLimiter && resMaxLoginLimiter.consumedPoints > maxLoginAttempts) {
       const user = {
@@ -318,6 +271,7 @@ module.exports = (users, db) => {
   }
   const loginUser = async (req, res) => {
     const credentials = req.body;
+      console.log("credentials: ", credentials);
 
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
