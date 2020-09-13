@@ -112,13 +112,12 @@ module.exports = (users, db) => {
   app.use(session({
     cookie: {
       secure: true,
-      // httpOnly: true,
-      // path: '/',
-      // maxAge: cookieAge,
-      // sameSite: true,
+      httpOnly: true,
+      path: '/',
+      maxAge: cookieAge,
+      sameSite: true,
     },
-    // secret: process.env.SECRET,
-    secret: "hello",
+    secret: process.env.SECRET,
     name: 'id',
     resave: false,
     saveUninitialized: false,
