@@ -12,6 +12,7 @@ const sanitizeHtml = require('sanitize-html');
 const bodyParser = require('body-parser');
 const csp = require('helmet-csp');
 const helmet = require('helmet');
+const cors = require('cors');
 const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
 const multer = require('multer');
@@ -127,10 +128,16 @@ module.exports = (users, db) => {
       tableName: 'sessions',
     }),
   }));
-  app.set('trust proxy', 1) // trust first proxy
 
   app.set('view engine', 'ejs');
 
+  app.use(cors({
+    origin: [
+      'reshipii.com', 
+      'https://unpkg.com/react@16/umd/react.production.min.js',
+      'https://unpkg.com/react-dom@16/umd/react-dom.production.min.js',
+    ]
+  }))
   app.use(
     csp({
       directives: {
