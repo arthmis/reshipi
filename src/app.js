@@ -109,8 +109,7 @@ module.exports = (users, db) => {
 
   app.use(session({
     cookie: {
-      // secure: true,
-      secure: false,
+      secure: true,
       httpOnly: true,
       path: '/',
       maxAge: cookieAge,
