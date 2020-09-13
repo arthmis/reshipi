@@ -107,7 +107,7 @@ module.exports = (users, db) => {
 
   const cookieAge = getMinutesInMilliseconds(3600);
 
-  app.set('trust proxy', true);
+  app.set('trust proxy', 1);
 
   app.use(session({
     cookie: {
