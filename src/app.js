@@ -119,6 +119,7 @@ module.exports = (users, db) => {
     name: 'id',
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     store: new PgSession({
       pgPromise: db,
       tableName: 'sessions',
