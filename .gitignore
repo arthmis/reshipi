@@ -5,3 +5,5 @@ dist
 font-awesome
 config.cfg
 .eslintrc.json
+.gitignore
+.vscode

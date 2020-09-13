@@ -261,6 +261,7 @@ module.exports = (users, db) => {
   }
   const loginUser = async (req, res) => {
     const credentials = req.body;
+      console.log("credentials: ", credentials);
 
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
@@ -268,7 +269,6 @@ module.exports = (users, db) => {
         email: credentials.email,
         errorMessage: 'email or password is incorrect',
       };
-      console.log("hello");
       res.status(200);
       res.render('pages/login', {
         user,
