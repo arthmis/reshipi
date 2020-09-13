@@ -134,6 +134,7 @@ module.exports = (users, db) => {
   app.use(cors({
     origin: [
       'https://reshipii.com', 
+      'https://www.reshipii.com', 
       'https://unpkg.com/react@16/umd/react.production.min.js',
       'https://unpkg.com/react-dom@16/umd/react-dom.production.min.js',
     ]
