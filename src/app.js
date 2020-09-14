@@ -129,7 +129,7 @@ module.exports = (users, db) => {
   };
   if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', true);
-    sessionConfig.cookies.secure = true;
+    sessionConfig.cookie.secure = true;
   }
   app.use(session(sessionConfig));
 
