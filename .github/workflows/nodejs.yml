@@ -47,15 +47,19 @@ jobs:
     name: SSH
     runs-on: ubuntu-18.04
     steps:
-    - name: ssh into server
-      run: |
-        ssh -i ${{ secrets.RESHIPIDEPLOY }} ${{ secrets.USERNAME }}@${{ secrets.HOST }}
-        cd reshipi
-        ls
-
-      env:
-        HOST: ${{ secrets.HOST }}
+    - name: Executing remote command
+      uses: appleboy/ssh-action@master
+    # - name: ssh into server
+    #   run: |
+    #     ssh -i ${{ secrets.RESHIPIDEPLOY }} ${{ secrets.USERNAME }}@${{ secrets.HOST }}
+    #     cd reshipi
+    #     ls
+      with:
+        host: ${{ secrets.HOST }}
         USERNAME: ${{ secrets.USERNAME }}
         PORT: ${{ secrets.PORT }}
-        KEY: ${{ secrets.SSHKEY }}
+        KEY: ${{ secrets.RESHIPIDEPLOY }}
+        script: |
+          cd reshipi
+          ls
 
