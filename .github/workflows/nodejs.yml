@@ -3,57 +3,53 @@ name: Node.js CI
 on: [push]
 
 jobs:
-  # test:
-  #   name: Test Code
-  #   runs-on: ubuntu-18.04
-  #   strategy:
-  #     matrix:
-  #       node-version: [12.14.x]
+  test:
+    name: Test Code
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        node-version: [12.14.x]
 
-  #   services:
-  #       postgres:
-  #           image: postgres:10.12
-  #           ports: 
-  #               - 5432:5432
-  #           env:
-  #               POSTGRES_PASSWORD: postgres
-  #           options: >- 
-  #               --health-cmd pg_isready 
-  #               --health-interval 10s 
-  #               --health-timeout 5s 
-  #               --health-retries 5
+    services:
+        postgres:
+            image: postgres:10.12
+            ports: 
+                - 5432:5432
+            env:
+                POSTGRES_PASSWORD: postgres
+            options: >- 
+                --health-cmd pg_isready 
+                --health-interval 10s 
+                --health-timeout 5s 
+                --health-retries 5
 
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Use Node.js ${{ matrix.node-version }}
-  #       uses: actions/setup-node@v1
-  #       with:
-  #         node-version: ${{ matrix.node-version }}
-  #     - run: npm install
-  #     - name: Create database testdb 
-  #       run: |
-  #         psql -c "CREATE ROLE testdb WITH SUPERUSER CREATEDB LOGIN PASSWORD 'postgres';" -U postgres -h localhost -p 5432 -w
-  #         psql -c 'CREATE DATABASE testdb;' -U postgres -h localhost -p 5432 -w
-  #         psql -c 'ALTER DATABASE testdb OWNER to testdb;' -U postgres -h localhost -p 5432 -w
-  #       env:
-  #         PGPASSWORD: postgres
-  #     - name: Test code
-  #       run: npm test
-  #       env:
-  #         TESTING_DATABASE_URL: postgresql://testdb:postgres@localhost:5432/testdb
-  #         SECRET: secret
-  #         PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install
+      - name: Create database testdb 
+        run: |
+          psql -c "CREATE ROLE testdb WITH SUPERUSER CREATEDB LOGIN PASSWORD 'postgres';" -U postgres -h localhost -p 5432 -w
+          psql -c 'CREATE DATABASE testdb;' -U postgres -h localhost -p 5432 -w
+          psql -c 'ALTER DATABASE testdb OWNER to testdb;' -U postgres -h localhost -p 5432 -w
+        env:
+          PGPASSWORD: postgres
+      - name: Test code
+        run: npm test
+        env:
+          TESTING_DATABASE_URL: postgresql://testdb:postgres@localhost:5432/testdb
+          SECRET: secret
+          PGPASSWORD: postgres
   deploy:
     name: SSH
+    needs: test
     runs-on: ubuntu-18.04
     steps:
     - name: Executing remote command
       uses: appleboy/ssh-action@master
-    # - name: ssh into server
-    #   run: |
-    #     ssh -i ${{ secrets.RESHIPIDEPLOY }} ${{ secrets.USERNAME }}@${{ secrets.HOST }}
-    #     cd reshipi
-    #     ls
       with:
         host: ${{ secrets.HOST }}
         USERNAME: ${{ secrets.USERNAME }}
@@ -61,5 +57,9 @@ jobs:
         KEY: ${{ secrets.RESHIPIDEPLOY }}
         script: |
           cd reshipi
-          ls
+          git pull origin production
+          cd reshipi-frontend
+          npm run build
+          cd ..
+          npm run start
 
