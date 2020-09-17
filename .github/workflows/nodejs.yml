@@ -57,7 +57,8 @@ jobs:
         KEY: ${{ secrets.RESHIPIDEPLOY }}
         script: |
           cd reshipi
-          git pull origin production
+          git pull origin CD
+          git checkout CD
           cd reshipi-frontend
           npm run build
           cd ..
