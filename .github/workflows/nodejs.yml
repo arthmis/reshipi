@@ -1,6 +1,13 @@
 name: Node.js CI
 
-on: [push]
+on: 
+  push:
+    branches:
+      - master
+  pull_request:
+      branches:
+        - production
+        - master
 
 jobs:
   test:
@@ -44,11 +51,11 @@ jobs:
           SECRET: secret
           PGPASSWORD: postgres
   deploy:
-    name: SSH
+    name: Deploy website
     needs: test
     runs-on: ubuntu-18.04
     steps:
-    - name: Executing remote command
+    - name: Executing deployment actions
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOST }}
@@ -57,10 +64,8 @@ jobs:
         KEY: ${{ secrets.RESHIPIDEPLOY }}
         script: |
           cd reshipi
-          git pull origin CD
-          git checkout CD
+          git pull origin production
+          git checkout production
           cd reshipi-frontend
           npm run build
-          cd ..
-          npm run start
 
