@@ -57,6 +57,7 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - name: Executing deployment actions
+      if: github.ref == 'refs/heads/production'
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOST }}
@@ -71,5 +72,3 @@ jobs:
           npm run build
           cd ..
           npm run restart
-
-
