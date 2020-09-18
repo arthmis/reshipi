@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "mocha",
-    "restart": "pm2 restart --name reshipi",
+    "restart": "pm2 restart reshipi",
     "dev": "nodemon src/index.js"
   },
   "author": "",
