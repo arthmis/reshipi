@@ -4,10 +4,11 @@ on:
   push:
     branches:
       - master
+      - production
   pull_request:
-      branches:
-        - production
-        - master
+    branches:
+      - production
+      - master
 
 jobs:
   test:
@@ -68,4 +69,6 @@ jobs:
           git checkout production
           cd reshipi-frontend
           npm run build
+          cd ..
+          npm run restart
 
