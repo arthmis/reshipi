@@ -59,7 +59,7 @@ class Recipes extends React.Component {
     componentDidMount() {
         fetch('/all_recipes', {
             method: "GET",
-            mode: 'same-origin',
+            mode: 'cors',
             credentials: 'same-origin',
         })
             .then(response => response.json())
