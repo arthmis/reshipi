@@ -180,7 +180,6 @@ class NewRecipeForm extends React.Component {
                             mode: 'same-origin',
                             credentials: 'same-origin',
                         }).then(response => {
-                            console.log(response.body);
                             document.location.href = '/recipes';
                         });
                     }
@@ -199,7 +198,6 @@ class NewRecipeForm extends React.Component {
                     mode: 'same-origin',
                     credentials: 'same-origin',
                 }).then(response => {
-                    console.log(response.body);
                     document.location.href = '/recipes';
                 });
             }

@@ -72,7 +72,6 @@ class Recipe extends React.Component {
             credentials: 'same-origin',
         });
         let recipe = await response.json();
-        console.log(recipe);
 
         const ingredientAndQuantity = [];
         for (let i = 0; i < recipe.ingredients.length; i += 1) {
