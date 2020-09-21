@@ -116,10 +116,6 @@ h1 {
     font-size: 3em;
 }
 
-p {
-    font-size: 1.6em;
-}
-
 #reshipi-description {
     max-width: 20em;
     margin: 2em;
@@ -268,12 +264,6 @@ video {
 #signup-associated-text {
     color: #3d3d3d;
 }
-#signup-associated-text > h3 {
-    font-size: 1.6em;
-}
-#signup-associated-text > p {
-    font-size: 1.3em;
-}
 
 footer {
     min-height: 10vh;
@@ -281,8 +271,17 @@ footer {
 }
 
 @media all and (max-width: 700px) {
-
-
+    #reshipi {
+        margin-left: 1em;
+    }
+    #login {
+        width: 4em;
+        margin-right: 1.5em;
+    }
+    #signup {
+        width: 4em;
+        margin-right: 1.5em;
+    }
     main {
         display: flex;
         flex-direction: column;
@@ -290,17 +289,73 @@ footer {
     }
     #main-information {
         width: 100%;
+        flex-direction: column;
+    }
+    #reshipi-description {
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        margin-left: 2em;
+        margin-right: 2em;
+        width: 90%;
+        align-items: center
+    }
+    #recipe-book-img {
+        width: 95%;
+    }
+
+    #reshipi-example-one {
+        flex-direction: column;
+    }
+    #reshipi-search-description {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 90%;
+    }
+    #reshipi-example-one > p {
+        width: 90%;
+    }
+    #reshipi-search-video {
+        width: 95%;
     }
 
     #sign-up-wrapper {
         width: 100%;
+        flex-direction: column;
     }
+    #signup-associated-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-left: 1em;
+        margin-right: 1em;
+        width: 95%;
+    }
+    #signup-associated-text > p {
+        width: 95%;
+        font-size: 1em;
+    }
+    #sign-up {
+        margin-left: 0.5em;
+        margin-right: 0.5em;
+        width: 80%;
+    } 
 }
 
 
 @media all and (min-width: 701px) and (max-width: 1199px) {
-
-
+    #reshipi {
+        margin-left: 1.5em;
+    }
+    #login {
+        width: 5em;
+        margin-right: 2em;
+    }
+    #signup {
+        width: 5em;
+        margin-right: 2.5em;
+    }
     main {
         display: flex;
         flex-direction: column;
@@ -308,11 +363,64 @@ footer {
     }
     #main-information {
         width: 100%;
+        flex-direction: column;
+    }
+    #reshipi-description {
+        display: flex;
+        flex-direction: column;
+        width: 90%;
+        align-items: center;
+        padding: 0;
+        margin-left: 2em;
+        margin-right: 2em;
+        font-size: 1.5em;
+    }
+    #recipe-book-img {
+        width: 90%;
+    }
+
+    #reshipi-example-one {
+        flex-direction: column;
+    }
+    #reshipi-search-description {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 90%;
+        font-size: 1.5em;
+    }
+    #reshipi-search-description > p {
+        width: 90%;
+    }
+    #reshipi-search-video {
+        width: 90%;
     }
 
     #sign-up-wrapper {
         width: 100%;
+        flex-direction: column;
     }
+    #signup-associated-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-left: 1em;
+        margin-right: 1em;
+        width: 90%;
+        font-size: 1.5em;
+    }
+    #signup-associated-text > h2 {
+        font-size: 1.5em;
+    }
+    #signup-associated-text > p {
+        width: 90%;
+    }
+    #sign-up {
+        margin-left: 0.5em;
+        margin-right: 0.5em;
+        width: 80%;
+        font-size: 1.3em;
+    } 
 }
 
 @media all and (min-width: 1200px) {
@@ -341,6 +449,13 @@ footer {
     #reshipi-search-description {
         max-width: 20em;
         margin: 1em;
+    }
+
+    #signup-associated-text > h2 {
+        font-size: 1.5em;
+    }
+    #signup-associated-text > p {
+        font-size: 1em;
     }
 }
 
