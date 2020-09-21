@@ -6,6 +6,9 @@ const pgp = require('pg-promise')();
 
 const db = pgp(process.env.DATABASE_URL);
 
+const { Client } = require('@elastic/elasticsearch');
+const searchClient = new Client({ node: 'http://localhost:9200' });
+
 const users = require('./users.js')(db);
 const { app } = require('./app.js')(users, db);
 const logger = require('./log.js');
@@ -67,7 +70,6 @@ async function main() {
   });
   // logger.info("Created Sessions table if it doesn't exist");
 
-  app.use(express.static('reshipi-frontend'));
   try {
     if (!fs.existsSync('../uploads')) {
       fs.mkdirSync('../uploads');
@@ -76,7 +78,29 @@ async function main() {
   } catch (err) {
     logger.error(err.stack);
   }
+
+  const recipeIndexDoesExist = await searchClient.indices.exists({
+    index: 'recipes',
+  });
+  if (recipeIndexDoesExist.statusCode === 404) {
+    await searchClient.indices.create({
+      index: 'recipes',
+      body: {
+        mappings: {
+          properties: {
+            email: { type: 'keyword' },
+            title: { type: 'text' },
+            description: { type: 'text' },
+            ingredients: { type: 'text' },
+            ingredient_amount: { type: 'text' },
+            directions: { type: 'text' },
+          }
+        }
+      }
+    });
+  }
   app.use(express.static('../uploads'));
+  app.use(express.static('reshipi-frontend'));
   app.listen(port, 'localhost');
 }
 
