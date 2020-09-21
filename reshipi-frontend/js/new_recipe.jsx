@@ -101,7 +101,6 @@ class NewRecipeForm extends React.Component {
                     mode: 'same-origin',
                     credentials: 'same-origin',
                 }).then(response => {
-                    console.log(response.body);
                     document.location.href = '/recipes';
                 });
             }
@@ -148,7 +147,6 @@ class NewRecipeForm extends React.Component {
 
     handleTitle(event) {
         const value = event.target.value;
-        console.log(value);
 
         if (value.length === 0) {
             title.setCustomValidity('Please provide a title.');
