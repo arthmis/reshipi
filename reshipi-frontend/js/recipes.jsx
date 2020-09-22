@@ -152,17 +152,19 @@ class Recipes extends React.Component {
                         </button>
                     </form>
                 </div>
-                <div className="all-recipes">
-                    {this.state.recipes.map((recipe, index) => {
-                        return (
-                            <Recipe
-                                key={index.toString()}
-                                recipe={recipe}
-                                deleteRecipe={this.deleteRecipe}
-                                editRecipe={this.editRecipe}
-                            />
-                        );
-                    })}
+                <div id="all-recipes-wrapper">
+                    <div className="all-recipes">
+                        {this.state.recipes.map((recipe, index) => {
+                            return (
+                                <Recipe
+                                    key={index.toString()}
+                                    recipe={recipe}
+                                    deleteRecipe={this.deleteRecipe}
+                                    editRecipe={this.editRecipe}
+                                />
+                            );
+                        })}
+                    </div>
                 </div>
             </main>
         )

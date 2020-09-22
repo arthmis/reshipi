@@ -95,6 +95,7 @@ main {
     min-width: 60%;
     max-width: 90%;
     /* width: 100%; */
+    /* width: 100%; */
     display: flex;
     flex-direction: column;
     background-color: #f9f9f9;
@@ -107,11 +108,13 @@ main {
     height: auto;
     align-self: center;
 }
+#description, #ingredients, #directions {
+    margin-left: 1em;
+    margin-right: 1em;
+}
 
 #description {
     margin-top: 2em;
-    margin-left: 2em;
-    margin-right: 2em;
     padding-bottom: 2em;
     font-size: 1.2em;
     border-bottom: 2px solid #e0e0e0;
@@ -119,8 +122,6 @@ main {
 
 #ingredients {
     font-size: 1.1em;
-    margin-left: 2em;
-    margin-right: 2em;
     font-family: 'Raleway', sans-serif;
     border-bottom: 2px solid #e0e0e0;
 }
@@ -143,8 +144,6 @@ main {
 #directions {
     font-size: 1.1em;
     font-family: 'Raleway', sans-serif;
-    margin-left: 2em;
-    margin-right: 2em;
 }
 
 #ingredients > h4, #directions > h4 {
@@ -161,4 +160,20 @@ main {
     margin-left: 1em;
     margin-bottom: 2em;
     max-width: 70ch;
+}
+
+@media all and (max-width: 1199px) {
+    #recipe {
+        width: 90%;
+        /* width: 100%; */
+        display: flex;
+        flex-direction: column;
+        background-color: #f9f9f9;
+        /* align-items: center; */
+    }
+}
+@media all and (min-width: 1200px) {
+    #recipe {
+        font-size: 1.3em;
+    }
 }
