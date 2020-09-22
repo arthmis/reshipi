@@ -240,10 +240,17 @@ textarea {
     /* justify-content: center */
     align-items: center;
 }
-/* #image-input > button {
-} */
+#image-input-button {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+#image-input-button > div {
+    margin-left: 1em;
+    color: #363636;
+}
 
-.image-input-button {
+#image-input-button > button {
     width: 9em;
     height: 2.5em;
     font-family: inherit;
