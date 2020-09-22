@@ -275,7 +275,10 @@ class ImageInput extends React.Component {
             return (
                 <div className="input-group">
                     <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
-                    <button className="image-input-button" onClick={this.props.handleFileInput}>Upload Image</button>
+                    <div id="image-input-button">
+                        <button className="image-input-button" onClick={this.props.handleFileInput}>Upload Image</button>
+                        <div>Max file size: 1mb</div>
+                    </div>
                     <div>
                         <input 
                             style={{visibility: 'hidden'}} 

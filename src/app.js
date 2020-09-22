@@ -47,7 +47,12 @@ module.exports = (users, db) => {
     },
   });
 
-  const upload = multer({ storage });
+  const upload = multer({ 
+    storage, 
+    limits: {
+      fileSize: 1048576,
+    } 
+  });
 
   const app = express();
 
