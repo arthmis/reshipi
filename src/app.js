@@ -60,6 +60,14 @@ module.exports = (users, db) => {
     contentSecurityPolicy: false,
   }));
 
+  // stops browser from caching content
+  // useful for when user logouts and presses the back button
+  // it would open up the cached page after logout
+  app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store')
+  next()
+  });
+
   app.use(morgan('combined', {
     stream: fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' }),
   }));
