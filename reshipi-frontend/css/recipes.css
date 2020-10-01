@@ -423,7 +423,6 @@ p {
 
 @media all and (min-width: 701px) and (max-width: 1199px) {
 
-
     main {
         display: flex;
         flex-direction: column;
