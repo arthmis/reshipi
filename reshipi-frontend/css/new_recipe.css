@@ -53,8 +53,7 @@ nav * {
 main {
     min-height: calc(100vh - 4em);
     width: 100%;
-    /* background-color: #25bdb5; */
-    background-image: linear-gradient(to left, #ffcd94, #fdc999);
+    background-color: white;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -71,7 +70,6 @@ main {
     align-items: center;
     max-width: 90ch;
     width: 100%;
-    background: #ffffff;
     border-radius: 6px;
     margin-top: 5em;
     margin-bottom: 5em;
