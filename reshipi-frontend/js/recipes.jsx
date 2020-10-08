@@ -87,14 +87,21 @@ class Recipes extends React.Component {
             credentials: 'same-origin',
         });
 
-        let recipes = await fetch('/all_recipes', {
+        const response = await fetch('/all_recipes', {
             method: "GET",
             mode: 'same-origin',
             credentials: 'same-origin',
         });
 
-        recipes = await recipes.json();
-        recipes = recipes.recipes;
+        const res = await response.json()
+        let recipes = res.recipes;
+        const substituteImages = res.images;
+        for (let i = 0; i < recipes.length; i += 1) {
+            if (recipes[i].image === '') {
+                let ranNumber = Math.round((Math.random() * (substituteImages.length - 1)));
+                recipes[i].image = substituteImages[ranNumber];
+            }
+        }
         this.setState({ recipes });
     }
 

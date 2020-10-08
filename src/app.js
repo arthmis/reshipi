@@ -592,7 +592,7 @@ module.exports = (users, db) => {
               id: `${req.user} ${recipe.title}`,
               refresh: true
           }).catch((err) => console.log(err.stack));
-          res.sendStatus(204);
+          res.sendStatus(200);
         } else {
           res.sendStatus(404);
         }
