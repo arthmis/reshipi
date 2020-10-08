@@ -1,7 +1,3 @@
-/* eslint-disable func-names */
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-console */
-/* eslint-disable prefer-arrow-callback */
 const { describe, it, before, after, afterEach } = require('mocha');
 const assert = require('assert');
 require('dotenv').config();
@@ -11,21 +7,10 @@ const bcrypt = require('bcrypt');
 
 require('dotenv').config();
 
-// const users = new UsersDatabase(process.env.TESTING_DATABASE_URL);
 const db = pgp(process.env.TESTING_DATABASE_URL);
 const users = require('../src/users.js')(db);
 const { app } = require('../src/app.js')(users, db);
 
-// const testRecipe = JSON.stringify({
-//   title: 'Steak Brisket',
-//   ingredients:
-//     'Beef chuck 1/2lb\nSalt 1 teaspoon\nBlack Pepper 1 teaspoon\nButter 1 teaspoon',
-//   directions:
-//     '1. Heat pan up and put butter on pan.\n2. Place steak on pan and cook both side.',
-//   description: 'Tasty steak',
-//   food_category: 'Steak',
-//   tags: 'beef',
-// });
 
 describe('reshipi', function () {
   before(async function () {
@@ -40,12 +25,7 @@ describe('reshipi', function () {
       Recipes(
         id SERIAL PRIMARY KEY,
         username TEXT NOT NULL,
-        title TEXT NOT NULL,
-        ingredients TEXT NOT NULL,
-        directions TEXT NOT NULL,
-        description TEXT NOT NULL,
-        food_category TEXT NOT NULL,
-        tags TEXT
+        recipe JSONB NOT NULL
       )`;
 
     // need to put unique for sid or will get error
@@ -63,10 +43,13 @@ describe('reshipi', function () {
     console.log('Created tables for testing');
   });
 
-  // afterEach(async function () {
-  //   await db.none('DELETE FROM users').catch((err) => console.log(err));
-  //   await db.none('DELETE FROM recipes').catch((err) => console.log(err));
-  // });
+  after(async function () {
+    // delete all data in reshipi_testdb
+    await db.none('DELETE FROM users').catch((err) => console.log(err));
+    await db.none('DELETE FROM recipes').catch((err) => console.log(err));
+    await db.none('DELETE FROM sessions').catch((err) => console.log(err));
+    console.log('Deleted everything from tables in testdb');
+  });
 
   describe('database testing', function () {
     it('should add one user', async function () {
@@ -81,36 +64,8 @@ describe('reshipi', function () {
       const match = await bcrypt.compare(singleUser.password, user.hash);
       assert(match === true);
     });
-
-    // it.skip('should add multiple users', async function () {
-    //   const multipleUsers = [
-    //     {
-    //       username: 'buman',
-    //       email: 'magamaniaca@gmail.com',
-    //       password: 'hello,world!',
-    //     },
-    //     {
-    //       username: 'luna',
-    //       email: 'luna@yahoo.com',
-    //       password: 'witchywatch',
-    //     },
-    //     {
-    //       username: 'lyon',
-    //       email: 'lyon@hotmail.com',
-    //       password: 'lyoness23@',
-    //     },
-    //   ];
-    //   for (const testUser of multipleUsers) {
-    //     await users.addUser(testUser);
-    //     const user = await users.getUser(testUser).catch((err) => console.log(err));
-
-    //     assert(user.username === testUser.username);
-    //     assert(user.email === testUser.email);
-    //     const match = await bcrypt.compare(testUser.password, user.hash);
-    //     assert(match === true);
-    //   }
-    // });
   });
+
   describe('signup', function () {
     it('should sign up a user', async function () {
       const res = await request(app)
@@ -138,6 +93,12 @@ describe('reshipi', function () {
   });
 
   describe('login', function () {
+    after(async function () {
+        await db.none('DELETE FROM users').catch((err) => console.log(err));
+        await db.none('DELETE FROM recipes').catch((err) => console.log(err));
+        await db.none('DELETE FROM sessions').catch((err) => console.log(err));
+    });
+
     it('should login a user', async function () {
       await request(app)
         .post('/signup')
@@ -170,11 +131,126 @@ describe('reshipi', function () {
     });
   });
 
-  after(async function () {
-    // delete all data in testdb
-    await db.none('DELETE FROM users').catch((err) => console.log(err));
-    await db.none('DELETE FROM recipes').catch((err) => console.log(err));
-    await db.none('DELETE FROM sessions').catch((err) => console.log(err));
-    console.log('Deleted everything from tables in testdb');
+  describe('logout', function () {
+    it('should logout a user', async function () {
+      res = await request(app)
+        .post('/logout');
+
+      assert(res.status === 303);
+      assert(res.redirect === true);
+    });
   });
+
+  describe('recipe operations', function () {
+    const agent = request.agent(app);
+
+    before(async function () {
+      await agent
+        .post('/signup')
+        .send({
+          email: 'kupam@gmail.com',
+          password: 'secret_passy',
+          confirm_password: 'secret_passy',
+        })
+        .expect(201);
+
+      await agent
+        .post('/login')
+        .send({
+          email: 'kupam@gmail.com',
+          password: 'secret_passy'
+        })
+        .expect(303);
+    });
+
+    after(async function () {
+      await agent
+        .post('/logout')
+        .expect(303);
+
+        await db.none('DELETE FROM users').catch((err) => console.log(err));
+        await db.none('DELETE FROM recipes').catch((err) => console.log(err));
+    });
+
+    it('should add a recipe', async function () {
+      const recipe = {
+        title: 'Steak Brisket',
+        ingredients: [
+          'Beef chuck',
+          'Salt',
+          'Black Pepper',
+          'Butter',
+        ],
+        ingredient_amount: [
+          '1/2 lb',
+          '1 teaspoon',
+          '1 teaspoon',
+          '1 tablespoon',
+        ],
+        directions: [
+          'Heat pan up and put butter on pan.',
+          'Place steak on pan and cook both side.',
+        ],
+        description: 'Tasty steak',
+        original_url: '',
+        food_category: '',
+      };
+
+      res = await agent
+        .post('/add_recipe')
+        .send(recipe);
+        
+      assert(res.status === 200, `res.status was ${res.status}`);
+
+      const row = await db.one(
+        "SELECT recipe FROM Recipes WHERE recipe->>'title' = $1 AND username = $2",
+        [recipe.title, "kupam@gmail.com"],
+      ).catch((err) => {
+        throw err;
+      });
+      assert(recipe.title === row.recipe.title, `expected title is ${recipe.title}, got ${row.recipe.title}`);
+    });
+
+    it('should update recipe', async function () {
+      const recipeUpdate = {
+        title: 'Pork Brisket',
+        ingredients: [
+          'Beef chuck',
+          'Salt',
+          'Black Pepper',
+          'Butter',
+        ],
+        ingredient_amount: [
+          '1/2 lb',
+          '1 teaspoon',
+          '1 teaspoon',
+          '1 tablespoon',
+        ],
+        directions: [
+          'Heat pan up and put butter on pan.',
+          'Place steak on pan and cook both side.',
+        ],
+        description: 'Tasty steak',
+        original_title: 'Steak Brisket',
+        original_image: '',
+        original_url: '',
+        food_category: '',
+
+      };
+      res = await agent
+        .put('/update_recipe')
+        .send(recipeUpdate);
+        
+      assert(res.status === 200, `res.status was ${res.status}`);
+
+      const row = await db.one(
+        "SELECT recipe FROM Recipes WHERE recipe->>'title' = $1 AND username = $2",
+        [recipeUpdate.title, "kupam@gmail.com"],
+      ).catch((err) => {
+        throw err;
+      });
+      assert(recipeUpdate.title === row.recipe.title, `expected title is ${recipeUpdate.title}, got ${row.recipe.title}`);
+    });
+  });
+
 });
