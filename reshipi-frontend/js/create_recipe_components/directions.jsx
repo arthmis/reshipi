@@ -1,16 +1,20 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
 import {moveElementDownList, moveElementUpList} from '../utility.js';
-'use strict';
+// import {DragDropContext, Droppable, Draggable} from "../../node_modules/react-beautiful-dnd/dist/react-beautiful-dnd.js";
+import {DragDropContext, Droppable, Draggable} from "react-beautiful-dnd";
 
 export default class Directions extends React.Component {
     constructor(props) {
         super(props);
-        this.state = ({directions: ['']});
+        this.state = {directions: ['']};
         this.addDirection = this.addDirection.bind(this);
         this.updateDirections = this.updateDirections.bind(this);
         this.removeDirection = this.removeDirection.bind(this);
         this.handleDragOver = this.handleDragOver.bind(this);
         this.onDragStart = this.onDragStart.bind(this);
         this.onDrop = this.onDrop.bind(this);
+        this.dragEnd = this.dragEnd.bind(this);
     }
 
     addDirection(event) {
@@ -67,6 +71,24 @@ export default class Directions extends React.Component {
         }
     }
 
+    dragEnd(result) {
+        if (!result.destination) {
+            return;
+        }
+        const dropIndex = result.destination.index;
+        const sourceIndex = result.source.index;
+        const directions = this.state.directions;
+        if (sourceIndex > dropIndex) {
+            const [movedItem] = directions.splice(result.elementIndex, 1);
+            directions.splice(dropIndex, 0, movedItem)
+            this.setState({directions});
+        } else if (sourceIndex < dropIndex) { // left shifts elements
+            const [movedItem] = directions.splice(result.elementIndex, 1);
+            directions.splice(dropIndex, 0, movedItem)
+            this.setState({directions});
+        }
+    }
+
     render() {
         let directionList = null;
         if (this.state.directions.length === 1) {
@@ -99,26 +121,30 @@ export default class Directions extends React.Component {
             
             directionList = this.state.directions.map((direction, index) => {
                 return (
-                    <li className="list-item" key={index.toString()} >
-                        <div className="drag-item"
-                            draggable
-                            onDragStart={(e) => this.onDragStart(e, index)}
-                            onDragOver={this.handleDragOver}
-                            onDrop={(e) => this.onDrop(e, index)}
-                        >
-                            <DirectionInput
-                                direction={direction} 
-                                updateDirections={this.updateDirections} 
-                                index={index} 
-                            />
-                            <span className="draggable-icon"> 
-                                <i className="fas fa-grip-lines"></i>
-                            </span>
-                        </div>
-                        <span className="remove-input-wrapper">
-                            <button onClick={(e) => this.removeDirection(e, index)} className="remove-input-button"><i className="fas fa-times"></i></button>
-                        </span>
-                    </li>
+                    <Draggable key={index.toString()} draggableId={index.toString()} index={index}>
+                        {(provided) => (
+                            <li className="list-item" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                                <div className="drag-item"
+                                    draggable
+                                    onDragStart={(e) => this.onDragStart(e, index)}
+                                    onDragOver={this.handleDragOver}
+                                    onDrop={(e) => this.onDrop(e, index)}
+                                >
+                                    <DirectionInput
+                                        direction={direction} 
+                                        updateDirections={this.updateDirections} 
+                                        index={index} 
+                                    />
+                                    <span className="draggable-icon"> 
+                                        <i className="fas fa-grip-lines"></i>
+                                    </span>
+                                </div>
+                                <span className="remove-input-wrapper">
+                                    <button onClick={(e) => this.removeDirection(e, index)} className="remove-input-button"><i className="fas fa-times"></i></button>
+                                </span>
+                            </li>
+                        )}
+                    </Draggable>
                 )
             });
         }
@@ -126,9 +152,17 @@ export default class Directions extends React.Component {
         return (
             <div className="input-group">
                 <label className="label" form="new-recipe" htmlFor="directions">Directions</label><br />
-                <ol>
-                    {directionList}
-                </ol>
+                <DragDropContext onDragEnd={this.dragEnd}>
+                    <Droppable droppableId="directions">
+                        {(provided) => (
+                            <ul id="directions" {...provided.droppableProps} ref={provided.innerRef}>
+                                {directionList}
+                                ...
+                                {provided.placeholder}
+                            </ul>
+                        )}
+                    </Droppable>
+                </DragDropContext>
                 <button className="add-new-input" onClick={this.addDirection}>Add direction</button>
             </div>
         );

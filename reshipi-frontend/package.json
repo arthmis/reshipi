@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npx babel js --out-dir dist",
-    "watch": "npx babel --watch js --out-dir dist --source-maps"
+    "build": "npx babel js --out-dir dist && webpack",
+    "watch": "npx babel --watch js --out-dir dist --source-maps",
+    "list": "webpack -w"
   },
   "author": "",
   "license": "ISC",
@@ -20,6 +21,7 @@
   },
   "dependencies": {
     "react": "^16.13.1",
+    "react-beautiful-dnd": "^13.0.0",
     "react-dom": "^16.13.1"
   }
 }

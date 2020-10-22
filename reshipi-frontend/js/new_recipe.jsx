@@ -1,5 +1,7 @@
-import Directions from './create_recipe_components/directions.js';
-import IngredientList from './create_recipe_components/ingredients.js';
+import Directions from './create_recipe_components/directions.jsx';
+import IngredientList from './create_recipe_components/ingredients.jsx';
+import React from 'react';
+import ReactDOM from 'react-dom';
 
 'use strict';
 
