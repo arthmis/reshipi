@@ -78,15 +78,10 @@ export default class Directions extends React.Component {
         const dropIndex = result.destination.index;
         const sourceIndex = result.source.index;
         const directions = this.state.directions;
-        if (sourceIndex > dropIndex) {
-            const [movedItem] = directions.splice(result.elementIndex, 1);
-            directions.splice(dropIndex, 0, movedItem)
-            this.setState({directions});
-        } else if (sourceIndex < dropIndex) { // left shifts elements
-            const [movedItem] = directions.splice(result.elementIndex, 1);
-            directions.splice(dropIndex, 0, movedItem)
-            this.setState({directions});
-        }
+
+        const [movedItem] = directions.splice(sourceIndex, 1);
+        directions.splice(dropIndex, 0, movedItem)
+        this.setState({directions});
     }
 
     render() {
