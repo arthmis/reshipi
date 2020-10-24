@@ -11,11 +11,17 @@ module.exports = {
         path: path.resolve(__dirname, './dist'),
     },
     optimization: {
+        runtimeChunk: 'single',
         splitChunks: {
             cacheGroups: {
                 vendor: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: 'vendors',
+                    test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+                    name: 'react',
+                    chunks: 'all'
+                },
+                vendor: {
+                    test: /[\\/]node_modules[\\/]react-beautiful-dnd[\\/]/,
+                    name: 'react-beautiful-dnd',
                     chunks: 'all'
                 }
             }
