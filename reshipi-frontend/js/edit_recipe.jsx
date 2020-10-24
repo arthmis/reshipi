@@ -1,15 +1,12 @@
-import Directions from './update_recipe_components/directions.js';
-import { Ingredient, IngredientList } from './update_recipe_components/ingredients.js';
-import { moveElementDownList, moveElementUpList } from './utility.js';
-
-'use strict';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Directions from './update_recipe_components/directions.jsx';
+import IngredientList from './update_recipe_components/ingredients.jsx';
 
 class App extends React.Component {
     constructor(props) {
         super(props);
     }
-
-
 
     render() {
         return (
@@ -76,59 +73,46 @@ class NewRecipeForm extends React.Component {
         this.handleUrlChange = this.handleUrlChange.bind(this);
 
         this.handleFoodCategory = this.handleFoodCategory.bind(this);
-
-        this.directionsOnDrop = this.directionsOnDrop.bind(this);
-        this.addDirection = this.addDirection.bind(this);
-        this.updateDirections = this.updateDirections.bind(this);
-        this.removeDirection = this.removeDirection.bind(this);
-        this.handleDragOver = this.handleDragOver.bind(this);
-        this.onDragStart = this.onDragStart.bind(this);
-
-        this.addNewIngredientInput = this.addNewIngredientInput.bind(this);
-        this.removeIngredientInput = this.removeIngredientInput.bind(this);
-        this.updateIngredient = this.updateIngredient.bind(this);
-        this.updateIngredientQuantity = this.updateIngredientQuantity.bind(this);
-        this.onIngredientDrop = this.onIngredientDrop.bind(this)
     }
 
-    async componentDidMount() {
-        const urlKeys = new URLSearchParams(window.location.search);
-        const title = urlKeys.get('title');
-        const encodedTitle = encodeURIComponent(title);
-        const newUrl = `/get_recipe?title=${encodedTitle}`;
-        let response = await fetch(newUrl, {
-            method: "GET",
-            mode: 'same-origin',
-            credentials: 'same-origin',
-        });
-        let recipe = await response.json();
+    // async componentDidMount() {
+    //     const urlKeys = new URLSearchParams(window.location.search);
+    //     const title = urlKeys.get('title');
+    //     const encodedTitle = encodeURIComponent(title);
+    //     const newUrl = `/get_recipe?title=${encodedTitle}`;
+    //     let response = await fetch(newUrl, {
+    //         method: "GET",
+    //         mode: 'same-origin',
+    //         credentials: 'same-origin',
+    //     });
+    //     let recipe = await response.json();
 
-        const ingredientAndQuantity = [];
-        for (let i = 0; i < recipe.ingredients.length; i += 1) {
-            ingredientAndQuantity.push(new Ingredient(recipe.ingredients[i], recipe.ingredient_amount[i]))
-        }
+    //     const ingredientAndQuantity = [];
+    //     for (let i = 0; i < recipe.ingredients.length; i += 1) {
+    //         ingredientAndQuantity.push(new Ingredient(recipe.ingredients[i], recipe.ingredient_amount[i]))
+    //     }
 
-        recipe.ingredients = ingredientAndQuantity;
-        delete recipe.ingredient_amount;
+    //     recipe.ingredients = ingredientAndQuantity;
+    //     delete recipe.ingredient_amount;
 
-        this.setState((prevState, props) => {
-            prevState.recipe = recipe;
-            prevState.originalTitle = recipe.title;
-            prevState.originalImage = recipe.image;
-            prevState.imageUrl = recipe.image;
+    //     this.setState((prevState, props) => {
+    //         prevState.recipe = recipe;
+    //         prevState.originalTitle = recipe.title;
+    //         prevState.originalImage = recipe.image;
+    //         prevState.imageUrl = recipe.image;
 
-            // only update recipe image name if there is an original one
-            // otherwise the made up name interferes with client
-            // validation when submitting the form
-            if (recipe.image !== '') {
-                let imageNameSplit = recipe.image.split('.');
-                let imageExtenstion = imageNameSplit[imageNameSplit.length - 1];
-                prevState.imageName = `${recipe.title}.${imageExtenstion}`;
-            }
+    //         // only update recipe image name if there is an original one
+    //         // otherwise the made up name interferes with client
+    //         // validation when submitting the form
+    //         if (recipe.image !== '') {
+    //             let imageNameSplit = recipe.image.split('.');
+    //             let imageExtenstion = imageNameSplit[imageNameSplit.length - 1];
+    //             prevState.imageName = `${recipe.title}.${imageExtenstion}`;
+    //         }
 
-            return (prevState);
-        });
-    }
+    //         return (prevState);
+    //     });
+    // }
 
     handleSubmit(event) {
         event.preventDefault();
@@ -303,125 +287,6 @@ class NewRecipeForm extends React.Component {
         });
     }
 
-    addDirection(event) {
-        event.preventDefault();
-        this.setState((prevState, props) => {
-            prevState.recipe.directions.push('');
-            return (prevState);
-        })
-    }
-
-    updateDirections(index, direction) {
-        event.preventDefault();
-        this.setState((prevState, props) => {
-            prevState.recipe.directions[index] = direction;
-            return (prevState);
-        });
-    }
-
-    removeDirection(event, index) {
-        event.preventDefault();
-        if (this.state.recipe.directions.length > 1) {
-            this.setState((prevState, props) => {
-                prevState.recipe.directions.splice(index, 1);
-                return (prevState);
-            });
-        }
-    }
-    directionsOnDrop(event, dropIndex) {
-        event.preventDefault();
-
-        // dataTransfer turns the data into a DOMstring
-        const element_index = Number(event.dataTransfer.getData("text/plain"));
-
-        const directions = this.state.recipe.directions;
-        const directionToDrag = directions[element_index];
-
-        // if greater than dropIndex I will have to right shift
-        // the array elements up to index
-        if (element_index > dropIndex) {
-            moveElementUpList(directions, element_index, dropIndex);
-            // this.setState({directions});
-            this.setState((prevState, props) => {
-                prevState.recipe.directions = directions;
-                return (prevState);
-            });
-        } else if (element_index < dropIndex) { // left shifts elements
-            moveElementDownList(directions, element_index, dropIndex);
-            // this.setState({directions});
-            this.setState((prevState, props) => {
-                prevState.recipe.directions = directions;
-                return (prevState);
-            });
-        }
-    }
-
-    handleDragOver(event) {
-        event.preventDefault();
-    }
-
-    onDragStart(event, index) {
-        event.dataTransfer.setData("text/plain", index);
-    }
-
-    addNewIngredientInput(event) {
-        event.preventDefault();
-        this.setState((prevState, props) => {
-            prevState.recipe.ingredients.push(new Ingredient('', ''));
-            return (prevState);
-        });
-    }
-
-    removeIngredientInput(event, index) {
-        event.preventDefault();
-        if (this.state.recipe.ingredients.length > 1) {
-            this.setState((prevState, props) => {
-                prevState.recipe.ingredients.splice(index, 1);
-                return (prevState);
-            });
-        }
-    }
-
-    updateIngredient(index, ingredient) {
-        this.setState((prevState, props) => {
-            prevState.recipe.ingredients[index].ingredient = ingredient;
-            return (prevState);
-        });
-    }
-    updateIngredientQuantity(index, quantity) {
-        this.setState((prevState, props) => {
-            prevState.recipe.ingredients[index].quantity = quantity;
-            return (prevState);
-        });
-    }
-
-    onIngredientDrop(event, dropIndex) {
-        event.preventDefault();
-
-        // dataTransfer turns the data into a DOMstring
-        const element_index = Number(event.dataTransfer.getData("text/plain"));
-
-        const ingredients = this.state.recipe.ingredients;
-
-        // if greater than dropIndex I will have to right shift
-        // the array elements up to index
-        if (element_index > dropIndex) {
-            moveElementUpList(ingredients, element_index, dropIndex);
-            this.setState((prevState, props) => {
-                prevState.recipe.ingredients = ingredients;
-                return (prevState);
-            });
-            // this.setState({ingredients});
-        } else if (element_index < dropIndex) { // left shifts elements
-            moveElementDownList(ingredients, element_index, dropIndex);
-            // this.setState({ingredients});
-            this.setState((prevState, props) => {
-                prevState.recipe.ingredients = ingredients;
-                return (prevState);
-            });
-        }
-    }
-
     render() {
         return (
             <form id="new-recipe" action="/add_recipe" onSubmit={this.handleSubmit} method="post" encType="multipart/form-data">
@@ -452,22 +317,9 @@ class NewRecipeForm extends React.Component {
                     <IngredientList
                         ingredients={this.state.recipe.ingredients}
                         ingredientsAmount={this.state.recipe.ingredients_amount}
-                        addNewIngredientInput={this.addNewIngredientInput}
-                        removeIngredientInput={this.removeIngredientInput}
-                        updateIngredient={this.updateIngredient}
-                        updateIngredientQuantity={this.updateIngredientQuantity}
-                        onDrop={this.onIngredientDrop}
-                        onDragStart={this.onDragStart}
-                        handleDragOver={this.handleDragOver}
                     />
                     <Directions
                         directions={this.state.recipe.directions}
-                        addDirection={this.addDirection}
-                        removeDirection={this.removeDirection}
-                        updateDirections={this.updateDirections}
-                        onDrop={this.directionsOnDrop}
-                        onDragStart={this.onDragStart}
-                        handleDragOver={this.handleDragOver}
                     />
                     <FoodCategory foodCategory={this.state.recipe.food_category} handleFoodCategory={this.handleFoodCategory} />
                     <ImageInput

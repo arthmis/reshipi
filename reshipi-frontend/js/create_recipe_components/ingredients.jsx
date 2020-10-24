@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {moveElementDownList, moveElementUpList} from '../utility.js';
 import {DragDropContext, Droppable, Draggable} from "react-beautiful-dnd";
 
 class Ingredient {
@@ -18,9 +17,6 @@ export default class IngredientList extends React.Component {
         this.removeIngredientInput = this.removeIngredientInput.bind(this);
         this.updateIngredient = this.updateIngredient.bind(this);
         this.updateIngredientQuantity = this.updateIngredientQuantity.bind(this);
-        this.handleDragOver = this.handleDragOver.bind(this);
-        this.onDragStart = this.onDragStart.bind(this);
-        this.onDrop = this.onDrop.bind(this);
         this.dragEnd = this.dragEnd.bind(this);
     }
 
@@ -55,33 +51,6 @@ export default class IngredientList extends React.Component {
         });
     }
 
-    handleDragOver (event) {
-        event.preventDefault();
-    }
-
-    onDragStart (event, index) {
-        event.dataTransfer.setData("text/plain", index);
-    }
-
-    onDrop(event, dropIndex) {
-        event.preventDefault();
-
-        // dataTransfer turns the data into a DOMstring
-        const element_index = Number(event.dataTransfer.getData("text/plain"));
-
-        const ingredients = this.state.ingredients;
-
-        // if greater than dropIndex I will have to right shift
-        // the array elements up to index
-        if (element_index > dropIndex) {
-            moveElementUpList(ingredients, element_index, dropIndex);
-            this.setState({ingredients});
-        } else if (element_index < dropIndex) { // left shifts elements
-            moveElementDownList(ingredients, element_index, dropIndex);
-            this.setState({ingredients});
-        }
-    }
-
     dragEnd(result) {
         if (!result.destination) {
             return;
@@ -95,7 +64,6 @@ export default class IngredientList extends React.Component {
         this.setState({ingredients})
     }
 
-
     render() {
         let ingredientList = null;
         ingredientList = this.state.ingredients.map((ingredient, index) => {
@@ -103,12 +71,7 @@ export default class IngredientList extends React.Component {
                 <Draggable key={index.toString()} draggableId={index.toString()} index={index}>
                     {(provided) => (
                         <li className="list-item" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                            <div className="drag-item"
-                                // draggable
-                                // onDragStart={(e) => this.onDragStart(e, index)}
-                                // onDragOver={this.handleDragOver}
-                                // onDrop={(e) => this.onDrop(e, index)}
-                            >
+                            <div className="drag-item">
                                 <IngredientInput
                                     ingredient={ingredient} 
                                     updateIngredient={this.updateIngredient} 

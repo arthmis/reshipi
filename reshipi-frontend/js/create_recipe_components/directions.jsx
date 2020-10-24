@@ -1,34 +1,29 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {moveElementDownList, moveElementUpList} from '../utility.js';
-// import {DragDropContext, Droppable, Draggable} from "../../node_modules/react-beautiful-dnd/dist/react-beautiful-dnd.js";
 import {DragDropContext, Droppable, Draggable} from "react-beautiful-dnd";
 
 export default class Directions extends React.Component {
     constructor(props) {
         super(props);
+
         this.state = {directions: ['']};
         this.addDirection = this.addDirection.bind(this);
         this.updateDirections = this.updateDirections.bind(this);
         this.removeDirection = this.removeDirection.bind(this);
-        this.handleDragOver = this.handleDragOver.bind(this);
-        this.onDragStart = this.onDragStart.bind(this);
-        this.onDrop = this.onDrop.bind(this);
         this.dragEnd = this.dragEnd.bind(this);
     }
 
     addDirection(event) {
         event.preventDefault();
-        this.setState((state, props) => {
-            state.directions.push('');
-            return ({directions: state.directions});
-        })
+        this.setState((prevState, props) => {
+            prevState.directions.push('');
+            return (prevState);
+        });
     }
 
     updateDirections(index, direction) {
-        event.preventDefault();
         this.setState((prevState, props) => {
-            prevState.directions[index]= direction;
+            prevState.directions[index] = direction;
             return (prevState);
         });
     }
@@ -40,34 +35,6 @@ export default class Directions extends React.Component {
                 prevState.directions.splice(index, 1);
                 return(prevState);
             });
-        }
-    }
-
-    handleDragOver (event) {
-        event.preventDefault();
-    }
-
-    onDragStart (event, index) {
-        event.dataTransfer.setData("text/plain", index);
-    }
-
-    onDrop(event, dropIndex) {
-        event.preventDefault();
-
-        // dataTransfer turns the data into a DOMstring
-        const element_index = Number(event.dataTransfer.getData("text/plain"));
-
-        const directions = this.state.directions;
-        const directionToDrag = directions[element_index];
-
-        // if greater than dropIndex I will have to right shift
-        // the array elements up to index
-        if (element_index > dropIndex) {
-            moveElementUpList(directions, element_index, dropIndex);
-            this.setState({directions});
-        } else if (element_index < dropIndex) { // left shifts elements
-            moveElementDownList(directions, element_index, dropIndex);
-            this.setState({directions});
         }
     }
 
@@ -91,12 +58,7 @@ export default class Directions extends React.Component {
                 <Draggable key={index.toString()} draggableId={index.toString()} index={index}>
                     {(provided) => (
                         <li className="list-item" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                            <div className="drag-item"
-                                // draggable
-                                // onDragStart={(e) => this.onDragStart(e, index)}
-                                // onDragOver={this.handleDragOver}
-                                // onDrop={(e) => this.onDrop(e, index)}
-                            >
+                            <div className="drag-item">
                                 <DirectionInput
                                     direction={direction} 
                                     updateDirections={this.updateDirections} 
