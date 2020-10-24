@@ -6,8 +6,7 @@
   "scripts": {
     "build": "npx babel js --out-dir dist && webpack --config webpack.prod.js",
     "watch": "npx babel --watch js --out-dir dist --source-maps",
-    "list-dev": "webpack -w --config webpack.dev.js",
-    "list": "webpack -w --config webpack.prod.js"
+    "list": "webpack -w --config webpack.dev.js"
   },
   "author": "",
   "license": "ISC",
@@ -17,7 +16,7 @@
     "@babel/preset-env": "^7.9.0",
     "@babel/preset-react": "^7.9.1",
     "babel-loader": "^8.1.0",
-    "webpack": "^4.42.0",
+    "webpack": "^5.2.0",
     "webpack-cli": "^3.3.11",
     "webpack-merge": "^5.2.0"
   },
