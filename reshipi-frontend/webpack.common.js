@@ -4,7 +4,9 @@ const webpack = require('webpack');
 module.exports = {
     entry: {
         new_recipe: './js/new_recipe.jsx',
-        edit_recipe: './js/edit_recipe.jsx'
+        edit_recipe: './js/edit_recipe.jsx',
+        recipes: './js/recipes.jsx',
+        recipe: './js/recipe.jsx'
     },
     output: {
         filename: '[name].js',

@@ -4,9 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npx babel js --out-dir dist && webpack --config webpack.prod.js",
-    "watch": "npx babel --watch js --out-dir dist --source-maps",
-    "list": "webpack -w --config webpack.dev.js"
+    "build": "webpack --config webpack.prod.js",
+    "watch": "webpack -w --config webpack.dev.js"
   },
   "author": "",
   "license": "ISC",
