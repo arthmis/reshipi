@@ -1,4 +1,4 @@
-html, body {
+html, body, #root, #root, #app {
     width: 100%;
     padding: 0;
     margin: 0;
@@ -76,8 +76,8 @@ main {
 }
 
 .input-group {
-    padding-top: 1em;
-    padding-bottom: 1em;
+    padding-top: 1.5em;
+    padding-bottom: 1.5em;
     width: 100%;
 }
 
@@ -107,11 +107,18 @@ main {
 }
 .ingredient-list {
     list-style-type: none;
-    margin: 0;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#directions {
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 .direction-input, .ingredient-input {
-    width: calc(100% - 5em);
+    /* width: calc(100% - 5em); */
+    width: calc(100%);
     display: inline-flex;
 }
 
@@ -145,11 +152,12 @@ main {
 }
 
 .list-item {
+    display: flex;
+    align-items: center;
     width: 100%;
-    max-height: 5em;
-    height: 100%;
-    margin-top: 6px;
-    margin-bottom: 6px;
+    height: 2em;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 .drag-item {
     border: 1px solid #afafaf;
@@ -197,6 +205,15 @@ main {
     background-color: #a32b1b;
 }
 
+.remove-input-wrapper {
+    display: inline-flex;
+    max-width: 5em;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
 .remove-input-button {
     font-size: 1em;
     /* width: 3em; */
@@ -212,16 +229,6 @@ main {
 .remove-input-button:disabled {
     color: rgb(207, 207, 207);
 }
-
-.remove-input-wrapper {
-    display: inline-flex;
-    max-width: 5em;
-    width: 100%;
-    /* height: 100%; */
-    justify-content: center;
-    align-items: center;
-}
-
 
 ul {
     padding: 0;
@@ -249,9 +256,9 @@ textarea {
     color: #363636;
 }
 
-#image-input-button > button {
+.image-input-button {
     width: 9em;
-    height: 2.5em;
+    height: 3em;
     font-family: inherit;
     text-align: center;
     font-size: 1em;
@@ -376,10 +383,10 @@ textarea {
     }
     .add-new-input {
         max-width: 9em;
-        font-size: 0.8em;
+        font-size: 0.9em;
     }
     .image-input-button {
-        font-size: 0.8em;
+        font-size: 0.9em;
     }
 }
 

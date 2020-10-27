@@ -57,14 +57,14 @@ export default class Directions extends React.Component {
             return (
                 <Draggable key={index.toString()} draggableId={index.toString()} index={index}>
                     {(provided) => (
-                        <li className="list-item" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                        <li className="list-item" ref={provided.innerRef} {...provided.draggableProps}>
                             <div className="drag-item">
                                 <DirectionInput
                                     direction={direction} 
                                     updateDirections={this.updateDirections} 
                                     index={index} 
                                 />
-                                <span className="draggable-icon"> 
+                                <span className="draggable-icon" {...provided.dragHandleProps}> 
                                     <i className="fas fa-grip-lines"></i>
                                 </span>
                             </div>
@@ -88,7 +88,6 @@ export default class Directions extends React.Component {
                         {(provided) => (
                             <ul id="directions" {...provided.droppableProps} ref={provided.innerRef}>
                                 {directionList}
-                                ...
                                 {provided.placeholder}
                             </ul>
                         )}
@@ -132,7 +131,7 @@ class DirectionInput extends React.Component {
                     type="text" 
                     value={this.props.direction} 
                     onChange={this.handleInput} 
-                    placeholder="Enter new direction" 
+                    placeholder="Direction" 
                     required 
                 />
             </div>

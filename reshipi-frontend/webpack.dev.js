@@ -3,5 +3,9 @@
 
  module.exports = merge(common, {
     mode: 'development',
-    devtool: 'source-map'
+    devtool: 'source-map',
+    watch: true,
+    watchOptions: {
+       ignored: /node_modules/
+    }
  });

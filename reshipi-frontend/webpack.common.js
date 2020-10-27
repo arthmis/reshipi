@@ -15,15 +15,16 @@ module.exports = {
     optimization: {
         runtimeChunk: 'single',
         splitChunks: {
+            minSize: 20000,
             cacheGroups: {
-                vendor: {
-                    test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-                    name: 'react',
-                    chunks: 'all'
-                },
-                vendor: {
+                react_beautiful_dnd: {
                     test: /[\\/]node_modules[\\/]react-beautiful-dnd[\\/]/,
                     name: 'react-beautiful-dnd',
+                    chunks: 'all'
+                },
+                react: {
+                    test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+                    name: 'react',
                     chunks: 'all'
                 }
             }
@@ -39,4 +40,4 @@ module.exports = {
             },
         ],
     },  
-};
+}

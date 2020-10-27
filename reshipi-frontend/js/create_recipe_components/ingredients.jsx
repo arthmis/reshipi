@@ -70,7 +70,7 @@ export default class IngredientList extends React.Component {
             return (
                 <Draggable key={index.toString()} draggableId={index.toString()} index={index}>
                     {(provided) => (
-                        <li className="list-item" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                        <li className="list-item" ref={provided.innerRef} {...provided.draggableProps}>
                             <div className="drag-item">
                                 <IngredientInput
                                     ingredient={ingredient} 
@@ -78,7 +78,7 @@ export default class IngredientList extends React.Component {
                                     updateIngredientQuantity={this.updateIngredientQuantity}
                                     index={index} 
                                 />
-                                <span className="draggable-icon">
+                                <span className="draggable-icon" {...provided.dragHandleProps}>
                                     <i className="fas fa-grip-lines"></i>
                                 </span>
                             </div>
@@ -101,7 +101,6 @@ export default class IngredientList extends React.Component {
                         {(provided) => (
                             <ul id="ingredients-list" className="ingredient-list" {...provided.droppableProps} ref={provided.innerRef}>
                                 {ingredientList}
-                                ...
                                 {provided.placeholder}
                             </ul>
                         )}
@@ -159,7 +158,7 @@ class IngredientInput extends React.Component {
                     type="text" 
                     value={this.props.ingredient.ingredient} 
                     onChange={this.handleInput} 
-                    placeholder="Enter new ingredient" 
+                    placeholder="Ingredient" 
                     required 
                 />
                 <input 
