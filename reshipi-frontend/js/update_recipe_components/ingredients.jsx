@@ -1,5 +1,6 @@
-import {moveElementDownList, moveElementUpList} from '../utility.js';
-'use strict';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import {DragDropContext, Droppable, Draggable} from "react-beautiful-dnd";
 
 export class Ingredient {
     constructor(ingredient, quantity) {
@@ -11,69 +12,51 @@ export class Ingredient {
 export class IngredientList extends React.Component {
     constructor(props) {
         super(props);
+
     }
 
     render() {
         let ingredientList = null;
-        if (this.props.ingredients.length === 1) {
-            ingredientList = this.props.ingredients.map((ingredient, index) => {
-                return (
-                    <li className="list-item" key={index.toString()}>
-                        <div className="drag-item"
-                            draggable
-                            onDragStart={(e) => this.props.onDragStart(e, index)}
-                            onDragOver={this.props.handleDragOver}
-                            onDrop={(e) => this.props.onDrop(e, index)}
-                        >
-                            <IngredientInput
-                                ingredient={ingredient} 
-                                updateIngredient={this.props.updateIngredient} 
-                                updateIngredientQuantity={this.props.updateIngredientQuantity}
-                                index={index} 
-                            />
-                            <span className="draggable-icon">
-                                <i className="fas fa-grip-lines"></i>
+        ingredientList = this.props.ingredients.map((ingredient, index) => {
+            return (
+                <Draggable key={index.toString()} draggableId={index.toString()} index={index}>
+                    {(provided) => (
+                        <li className="list-item" ref={provided.innerRef} {...provided.draggableProps}>
+                            <div className="drag-item">
+                                <IngredientInput
+                                    ingredient={ingredient} 
+                                    updateIngredient={this.props.updateIngredient} 
+                                    updateIngredientQuantity={this.props.updateIngredientQuantity}
+                                    index={index} 
+                                />
+                                <span className="draggable-icon" {...provided.dragHandleProps}>
+                                    <i className="fas fa-grip-lines"></i>
+                                </span>
+                            </div>
+                            <span className="remove-input-wrapper">
+                                {this.props.ingredients.length === 1 ?
+                                    <button onClick={(e) => this.props.removeIngredientInput(e, index)} className="remove-input-button" disabled><i className="fas fa-times"></i></button>:
+                                    <button onClick={(e) => this.props.removeIngredientInput(e, index)} className="remove-input-button"><i className="fas fa-times"></i></button>
+                                }
                             </span>
-                        </div>
-                        <span className="remove-input-wrapper">
-                            <button onClick={(e) => this.props.removeIngredientInput(e, index)} className="remove-input-button" disabled><i className="fas fa-times"></i></button>
-                        </span>
-                    </li>
-                )
-            });
-        } else {
-            ingredientList = this.props.ingredients.map((ingredient, index) => {
-                return (
-                    <li className="list-item" key={index.toString()}>
-                        <div className="drag-item"
-                            draggable
-                            onDragStart={(e) => this.props.onDragStart(e, index)}
-                            onDragOver={this.props.handleDragOver}
-                            onDrop={(e) => this.props.onDrop(e, index)}
-                        >
-                            <IngredientInput
-                                ingredient={ingredient} 
-                                updateIngredient={this.props.updateIngredient} 
-                                updateIngredientQuantity={this.props.updateIngredientQuantity}
-                                index={index} 
-                            />
-                            <span className="draggable-icon">
-                                <i className="fas fa-grip-lines"></i>
-                            </span>
-                        </div>
-                        <span className="remove-input-wrapper">
-                            <button onClick={(e) => this.props.removeIngredientInput(e, index)} className="remove-input-button"><i className="fas fa-times"></i></button>
-                        </span>
-                    </li>
-                )
-            });
-        }
+                        </li>
+                    )}
+                </Draggable>
+            );
+        });
         return (
             <div className="input-group">
                 <label className="label" form="new-recipe" htmlFor="ingredients">Ingredients</label><br />
-                <ul className="ingredient-list">
-                    {ingredientList}
-                </ul>
+                <DragDropContext onDragEnd={this.props.ingredientDragEnd}>
+                    <Droppable droppableId="ingredients-list">
+                        {(provided) => (
+                            <ul id="ingredients-list" className="ingredient-list" {...provided.droppableProps} ref={provided.innerRef}>
+                                {ingredientList}
+                                {provided.placeholder}
+                            </ul>
+                        )}
+                    </Droppable>
+                </DragDropContext>
                 <button className="add-new-input" onClick={this.props.addNewIngredientInput}>Add ingredient</button>
             </div>
         );
@@ -126,7 +109,7 @@ class IngredientInput extends React.Component {
                     type="text" 
                     value={this.props.ingredient.ingredient} 
                     onChange={this.handleInput} 
-                    placeholder="Enter new ingredient" 
+                    placeholder="Ingredient" 
                     required 
                 />
                 <input 

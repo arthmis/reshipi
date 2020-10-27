@@ -1,4 +1,5 @@
-'use strict';
+import React from 'react';
+import ReactDOM from 'react-dom';
 
 class Ingredient {
     constructor(ingredient, amount) {
@@ -35,7 +36,7 @@ class Nav extends React.Component {
         return (
             <nav id="nav">
                 <a id="reshipi" href="/recipes">RE&middot;SHI&middot;PI</a>
-                <form id="logout-form" action="/logout" method="get">
+                <form id="logout-form" action="/logout" method="POST">
                     <input id="logout" type="submit" name="logout" value="Logout" />
                 </form>
             </nav>
@@ -72,7 +73,6 @@ class Recipe extends React.Component {
             credentials: 'same-origin',
         });
         let recipe = await response.json();
-        console.log(recipe);
 
         const ingredientAndQuantity = [];
         for (let i = 0; i < recipe.ingredients.length; i += 1) {

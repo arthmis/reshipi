@@ -1,15 +1,12 @@
-import Directions from './update_recipe_components/directions.js';
-import { Ingredient, IngredientList } from './update_recipe_components/ingredients.js';
-import { moveElementDownList, moveElementUpList } from './utility.js';
-
-'use strict';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Directions from './update_recipe_components/directions.jsx';
+import {Ingredient, IngredientList} from './update_recipe_components/ingredients.jsx';
 
 class App extends React.Component {
     constructor(props) {
         super(props);
     }
-
-
 
     render() {
         return (
@@ -33,7 +30,7 @@ class Nav extends React.Component {
         return (
             <nav id="nav">
                 <a id="home-link" href="/recipes">RE&middot;SHI&middot;PI</a>
-                <form id="logout-form" action="/logout" method="get">
+                <form id="logout-form" action="/logout" method="POST">
                     <input id="logout" type="submit" name="logout" value="Logout" />
                 </form>
             </nav>
@@ -77,18 +74,18 @@ class NewRecipeForm extends React.Component {
 
         this.handleFoodCategory = this.handleFoodCategory.bind(this);
 
-        this.directionsOnDrop = this.directionsOnDrop.bind(this);
-        this.addDirection = this.addDirection.bind(this);
-        this.updateDirections = this.updateDirections.bind(this);
-        this.removeDirection = this.removeDirection.bind(this);
-        this.handleDragOver = this.handleDragOver.bind(this);
-        this.onDragStart = this.onDragStart.bind(this);
-
+        // handles ingredients
         this.addNewIngredientInput = this.addNewIngredientInput.bind(this);
         this.removeIngredientInput = this.removeIngredientInput.bind(this);
         this.updateIngredient = this.updateIngredient.bind(this);
         this.updateIngredientQuantity = this.updateIngredientQuantity.bind(this);
-        this.onIngredientDrop = this.onIngredientDrop.bind(this)
+        this.ingredientDragEnd = this.ingredientDragEnd.bind(this);
+
+        // handles directions
+        this.addDirection = this.addDirection.bind(this);
+        this.updateDirections = this.updateDirections.bind(this);
+        this.removeDirection = this.removeDirection.bind(this);
+        this.directionDragEnd = this.directionDragEnd.bind(this);
     }
 
     async componentDidMount() {
@@ -111,7 +108,7 @@ class NewRecipeForm extends React.Component {
         recipe.ingredients = ingredientAndQuantity;
         delete recipe.ingredient_amount;
 
-        this.setState((prevState, props) => {
+        this.setState((prevState) => {
             prevState.recipe = recipe;
             prevState.originalTitle = recipe.title;
             prevState.originalImage = recipe.image;
@@ -180,7 +177,6 @@ class NewRecipeForm extends React.Component {
                             mode: 'same-origin',
                             credentials: 'same-origin',
                         }).then(response => {
-                            console.log(response.body);
                             document.location.href = '/recipes';
                         });
                     }
@@ -199,7 +195,6 @@ class NewRecipeForm extends React.Component {
                     mode: 'same-origin',
                     credentials: 'same-origin',
                 }).then(response => {
-                    console.log(response.body);
                     document.location.href = '/recipes';
                 });
             }
@@ -305,67 +300,6 @@ class NewRecipeForm extends React.Component {
         });
     }
 
-    addDirection(event) {
-        event.preventDefault();
-        this.setState((prevState, props) => {
-            prevState.recipe.directions.push('');
-            return (prevState);
-        })
-    }
-
-    updateDirections(index, direction) {
-        event.preventDefault();
-        this.setState((prevState, props) => {
-            prevState.recipe.directions[index] = direction;
-            return (prevState);
-        });
-    }
-
-    removeDirection(event, index) {
-        event.preventDefault();
-        if (this.state.recipe.directions.length > 1) {
-            this.setState((prevState, props) => {
-                prevState.recipe.directions.splice(index, 1);
-                return (prevState);
-            });
-        }
-    }
-    directionsOnDrop(event, dropIndex) {
-        event.preventDefault();
-
-        // dataTransfer turns the data into a DOMstring
-        const element_index = Number(event.dataTransfer.getData("text/plain"));
-
-        const directions = this.state.recipe.directions;
-        const directionToDrag = directions[element_index];
-
-        // if greater than dropIndex I will have to right shift
-        // the array elements up to index
-        if (element_index > dropIndex) {
-            moveElementUpList(directions, element_index, dropIndex);
-            // this.setState({directions});
-            this.setState((prevState, props) => {
-                prevState.recipe.directions = directions;
-                return (prevState);
-            });
-        } else if (element_index < dropIndex) { // left shifts elements
-            moveElementDownList(directions, element_index, dropIndex);
-            // this.setState({directions});
-            this.setState((prevState, props) => {
-                prevState.recipe.directions = directions;
-                return (prevState);
-            });
-        }
-    }
-
-    handleDragOver(event) {
-        event.preventDefault();
-    }
-
-    onDragStart(event, index) {
-        event.dataTransfer.setData("text/plain", index);
-    }
-
     addNewIngredientInput(event) {
         event.preventDefault();
         this.setState((prevState, props) => {
@@ -390,6 +324,7 @@ class NewRecipeForm extends React.Component {
             return (prevState);
         });
     }
+
     updateIngredientQuantity(index, quantity) {
         this.setState((prevState, props) => {
             prevState.recipe.ingredients[index].quantity = quantity;
@@ -397,31 +332,61 @@ class NewRecipeForm extends React.Component {
         });
     }
 
-    onIngredientDrop(event, dropIndex) {
-        event.preventDefault();
-
-        // dataTransfer turns the data into a DOMstring
-        const element_index = Number(event.dataTransfer.getData("text/plain"));
-
+    ingredientDragEnd(result) {
+        if (!result.destination) {
+            return;
+        }
+        const dropIndex = result.destination.index;
+        const sourceIndex = result.source.index;
         const ingredients = this.state.recipe.ingredients;
 
-        // if greater than dropIndex I will have to right shift
-        // the array elements up to index
-        if (element_index > dropIndex) {
-            moveElementUpList(ingredients, element_index, dropIndex);
+        const [movedItem] = ingredients.splice(sourceIndex, 1);
+        ingredients.splice(dropIndex, 0, movedItem)
+        this.setState((prevState) => {
+            prevState.recipe.ingredients = ingredients;
+            return (prevState)
+        });
+    }  
+
+    addDirection(event) {
+        event.preventDefault();
+        this.setState((prevState, props) => {
+            prevState.recipe.directions.push('');
+            return (prevState);
+        });
+    }
+
+    updateDirections(index, direction) {
+        this.setState((prevState, props) => {
+            prevState.recipe.directions[index] = direction;
+            return (prevState);
+        });
+    }
+
+    removeDirection(event, index) {
+        event.preventDefault();
+        if (this.state.recipe.directions.length > 1) {
             this.setState((prevState, props) => {
-                prevState.recipe.ingredients = ingredients;
-                return (prevState);
-            });
-            // this.setState({ingredients});
-        } else if (element_index < dropIndex) { // left shifts elements
-            moveElementDownList(ingredients, element_index, dropIndex);
-            // this.setState({ingredients});
-            this.setState((prevState, props) => {
-                prevState.recipe.ingredients = ingredients;
+                prevState.recipe.directions.splice(index, 1);
                 return (prevState);
             });
         }
+    }
+
+    directionDragEnd(result) {
+        if (!result.destination) {
+            return;
+        }
+        const dropIndex = result.destination.index;
+        const sourceIndex = result.source.index;
+        const directions = this.state.recipe.directions;
+
+        const [movedItem] = directions.splice(sourceIndex, 1);
+        directions.splice(dropIndex, 0, movedItem)
+        this.setState((prevState) => {
+            prevState.recipe.directions = directions;
+            return (prevState)
+        });
     }
 
     render() {
@@ -458,18 +423,14 @@ class NewRecipeForm extends React.Component {
                         removeIngredientInput={this.removeIngredientInput}
                         updateIngredient={this.updateIngredient}
                         updateIngredientQuantity={this.updateIngredientQuantity}
-                        onDrop={this.onIngredientDrop}
-                        onDragStart={this.onDragStart}
-                        handleDragOver={this.handleDragOver}
+                        ingredientDragEnd={this.ingredientDragEnd}
                     />
                     <Directions
                         directions={this.state.recipe.directions}
                         addDirection={this.addDirection}
-                        removeDirection={this.removeDirection}
                         updateDirections={this.updateDirections}
-                        onDrop={this.directionsOnDrop}
-                        onDragStart={this.onDragStart}
-                        handleDragOver={this.handleDragOver}
+                        removeDirection={this.removeDirection}
+                        directionDragEnd={this.directionDragEnd}
                     />
                     <FoodCategory foodCategory={this.state.recipe.food_category} handleFoodCategory={this.handleFoodCategory} />
                     <ImageInput

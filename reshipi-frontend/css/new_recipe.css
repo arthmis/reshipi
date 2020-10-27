@@ -1,4 +1,4 @@
-html, body {
+html, body, #root, #root, #app {
     width: 100%;
     padding: 0;
     margin: 0;
@@ -53,8 +53,7 @@ nav * {
 main {
     min-height: calc(100vh - 4em);
     width: 100%;
-    /* background-color: #25bdb5; */
-    background-image: linear-gradient(to left, #67c2ff, #91d3ff);
+    background-color: white;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -71,15 +70,14 @@ main {
     align-items: center;
     max-width: 90ch;
     width: 100%;
-    background: #ffffff;
     border-radius: 6px;
     margin-top: 5em;
     margin-bottom: 5em;
 }
 
 .input-group {
-    padding-top: 1em;
-    padding-bottom: 1em;
+    padding-top: 1.5em;
+    padding-bottom: 1.5em;
     width: 100%;
 }
 
@@ -109,11 +107,18 @@ main {
 }
 .ingredient-list {
     list-style-type: none;
-    margin: 0;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#directions {
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 .direction-input, .ingredient-input {
-    width: calc(100% - 5em);
+    /* width: calc(100% - 5em); */
+    width: calc(100%);
     display: inline-flex;
 }
 
@@ -147,11 +152,12 @@ main {
 }
 
 .list-item {
+    display: flex;
+    align-items: center;
     width: 100%;
-    max-height: 5em;
-    height: 100%;
-    margin-top: 6px;
-    margin-bottom: 6px;
+    height: 2em;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 .drag-item {
     border: 1px solid #afafaf;
@@ -199,6 +205,15 @@ main {
     background-color: #a32b1b;
 }
 
+.remove-input-wrapper {
+    display: inline-flex;
+    max-width: 5em;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
 .remove-input-button {
     font-size: 1em;
     /* width: 3em; */
@@ -215,18 +230,9 @@ main {
     color: rgb(207, 207, 207);
 }
 
-.remove-input-wrapper {
-    display: inline-flex;
-    max-width: 5em;
-    width: 100%;
-    /* height: 100%; */
-    justify-content: center;
-    align-items: center;
-}
-
-
-ol, ul {
+ul {
     padding: 0;
+    list-style-type: none;
 }
 
 textarea {
@@ -240,12 +246,19 @@ textarea {
     /* justify-content: center */
     align-items: center;
 }
-/* #image-input > button {
-} */
+#image-input-button {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+#image-input-button > div {
+    margin-left: 1em;
+    color: #363636;
+}
 
 .image-input-button {
     width: 9em;
-    height: 2.5em;
+    height: 3em;
     font-family: inherit;
     text-align: center;
     font-size: 1em;
@@ -329,10 +342,56 @@ textarea {
     right: 1px;
 }
 
-@media screen and (max-width: 600px) {
+@media screen and (max-width: 700px) {
     #new-recipe {
         width: 90%;
         margin-bottom: 2em;
         margin-top: 2em;
+    }
+    .list-item {
+        display: flex;
+        justify-content: space-between;
+    }
+    .drag-item {
+        width: calc(100% - 2.5em);
+        justify-content: space-between;
+    }
+    .draggable-icon {
+        font-size: 1em;
+        color: #8a8a8a;
+        max-width: 3em;
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .draggable-icon > i {
+        margin-left: 0em;
+    }
+    .ingredient-input {
+        width: calc(100% - 6em);
+    }
+    .ingredient-amount {
+        width: 100%;
+        max-width: 7ch;
+    }
+    .direction-input {
+        width: calc(100% - 3em);
+    }
+    .remove-input-wrapper {
+        max-width: 2em;
+    }
+    .add-new-input {
+        max-width: 9em;
+        font-size: 0.9em;
+    }
+    .image-input-button {
+        font-size: 0.9em;
+    }
+}
+
+@media screen and (min-width: 701px) and (max-width: 1199px) {
+    #new-recipe {
+        width: 95%;
     }
 }

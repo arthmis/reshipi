@@ -1,5 +1,7 @@
-import Directions from './create_recipe_components/directions.js';
-import IngredientList from './create_recipe_components/ingredients.js';
+import Directions from './create_recipe_components/directions.jsx';
+import IngredientList from './create_recipe_components/ingredients.jsx';
+import React from 'react';
+import ReactDOM from 'react-dom';
 
 'use strict';
 
@@ -7,9 +9,10 @@ class App extends React.Component {
     constructor(props) {
         super(props);
     }
+
     render() {
         return(
-            <div>
+            <div id="app">
                 <header>
                     <Nav />
                 </header>
@@ -29,7 +32,7 @@ class Nav extends React.Component {
         return(
             <nav id="nav">
                 <a id="home-link" href="/recipes">RE&middot;SHI&middot;PI</a>
-                <form id="logout-form" action="/logout" method="get">
+                <form id="logout-form" action="/logout" method="POST">
                     <input id="logout" type="submit" name="logout" value="Logout"/>
                 </form>
             </nav>
@@ -101,7 +104,6 @@ class NewRecipeForm extends React.Component {
                     mode: 'same-origin',
                     credentials: 'same-origin',
                 }).then(response => {
-                    console.log(response.body);
                     document.location.href = '/recipes';
                 });
             }
@@ -148,7 +150,6 @@ class NewRecipeForm extends React.Component {
 
     handleTitle(event) {
         const value = event.target.value;
-        console.log(value);
 
         if (value.length === 0) {
             title.setCustomValidity('Please provide a title.');
@@ -277,7 +278,10 @@ class ImageInput extends React.Component {
             return (
                 <div className="input-group">
                     <label className="label" form="new-recipe" htmlFor="recipe-image">Image</label><br />
-                    <button className="image-input-button" onClick={this.props.handleFileInput}>Upload Image</button>
+                    <div id="image-input-button">
+                        <button className="image-input-button" onClick={this.props.handleFileInput}>Upload Image</button>
+                        <div>Max file size: 1mb</div>
+                    </div>
                     <div>
                         <input 
                             style={{visibility: 'hidden'}} 

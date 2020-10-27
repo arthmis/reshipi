@@ -20,6 +20,9 @@ const validator = require('validator');
 const morgan = require('morgan');
 const path = require('path');
 const { RateLimiterPostgres } = require('rate-limiter-flexible');
+const { Client } = require('@elastic/elasticsearch');
+
+const searchClient = new Client({ node: 'http://localhost:9200' });
 
 const logger = require('./log.js');
 
@@ -44,13 +47,26 @@ module.exports = (users, db) => {
     },
   });
 
-  const upload = multer({ storage });
+  const upload = multer({ 
+    storage, 
+    limits: {
+      fileSize: 1048576,
+    } 
+  });
 
   const app = express();
 
   app.use(helmet({
     contentSecurityPolicy: false,
   }));
+
+  // stops browser from caching content
+  // useful for when user logouts and presses the back button
+  // it would open up the cached page after logout
+  app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store')
+  next()
+  });
 
   app.use(morgan('combined', {
     stream: fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' }),
@@ -107,7 +123,6 @@ module.exports = (users, db) => {
   }
 
   const cookieAge = getMinutesInMilliseconds(3600);
-
 
   let sessionConfig = {
     cookie: {
@@ -275,7 +290,6 @@ module.exports = (users, db) => {
   }
   const loginUser = async (req, res) => {
     const credentials = req.body;
-      console.log("credentials: ", credentials);
 
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
@@ -429,6 +443,25 @@ module.exports = (users, db) => {
           req.files = '';
         }
         await users.addRecipe(recipe, req.user, req.files);
+        try {
+          await searchClient.index({
+            index: 'recipes',
+            id: `${req.user} ${recipe.title}`,
+            refresh: true,
+            body: {
+              email: req.user,
+              title: recipe.title,
+              description: recipe.description,
+              ingredients: recipe.ingredients,
+              ingredient_amount: recipe.ingredient_amount,
+              directions: recipe.directions,
+            },
+          });
+        } catch (error) {
+          logger.error(`error indexing recipe in elasticsearch: ${error.stack}`);
+          res.status(500);
+          // res.render('pages/500');
+        }
         res.status(200);
         res.render('pages/recipes');
       } catch (error) {
@@ -553,7 +586,13 @@ module.exports = (users, db) => {
         const isDeleted = await users.deleteRecipe(recipe.title, req.user);
 
         if (isDeleted) {
-          res.sendStatus(204);
+          // TODO change this to throw error
+          await searchClient.delete({
+              index: 'recipes',
+              id: `${req.user} ${recipe.title}`,
+              refresh: true
+          }).catch((err) => console.log(err.stack));
+          res.sendStatus(200);
         } else {
           res.sendStatus(404);
         }
@@ -583,6 +622,7 @@ module.exports = (users, db) => {
     },
   );
 
+  // returns recipe as json 
   app.get('/get_recipe', validateUserSession, [query('title').trim().not().isEmpty()], async (req, res) => {
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
@@ -667,6 +707,16 @@ module.exports = (users, db) => {
         res.sendStatus(401);
         return;
       }
+      
+      if (!(Array.isArray(recipe.ingredients))) {
+        recipe.ingredients = [recipe.ingredients];
+      }
+      if (!(Array.isArray(recipe.ingredient_amount))) {
+        recipe.ingredient_amount = [recipe.ingredient_amount];
+      }
+      if (!(Array.isArray(recipe.directions))) {
+        recipe.directions = [recipe.directions];
+      }
 
       try {
         // makes sure updated recipe title is not a duplicate
@@ -685,6 +735,21 @@ module.exports = (users, db) => {
 
         try {
           await users.updateRecipe(recipe, req.user, req.files);
+          // update elasticsearch document
+          await searchClient.update({
+            index: 'recipes',
+            id: `${req.user} ${recipe.original_title}`,
+            refresh: true,
+            body: {
+                doc: {
+                    title: recipe.title,
+                    description: recipe.description,
+                    ingredients: recipe.ingredients, 
+                    ingredient_amount: recipe.ingredient_amount,
+                    directions: recipe.directions,
+                }
+            },
+          }).catch((err) => console.log(err.stack))
           res.sendStatus(200);
         } catch (error) {
           logger.error(error.stack);
@@ -698,6 +763,8 @@ module.exports = (users, db) => {
       }
     },
   );
+
+  // TODO think about server side rendering this recipe page using the recipes information
   app.get(
     '/recipe',
     validateUserSession,
@@ -715,64 +782,105 @@ module.exports = (users, db) => {
     },
   );
 
-  // app.get('/search_recipes', validateUserSession, query('search').trim(), async (req, res) => {
-  //   const validationErrors = validationResult(req);
-  //   if (!validationErrors.isEmpty()) {
-  //     logger.error(validationErrors);
-  //     res.sendStatus(401);
-  //     return;
-  //   }
+  app.get('/search_recipes', validateUserSession, query('search').trim(), async (req, res) => {
+    const validationErrors = validationResult(req);
+    if (!validationErrors.isEmpty()) {
+      logger.error(validationErrors);
+      res.sendStatus(401);
+      return;
+    }
 
-  //   const searchTerms = req.query.search;
+    const searchTerms = req.query.search;
+    // TODO make this async directory read
+    // TODO add error handling for file read
+    const images = fs.readdirSync('./reshipi-frontend/images/food_image_substitutes');
 
-  //   if (searchTerms !== '') {
-  //     const objectId = await sonicChannelSearch.query('recipes', req.user, searchTerms)
-  //       .catch((error) => logger.error(error.stack));
+    if (searchTerms !== '') {
+      const { body } = await searchClient.search({
+        index: 'recipes',
+        body: {
+          query: {
+            bool: {
+              should: { 
+                multi_match: {
+                  query: searchTerms,
+                  fields: ['title', 'description', 'ingredients', 'ingredient_amount', 'directions'],
+                  fuzziness: 'AUTO', 
+                }
+              },
+              must: {
+                term: { 
+                  email : req.user
+                }
+              }
+            },
+          }
+        }
+      }).catch((err) => console.log(err.stack));
+      const possibleRecipes = [];
+      for (const result of body.hits.hits) {
+        // TODO use a task from pg-promise to execute this, this is inefficient
+        possibleRecipes.push(db.one(
+          "SELECT recipe FROM Recipes WHERE recipe->>'title' = $1 AND username = $2",
+          [result._source.title, req.user],
+        ).catch((err) => {
+          throw err;
+        }));
 
-  //     if (objectId.length > 0) {
-  //       const possibleRecipes = [];
-  //       for (const item of objectId) {
-  //         const recipePromise = users.getRecipe(
-  //           item.split(':')[1].split('+').join(' '),
-  //           req.user,
-  //         );
-  //         possibleRecipes.push(recipePromise);
-  //       }
+      }
+      try {
+        const recipesFound = await Promise.all(possibleRecipes)
+          .catch((err) => console.log(err));
 
-  //       const recipes = [];
-  //       try {
-  //         const fullRecipes = await Promise.all(possibleRecipes);
+        const recipes = [];
+        for (const fullRecipe of recipesFound) {
+          const recipe = {
+            title: fullRecipe.recipe.title,
+            image: fullRecipe.recipe.image,
+          };
+          recipe.image = recipe.image.replace('\\', '/');
+          recipe.image = recipe.image.replace('../uploads/', '');
 
-  //         for (const fullRecipe of fullRecipes) {
-  //           const recipe = {
-  //             title: fullRecipe.title,
-  //             description: fullRecipe.description,
-  //           };
-  //           recipe.image = fullRecipe.image.replace('\\', '/');
-  //           recipe.image = recipe.image.replace('uploads/', '');
-  //           recipes.push(recipe);
-  //         }
-  //         res.status(200);
-  //         res.json(recipes);
-  //       } catch (error) {
-  //         logger.error(error.stack);
-  //         res.status(500);
-  //         // maybe think about about sending an empty recipe
-  //       }
-  //     } else {
-  //       res.sendStatus(404);
-  //     }
-  //   } else {
-  //     try {
-  //       const recipes = await users.getRecipes(req.user);
-  //       res.status(200);
-  //       res.send(recipes);
-  //     } catch (error) {
-  //       logger.error(error.stack);
-  //       res.status(500);
-  //     }
-  //   }
-  // });
+          if (recipe.image === '') {
+            let ranNumber = Math.round((Math.random() * (images.length - 1)));
+            recipe.image = `images/food_image_substitutes/${images[ranNumber]}`;
+          }
+          
+          recipes.push(recipe);
+        }
+        res.status(200);
+        res.json(recipes);
+        // res.json("search went through");
+      } catch (error) {
+        logger.error(error.stack);
+        res.status(500);
+        // TODO maybe think about about sending an empty recipe
+      }
+    } else {
+      try {
+        const recipes = await users.getRecipes(req.user);
+        for (let i = 0; i < recipes.length; i += 1) {
+            if (recipes[i].image === '') {
+                let ranNumber = Math.round((Math.random() * (images.length - 1)));
+                recipes[i].image = `images/food_image_substitutes/${images[ranNumber]}`;
+            }
+        }
+        res.status(200);
+        res.send(recipes);
+      } catch (error) {
+        logger.error(error.stack);
+        res.status(500);
+      }
+    }
+  });
+
+  // app.use(function (req, res, next) {
+  //   var options = {
+  //   root: path.join('reshipi-frontend/'),
+  //   dotfiles: 'deny',
+  // }
+  //   res.status(404).sendFile("404", options);
+  // })
 
   return { app };
 };

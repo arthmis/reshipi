@@ -1,4 +1,5 @@
-'use strict';
+import React from 'react';
+import ReactDOM from 'react-dom';
 
 class Nav extends React.Component {
     constructor(props) {
@@ -58,22 +59,22 @@ class Recipes extends React.Component {
 
     componentDidMount() {
         fetch('/all_recipes', {
-            method: "GET",
+            method: 'GET',
             mode: 'same-origin',
             credentials: 'same-origin',
         })
-            .then(response => response.json())
-            .then(res => {
-                const recipes = res.recipes;
-                const substituteImages = res.images;
-                for (let i = 0; i < recipes.length; i += 1) {
-                    if (recipes[i].image === '') {
-                        let ranNumber = Math.round((Math.random() * (substituteImages.length - 1)));
-                        recipes[i].image = substituteImages[ranNumber];
-                    }
+        .then(response => response.json())
+        .then(res => {
+            const recipes = res.recipes;
+            const substituteImages = res.images;
+            for (let i = 0; i < recipes.length; i += 1) {
+                if (recipes[i].image === '') {
+                    let ranNumber = Math.round((Math.random() * (substituteImages.length - 1)));
+                    recipes[i].image = substituteImages[ranNumber];
                 }
-                this.setState({ recipes });
-            });
+            }
+            this.setState({ recipes });
+        });
     }
 
     async deleteRecipe(recipeTitle) {
@@ -87,14 +88,21 @@ class Recipes extends React.Component {
             credentials: 'same-origin',
         });
 
-        let recipes = await fetch('/all_recipes', {
+        const response = await fetch('/all_recipes', {
             method: "GET",
             mode: 'same-origin',
             credentials: 'same-origin',
         });
 
-        recipes = await recipes.json();
-        recipes = recipes.recipes;
+        const res = await response.json()
+        let recipes = res.recipes;
+        const substituteImages = res.images;
+        for (let i = 0; i < recipes.length; i += 1) {
+            if (recipes[i].image === '') {
+                let ranNumber = Math.round((Math.random() * (substituteImages.length - 1)));
+                recipes[i].image = substituteImages[ranNumber];
+            }
+        }
         this.setState({ recipes });
     }
 
@@ -116,29 +124,29 @@ class Recipes extends React.Component {
     async searchRecipes(event) {
         event.preventDefault();
 
-        // const searchParameters = event.target.value;
+        const searchParameters = event.target.value;
 
-        // const newUrl = `/search_recipes?search=${searchParameters}`;
+        const newUrl = `/search_recipes?search=${searchParameters}`;
 
-        // const res = await fetch(newUrl, {
-        //     method: 'GET',
-        //     mode: 'same-origin',
-        //     credentials: 'same-origin',
-        // });
+        const res = await fetch(newUrl, {
+            method: 'GET',
+            mode: 'same-origin',
+            credentials: 'same-origin',
+        });
 
-        // if (res.ok) {
-        //     const recipes = await res.json();
+        if (res.ok) {
+            const recipes = await res.json();
 
-        //     this.setState((prevState, props) => {
-        //         prevState.recipes = recipes;
-        //         return (prevState);
-        //     });
-        // } else {
-        //     this.setState((prevState, props) => {
-        //         prevState.recipes = [];
-        //         return (prevState);
-        //     });
-        // }
+            this.setState((prevState, props) => {
+                prevState.recipes = recipes;
+                return (prevState);
+            });
+        } else {
+            this.setState((prevState, props) => {
+                prevState.recipes = [];
+                return (prevState);
+            });
+        }
     }
 
     render() {
@@ -152,17 +160,19 @@ class Recipes extends React.Component {
                         </button>
                     </form>
                 </div>
-                <div className="all-recipes">
-                    {this.state.recipes.map((recipe, index) => {
-                        return (
-                            <Recipe
-                                key={index.toString()}
-                                recipe={recipe}
-                                deleteRecipe={this.deleteRecipe}
-                                editRecipe={this.editRecipe}
-                            />
-                        );
-                    })}
+                <div id="all-recipes-wrapper">
+                    <div className="all-recipes">
+                        {this.state.recipes.map((recipe, index) => {
+                            return (
+                                <Recipe
+                                    key={index.toString()}
+                                    recipe={recipe}
+                                    deleteRecipe={this.deleteRecipe}
+                                    editRecipe={this.editRecipe}
+                                />
+                            );
+                        })}
+                    </div>
                 </div>
             </main>
         )
