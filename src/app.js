@@ -622,6 +622,7 @@ module.exports = (users, db) => {
     },
   );
 
+  // returns recipe as json 
   app.get('/get_recipe', validateUserSession, [query('title').trim().not().isEmpty()], async (req, res) => {
     const validationErrors = validationResult(req);
     if (!validationErrors.isEmpty()) {
@@ -762,6 +763,8 @@ module.exports = (users, db) => {
       }
     },
   );
+
+  // TODO think about server side rendering this recipe page using the recipes information
   app.get(
     '/recipe',
     validateUserSession,
