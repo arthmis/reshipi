@@ -69,6 +69,8 @@ jobs:
           git pull origin production
           git checkout production
           cd reshipi-frontend
+          npm install
           npm run build
           cd ..
+          npm install
           npm run restart
