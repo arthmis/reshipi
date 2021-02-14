@@ -18,7 +18,7 @@ This will create a superuser role that will have ownership of the `reshipi` data
 
 ```
     TESTING_DATABASE_URL=postgresql://testdb:postgres@localhost:5432/reshipi_test
-    DATABASE_URL=postgresql://reshipi:reshipi@localhost:5432/reshipi
+    DATABASE_URL=postgresql://reshipi:postgres@localhost:5432/reshipi
     SECRET=secret
     NODE_ENV=development
 ```
