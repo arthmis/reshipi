@@ -36,4 +36,4 @@ Go back to the root of the project and run
     npm run dev
 ```
 
-Go to `localhost:8000` on your web browser to go to enter the website. From here, you can create your own reshipi account and add, update, delete and search recipes. If these instructions don't lead to a working app then please let me know.
+Go to `localhost:8000` on your web browser to enter the website. From here, you can create your own reshipi account and add, update, delete and search recipes. If these instructions don't lead to a working app then please let me know.

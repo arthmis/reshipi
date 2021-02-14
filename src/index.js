@@ -18,6 +18,7 @@ logger.logger.emitErrs = false;
 // const port = process.env.PORT;
 const port = 8000;
 
+// TODO: is this the right thing to do?
 process.on('uncaughtException', (err) => {
   logger.error(err.stack);
   // send email
@@ -25,6 +26,7 @@ process.on('uncaughtException', (err) => {
   // restart
 });
 
+// TODO: is this the right thing to do?
 process.on('unhandledRejection', (err) => {
   logger.error(err.stack);
   // send email
@@ -99,6 +101,7 @@ async function main() {
       }
     });
   }
+  // TODO: check if nginx has access to this, it shouldn't
   app.use(express.static('../uploads'));
   app.use(express.static('reshipi-frontend'));
   app.listen(port, 'localhost');
