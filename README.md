@@ -4,7 +4,7 @@ This website a simple recipe manager that allows you to add, update, delete and 
 ## Demo
 <!-- <video src="./reshipi-frontend/video/search.m4v" width="320" height="200" controls preload></video> -->
 <video width="1024" height="768" controls>
-  <source src="search.m4v" type="video/mp4">
+  <source src="./resh.mp4" type="video/mp4">
 </video>
 
 ## Building
