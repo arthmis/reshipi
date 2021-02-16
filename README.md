@@ -2,10 +2,7 @@
 This website a simple recipe manager that allows you to add, update, delete and search your recipes.
 
 ## Demo
-<!-- <video src="./reshipi-frontend/video/search.m4v" width="320" height="200" controls preload></video> -->
-<video width="1024" height="768" controls>
-  <source src="./resh.mp4" type="video/mp4">
-</video>
+You can view a demo at [this link](https://arthmis.github.io/projects/#reshipi).
 
 ## Building
 The system used is Ubuntu 18.04, therefore all dependency installation instructions will be based on this.
