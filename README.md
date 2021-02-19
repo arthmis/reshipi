@@ -1,6 +1,9 @@
 # RE·SHI·PI
 This website a simple recipe manager that allows you to add, update, delete and search your recipes.
 
+## Demo
+You can view a demo at [this link](https://arthmis.github.io/projects/#reshipi).
+
 ## Building
 The system used is Ubuntu 18.04, therefore all dependency installation instructions will be based on this.
 
