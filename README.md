@@ -13,6 +13,13 @@ Now we will setup the necessary databases and tables in Postgres. You should hav
     psql -c 'CREATE DATABASE reshipi;' -U postgres -h localhost -p 5432 -w
     psql -c 'ALTER DATABASE reshipi OWNER to reshipi;' -U postgres -h localhost -p 5432 -w
 ```
+If these fail, then try only `psql` and use the queries directly. If you can't sign in due to authentication failure then try
+```
+sudo -u postgres psql
+```
+This works because the user postgres doesn't have a password.
+```
+I learned this from this [stack overflow question](https://stackoverflow.com/questions/7695962/postgresql-password-authentication-failed-for-user-postgres).
 
 This will create a superuser role that will have ownership of the `reshipi` database. The next commands will create the database and transfer ownership from postgres to reshipi user. Create a `.env` file at the root of the folder with the following content.
 
