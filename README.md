@@ -20,9 +20,7 @@ If these fail, then try only `psql` and use the queries directly. If you can't s
 ```
 sudo -u postgres psql
 ```
-This works because the user postgres doesn't have a password.
-```
-I learned this from this [stack overflow question](https://stackoverflow.com/questions/7695962/postgresql-password-authentication-failed-for-user-postgres).
+This works because the user postgres doesn't have a password. I learned this from this [stack overflow question](https://stackoverflow.com/questions/7695962/postgresql-password-authentication-failed-for-user-postgres).
 
 This will create a superuser role that will have ownership of the `reshipi` database. The next commands will create the database and transfer ownership from postgres to reshipi user. Create a `.env` file at the root of the folder with the following content.
 
