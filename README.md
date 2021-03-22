@@ -1,5 +1,5 @@
 # RE·SHI·PI
-This website a simple recipe manager that allows you to add, update, delete and search your recipes.
+This website is a simple recipe manager that allows you to add, update, delete and search your recipes.
 
 ## Demo
 There is a demo of the [reshipi website](https://reshipii.com).
