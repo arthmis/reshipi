@@ -47,11 +47,11 @@ module.exports = (users, db) => {
     },
   });
 
-  const upload = multer({ 
-    storage, 
+  const upload = multer({
+    storage,
     limits: {
       fileSize: 1048576,
-    } 
+    }
   });
 
   const app = express();
@@ -65,12 +65,13 @@ module.exports = (users, db) => {
   // it would open up the cached page after logout
   app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store')
-  next()
+    next()
   });
 
-  app.use(morgan('combined', {
-    stream: fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' }),
-  }));
+  // app.use(morgan('combined', {
+  //   stream: fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' }),
+  // }));
+  app.use(morgan('dev'));
 
   const loginRateLimitingOptions = {
     storeClient: db.$pool,
@@ -145,8 +146,15 @@ module.exports = (users, db) => {
   if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', true);
     sessionConfig.cookie.secure = true;
+  } else if (process.env.NODE_ENV === 'development_proxy_server') {
+    app.set('trust proxy', true);
   }
+
   app.use(session(sessionConfig));
+  app.use(function (req, res, next) {
+    logger.info(req.ip, req.method, req.route);
+    next();
+  });
 
   app.set('view engine', 'ejs');
 

@@ -7,15 +7,21 @@ const {
 const {
   combine,
   timestamp,
-  prettyPrint
+  label,
+  // prettyPrint,
+  printf,
 } = format;
 
+const myFormat = printf(({ level, message, timestamp }) => {
+  return `${timestamp} ${level.toUpperCase()}: ${message}`;
+})
 class Logger {
   constructor() {
     this.logger = createLogger({
       format: combine(
         timestamp(),
-        prettyPrint(),
+        myFormat,
+        // prettyPrint(),
       ),
       // transports: [],
       transports: [
