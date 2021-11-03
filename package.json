@@ -31,7 +31,7 @@
     "rate-limiter-flexible": "^2.2.1",
     "sanitize-html": "^1.27.5",
     "sonic-channel": "^1.2.6",
-    "validator": "^13.5.2",
+    "validator": "^13.7.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {
